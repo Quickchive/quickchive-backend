@@ -28,7 +28,6 @@ export class AuthController {
   async register(
     @Body() createAccountBody: CreateAccountBodyDto,
   ): Promise<CreateAccountOutput> {
-    console.log(createAccountBody);
     return await this.authService.register(createAccountBody);
   }
 

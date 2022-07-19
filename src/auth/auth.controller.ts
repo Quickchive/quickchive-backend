@@ -17,6 +17,7 @@ import {
 import { DeleteAccountOutput } from './dtos/delete-account.dto';
 import { LoginBodyDto, LoginOutput, LogoutOutput } from './dtos/login.dto';
 import { RefreshTokenDto, RefreshTokenOutput } from './dtos/token.dto';
+import { VerifyEmailOutput } from './dtos/verify-email.dto';
 import { JwtAuthGuard } from './jwt/jwt.guard';
 
 @Controller('auth')
@@ -53,5 +54,10 @@ export class AuthController {
     @Body() regenerateBody: RefreshTokenDto,
   ): Promise<RefreshTokenOutput> {
     return await this.authService.regenerateToken(regenerateBody);
+  }
+
+  @Get('verify-email')
+  async verifyEmail(@Query('code') code: string): Promise<VerifyEmailOutput> {
+    return await this.authService.verifyEmail(code);
   }
 }

@@ -1,7 +1,9 @@
 import { Injectable, UnauthorizedException } from '@nestjs/common';
 import { JwtService } from '@nestjs/jwt';
 import { InjectRepository } from '@nestjs/typeorm';
+import { MailService } from 'src/mail/mail.service';
 import { User } from 'src/users/entities/user.entity';
+import { Verification } from 'src/users/entities/verification.entity';
 // import { Verification } from 'src/users/entities/verification.entity';
 import { Repository } from 'typeorm';
 import {
@@ -12,6 +14,7 @@ import { DeleteAccountOutput } from './dtos/delete-account.dto';
 import { LoginBodyDto, LoginOutput, LogoutOutput } from './dtos/login.dto';
 import { RefreshTokenDto, RefreshTokenOutput } from './dtos/token.dto';
 import { ValidateUserDto, ValidateUserOutput } from './dtos/validate-user.dto';
+import { VerifyEmailOutput } from './dtos/verify-email.dto';
 import { Payload } from './jwt/jwt.payload';
 
 @Injectable()
@@ -19,7 +22,10 @@ export class AuthService {
   constructor(
     private readonly jwtService: JwtService,
     @InjectRepository(User)
-    private readonly users: Repository<User>, // @InjectRepository(Verification) // private readonly verifications: Repository<Verification>,
+    private readonly users: Repository<User>,
+    @InjectRepository(Verification)
+    private readonly verifications: Repository<Verification>,
+    private readonly mailService: MailService,
   ) {}
 
   async jwtLogin({ name, password }: LoginBodyDto): Promise<LoginOutput> {
@@ -55,7 +61,7 @@ export class AuthService {
     role,
   }: CreateAccountBodyDto): Promise<CreateAccountOutput> {
     try {
-      const user = await this.users.findOneBy({ name: name });
+      const user = await this.users.findOneBy({ email });
 
       if (user) {
         throw new UnauthorizedException('Already exist');
@@ -63,6 +69,17 @@ export class AuthService {
 
       const newUser = await this.users.save(
         this.users.create({ email, name, password, role }),
+      );
+
+      // Email Verification
+      const verification = await this.verifications.save(
+        this.verifications.create({ user: newUser }),
+      );
+
+      this.mailService.sendVerificationEmail(
+        newUser.email,
+        newUser.name,
+        verification.code,
       );
 
       return { ok: true };
@@ -163,6 +180,28 @@ export class AuthService {
       }
     } catch (error) {
       return { ok: false, error };
+    }
+  }
+
+  async verifyEmail(code: string): Promise<VerifyEmailOutput> {
+    try {
+      console.log('code : ', code);
+      const verification = await this.verifications.findOne({
+        where: { code },
+        relations: { user: true },
+      });
+      console.log(verification);
+      if (verification.code === code) {
+        verification.user.verified = true;
+        this.users.save(verification.user); // verify
+        await this.verifications.delete(verification.id); // delete verification value
+
+        return { ok: true };
+      } else {
+        return { ok: false, error: 'Wrong Code' };
+      }
+    } catch (error) {
+      return { ok: false, error: 'Could not verify email.' };
     }
   }
 }

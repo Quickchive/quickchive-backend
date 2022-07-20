@@ -7,6 +7,7 @@ import { AuthModule } from './auth/auth.module';
 import { MailModule } from './mail/mail.module';
 import { User } from './users/entities/user.entity';
 import { Verification } from './users/entities/verification.entity';
+import { ContentsModule } from './contents/contents.module';
 
 @Module({
   imports: [
@@ -35,6 +36,7 @@ import { Verification } from './users/entities/verification.entity';
       domain: process.env.MAILGUN_DOMAIN_NAME,
       fromEmail: process.env.MAILGUN_FROM_EMAIL,
     }),
+    ContentsModule,
   ],
   controllers: [],
   providers: [],

@@ -9,6 +9,7 @@ import { User } from './users/entities/user.entity';
 import { Verification } from './users/entities/verification.entity';
 import { ContentsModule } from './contents/contents.module';
 import { Content } from './contents/entities/content.entity';
+import { Category } from './contents/entities/category.entity';
 
 @Module({
   imports: [
@@ -23,7 +24,7 @@ import { Content } from './contents/entities/content.entity';
       synchronize: process.env.NODE_ENV !== 'prod',
       logging:
         process.env.NODE_ENV !== 'prod' && process.env.NODE_ENV !== 'test',
-      entities: [User, Verification, Content],
+      entities: [User, Verification, Content, Category],
       ssl: {
         require: true,
         rejectUnauthorized: false,

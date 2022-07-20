@@ -15,20 +15,38 @@ export class ContentsService {
     private readonly categories: Repository<Category>,
   ) {}
 
+  async getOrCreateCategory(name: string): Promise<Category> {
+    const categoryName = name.trim().toLowerCase();
+    const categorySlug = categoryName.replace(/ /g, '-');
+    let category = await this.categories.findOneBy({ slug: categorySlug });
+
+    if (!category) {
+      category = await this.categories.save(
+        this.categories.create({ slug: categorySlug, name: categoryName }),
+      );
+    }
+
+    return category;
+  }
+
   async addContent(
     user: User,
-    { link, title, description, comment }: AddContentBodyDto,
+    { link, title, description, comment, categoryName }: AddContentBodyDto,
   ): Promise<AddContentOutput> {
     try {
       if (!link) {
         throw new Error('Missing required field.');
       }
+      const category = categoryName
+        ? await this.getOrCreateCategory(categoryName)
+        : null;
 
       const newContent = this.contents.create({
         link,
         title,
         description,
         comment,
+        category,
       });
       newContent.user = user;
       await this.contents.save(newContent);

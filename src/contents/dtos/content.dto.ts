@@ -7,6 +7,8 @@ export class AddContentBodyDto extends PickType(Content, [
   'title',
   'description',
   'comment',
-]) {}
+]) {
+  categoryName: string;
+}
 
 export class AddContentOutput extends CoreOutput {}

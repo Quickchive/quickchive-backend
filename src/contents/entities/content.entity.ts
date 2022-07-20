@@ -32,7 +32,7 @@ export class Content extends CoreEntity {
     nullable: true,
     onDelete: 'SET NULL',
   })
-  category: Category;
+  category?: Category;
 
   @ManyToOne((type) => User, (user) => user.contents, {
     onDelete: 'CASCADE',

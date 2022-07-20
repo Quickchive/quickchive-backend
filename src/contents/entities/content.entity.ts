@@ -12,17 +12,17 @@ export class Content extends CoreEntity {
   @IsUrl(undefined, { message: 'Link is not valid.' })
   link: string;
 
-  @Column()
+  @Column({ nullable: true })
   @IsString()
-  title: string;
+  title?: string;
 
-  @Column()
+  @Column({ nullable: true })
   @IsString()
-  description: string;
+  description?: string;
 
-  @Column()
+  @Column({ nullable: true })
   @IsString()
-  comment: string;
+  comment?: string;
 
   @ManyToOne((type) => User, (user) => user.contents, {
     onDelete: 'CASCADE',

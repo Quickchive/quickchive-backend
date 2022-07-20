@@ -1,4 +1,4 @@
-import { PickType, PartialType } from '@nestjs/swagger';
+import { PickType } from '@nestjs/swagger';
 import { CoreOutput } from 'src/common/dtos/output.dto';
 import { Content } from '../entities/content.entity';
 

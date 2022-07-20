@@ -3,6 +3,7 @@ import { CoreEntity } from 'src/common/entities/core.entity';
 import { Column, Entity, ManyToOne, RelationId } from 'typeorm';
 import { User } from 'src/users/entities/user.entity';
 import { ApiProperty } from '@nestjs/swagger';
+import { Category } from './category.entity';
 
 @Entity()
 export class Content extends CoreEntity {
@@ -26,6 +27,12 @@ export class Content extends CoreEntity {
   @IsOptional()
   @IsString()
   comment?: string;
+
+  @ManyToOne((type) => Category, (category) => category.contents, {
+    nullable: true,
+    onDelete: 'SET NULL',
+  })
+  category: Category;
 
   @ManyToOne((type) => User, (user) => user.contents, {
     onDelete: 'CASCADE',

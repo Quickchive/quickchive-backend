@@ -3,6 +3,7 @@ import { InjectRepository } from '@nestjs/typeorm';
 import { User } from 'src/users/entities/user.entity';
 import { Repository } from 'typeorm';
 import { AddContentBodyDto, AddContentOutput } from './dtos/content.dto';
+import { Category } from './entities/category.entity';
 import { Content } from './entities/content.entity';
 
 @Injectable()
@@ -10,6 +11,8 @@ export class ContentsService {
   constructor(
     @InjectRepository(Content)
     private readonly contents: Repository<Content>,
+    @InjectRepository(Category)
+    private readonly categories: Repository<Category>,
   ) {}
 
   async addContent(

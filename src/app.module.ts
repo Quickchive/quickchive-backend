@@ -8,6 +8,7 @@ import { MailModule } from './mail/mail.module';
 import { User } from './users/entities/user.entity';
 import { Verification } from './users/entities/verification.entity';
 import { ContentsModule } from './contents/contents.module';
+import { Content } from './contents/entities/content.entity';
 
 @Module({
   imports: [
@@ -22,7 +23,7 @@ import { ContentsModule } from './contents/contents.module';
       synchronize: process.env.NODE_ENV !== 'prod',
       logging:
         process.env.NODE_ENV !== 'prod' && process.env.NODE_ENV !== 'test',
-      entities: [User, Verification],
+      entities: [User, Verification, Content],
       ssl: {
         require: true,
         rejectUnauthorized: false,

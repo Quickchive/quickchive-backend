@@ -2,6 +2,10 @@ import { Injectable } from '@nestjs/common';
 import { User } from 'src/users/entities/user.entity';
 import { DataSource, EntityManager, QueryRunner } from 'typeorm';
 import {
+  UpdateCategoryBodyDto,
+  UpdateCategoryOutput,
+} from './dtos/category.dto';
+import {
   AddContentBodyDto,
   AddContentOutput,
   UpdateContentBodyDto,
@@ -67,8 +71,8 @@ export class ContentsService {
         comment,
         category,
       });
-      newContent.user = userInDb;
       await queryRunnerManager.save(newContent);
+      userInDb.contents.push(newContent);
       userInDb.categories.push(category);
       queryRunnerManager.save(userInDb);
 
@@ -107,7 +111,7 @@ export class ContentsService {
           categories: true,
         },
       });
-      console.log(userInDb);
+
       const content = userInDb.contents.filter(
         (content) => content.link === link,
       )[0];
@@ -124,12 +128,123 @@ export class ContentsService {
           queryRunnerManager,
         );
         userInDb.categories.push(category);
+        const userCurrentCategories = userInDb.categories.filter(
+          (category) => category.name === content.category.name,
+        );
+        if (userCurrentCategories.length === 1) {
+          userInDb.categories = userInDb.categories.filter(
+            (category) => category.name !== content.category.name,
+          );
+        }
         queryRunnerManager.save(userInDb);
       }
 
       queryRunnerManager.save(Content, [
         { id: content.id, ...newContentObj, ...(category && { category }) },
       ]);
+
+      await queryRunner.commitTransaction();
+
+      return {
+        ok: true,
+      };
+    } catch (e) {
+      await queryRunner.rollbackTransaction();
+
+      return {
+        ok: false,
+        error: e.message,
+      };
+    }
+  }
+
+  //initalize the database
+  async init(): Promise<QueryRunner> {
+    const queryRunner = this.dataSource.createQueryRunner();
+    await queryRunner.connect();
+    await queryRunner.startTransaction();
+
+    return queryRunner;
+  }
+}
+
+@Injectable()
+export class CategoryService {
+  constructor(private readonly dataSource: DataSource) {}
+
+  async getOrCreateCategory(
+    name: string,
+    queryRunnerManager: EntityManager,
+  ): Promise<Category> {
+    const categoryName = name.trim().toLowerCase();
+    const categorySlug = categoryName.replace(/ /g, '-');
+    let category = await queryRunnerManager.findOneBy(Category, {
+      slug: categorySlug,
+    });
+
+    if (!category) {
+      category = await queryRunnerManager.save(
+        queryRunnerManager.create(Category, {
+          slug: categorySlug,
+          name: categoryName,
+        }),
+      );
+    }
+
+    return category;
+  }
+
+  // updateCategory
+  // 업데이트될 카테고리 우선 찾기
+  // 새로운 이름을 통해 카테고리를 생성하거나 이미 있는 카테고리를 가져오기
+  // 새로운 카테고리를 유저에게 추가하기
+  // 기존 카테고리를 유저에게에서 삭제하기
+  // 기존 컨텐츠들에 새로운 카테고리를 적용하기
+  async updateCategory(
+    user: User,
+    { originalName, name }: UpdateCategoryBodyDto,
+  ): Promise<UpdateCategoryOutput> {
+    const queryRunner = await this.init();
+    const queryRunnerManager: EntityManager = await queryRunner.manager;
+    try {
+      const userInDb = await queryRunnerManager.findOne(User, {
+        where: { id: user.id },
+        relations: {
+          contents: {
+            category: true,
+          },
+          categories: true,
+        },
+      });
+
+      // Check if user exists
+      if (!userInDb) {
+        throw new Error('User not found.');
+      }
+
+      // Get or create category
+      const category = await this.getOrCreateCategory(name, queryRunnerManager);
+
+      // Check if user has category
+      if (
+        !userInDb.categories.filter(
+          (category) => category.name === originalName,
+        )[0]
+      ) {
+        throw new Error("Category doesn't exists in current user.");
+      }
+      // Update and delete previous category
+      userInDb.categories.push(category);
+      userInDb.contents.forEach((content) => {
+        if (content.category && content.category.name === originalName) {
+          content.category = category;
+          queryRunnerManager.save(content);
+        }
+      });
+      userInDb.categories = userInDb.categories.filter(
+        (category) => category.name !== originalName,
+      );
+      queryRunnerManager.save(userInDb);
 
       await queryRunner.commitTransaction();
 

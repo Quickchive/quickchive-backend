@@ -8,7 +8,11 @@ import {
 import { AuthUser } from 'src/auth/auth-user.decorator';
 import { JwtAuthGuard } from 'src/auth/jwt/jwt.guard';
 import { User } from 'src/users/entities/user.entity';
-import { ContentsService } from './contents.service';
+import { CategoryService, ContentsService } from './contents.service';
+import {
+  UpdateCategoryBodyDto,
+  UpdateCategoryOutput,
+} from './dtos/category.dto';
 import {
   AddContentBodyDto,
   AddContentOutput,
@@ -55,5 +59,29 @@ export class ContentsController {
     @Body() content: UpdateContentBodyDto,
   ): Promise<UpdateContentOutput> {
     return await this.contentsService.updateContent(user, content);
+  }
+}
+
+@Controller('category')
+@ApiTags('category')
+export class CategoryController {
+  constructor(private readonly categoryService: CategoryService) {}
+
+  @ApiOperation({
+    summary: '카테고리 수정',
+    description: '카테고리 이름을 수정하는 메서드',
+  })
+  @ApiCreatedResponse({
+    description: '카테고리 수정 성공 여부를 반환한다.',
+    type: UpdateCategoryOutput,
+  })
+  @ApiBearerAuth('Authorization')
+  @UseGuards(JwtAuthGuard)
+  @Post('update')
+  async updateCategory(
+    @AuthUser() user: User,
+    @Body() content: UpdateCategoryBodyDto,
+  ): Promise<UpdateCategoryOutput> {
+    return await this.categoryService.updateCategory(user, content);
   }
 }

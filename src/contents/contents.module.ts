@@ -1,10 +1,10 @@
 import { Module } from '@nestjs/common';
-import { ContentsController } from './contents.controller';
-import { ContentsService } from './contents.service';
+import { CategoryController, ContentsController } from './contents.controller';
+import { CategoryService, ContentsService } from './contents.service';
 
 @Module({
   imports: [],
-  controllers: [ContentsController],
-  providers: [ContentsService],
+  controllers: [ContentsController, CategoryController],
+  providers: [ContentsService, CategoryService],
 })
 export class ContentsModule {}

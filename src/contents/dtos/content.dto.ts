@@ -1,4 +1,4 @@
-import { PickType } from '@nestjs/swagger';
+import { ApiProperty, PickType } from '@nestjs/swagger';
 import { CoreOutput } from 'src/common/dtos/output.dto';
 import { Content } from '../entities/content.entity';
 
@@ -8,6 +8,7 @@ export class AddContentBodyDto extends PickType(Content, [
   'description',
   'comment',
 ]) {
+  @ApiProperty({ description: 'Category Name' })
   categoryName: string;
 }
 

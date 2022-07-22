@@ -7,6 +7,7 @@ import {
 } from '@nestjs/swagger';
 import { AuthUser } from 'src/auth/auth-user.decorator';
 import { JwtAuthGuard } from 'src/auth/jwt/jwt.guard';
+import { LoadPersonalCategoriesOutput } from './dtos/load-personal-categories.dto';
 import { LoadPersonalContentsOutput } from './dtos/load-personal-contents.dto';
 import { User } from './entities/user.entity';
 import { UsersService } from './users.service';
@@ -39,14 +40,14 @@ export class UsersController {
   })
   @ApiCreatedResponse({
     description: '카테고리 목록을 반환한다.',
-    type: LoadPersonalContentsOutput,
+    type: LoadPersonalCategoriesOutput,
   })
   @ApiBearerAuth('Authorization')
   @UseGuards(JwtAuthGuard)
   @Get('load-categories')
   async loadPersonalCategories(
     @AuthUser() user: User,
-  ): Promise<LoadPersonalContentsOutput> {
+  ): Promise<LoadPersonalCategoriesOutput> {
     return await this.usersService.loadPersonalCategories(user);
   }
 }

@@ -7,27 +7,31 @@ import { Category } from './category.entity';
 
 @Entity()
 export class Content extends CoreEntity {
-  @ApiProperty()
+  @ApiProperty({ example: 'ex.com', description: 'Article Link' })
   @Column()
   @IsString({ message: 'Must be a string!' })
   @IsUrl({ message: 'Link is not valid.' })
   link: string;
 
+  @ApiProperty({ description: 'Article Title' })
   @Column({ nullable: true })
   @IsOptional()
   @IsString()
   title?: string;
 
+  @ApiProperty({ description: 'Article Description' })
   @Column({ nullable: true })
   @IsOptional()
   @IsString()
   description?: string;
 
+  @ApiProperty({ description: 'User Comment' })
   @Column({ nullable: true })
   @IsOptional()
   @IsString()
   comment?: string;
 
+  @ApiProperty({ description: 'Article Category' })
   @ManyToOne((type) => Category, (category) => category.contents, {
     nullable: true,
     onDelete: 'SET NULL',
@@ -39,6 +43,7 @@ export class Content extends CoreEntity {
   })
   user: User;
 
+  @ApiProperty({ description: 'Owner ID' })
   @RelationId((content: Content) => content.user)
   userId: number;
 }

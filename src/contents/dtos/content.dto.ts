@@ -12,3 +12,7 @@ export class AddContentBodyDto extends PickType(Content, [
 }
 
 export class AddContentOutput extends CoreOutput {}
+
+export class UpdateContentBodyDto extends AddContentBodyDto {}
+
+export class UpdateContentOutput extends CoreOutput {}

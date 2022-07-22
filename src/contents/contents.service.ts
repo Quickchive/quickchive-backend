@@ -1,7 +1,11 @@
 import { Injectable } from '@nestjs/common';
 import { User } from 'src/users/entities/user.entity';
-import { DataSource, EntityManager } from 'typeorm';
-import { AddContentBodyDto, AddContentOutput } from './dtos/content.dto';
+import { DataSource, EntityManager, QueryRunner } from 'typeorm';
+import {
+  AddContentBodyDto,
+  AddContentOutput,
+  UpdateContentBodyDto,
+} from './dtos/content.dto';
 import { Category } from './entities/category.entity';
 import { Content } from './entities/content.entity';
 
@@ -35,9 +39,7 @@ export class ContentsService {
     user: User,
     { link, title, description, comment, categoryName }: AddContentBodyDto,
   ): Promise<AddContentOutput> {
-    const queryRunner = this.dataSource.createQueryRunner();
-    await queryRunner.connect();
-    await queryRunner.startTransaction();
+    const queryRunner = await this.init();
     const queryRunnerManager: EntityManager = await queryRunner.manager;
     try {
       if (!link) {
@@ -80,5 +82,74 @@ export class ContentsService {
         error: 'Could not add Content',
       };
     }
+  }
+
+  async updateContent(
+    user: User,
+    updateContentBody: UpdateContentBodyDto,
+  ): Promise<AddContentOutput> {
+    const queryRunner = await this.init();
+    const queryRunnerManager: EntityManager = await queryRunner.manager;
+
+    const { link, title, description, comment, categoryName } =
+      updateContentBody;
+    const newContentObj = { link, title, description, comment };
+    try {
+      const userInDb = await queryRunnerManager.findOne(User, {
+        where: { id: user.id },
+        relations: {
+          contents: {
+            category: true,
+          },
+          categories: true,
+        },
+      });
+      console.log(userInDb);
+      const content = userInDb.contents.filter(
+        (content) => content.link === link,
+      )[0];
+
+      if (!content) {
+        throw new Error('Content not found.');
+      }
+
+      // update content
+      let category: Category = null;
+      if (categoryName) {
+        category = await this.getOrCreateCategory(
+          categoryName,
+          queryRunnerManager,
+        );
+        userInDb.categories.push(category);
+        queryRunnerManager.save(userInDb);
+      }
+
+      queryRunnerManager.save(Content, [
+        { id: content.id, ...newContentObj, ...(category && { category }) },
+      ]);
+
+      await queryRunner.commitTransaction();
+
+      return {
+        ok: true,
+      };
+    } catch (e) {
+      console.log(e);
+      await queryRunner.rollbackTransaction();
+
+      return {
+        ok: false,
+        error: 'Could not update Content',
+      };
+    }
+  }
+
+  //initalize the database
+  async init(): Promise<QueryRunner> {
+    const queryRunner = this.dataSource.createQueryRunner();
+    await queryRunner.connect();
+    await queryRunner.startTransaction();
+
+    return queryRunner;
   }
 }

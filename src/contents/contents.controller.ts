@@ -29,7 +29,7 @@ import {
 } from './dtos/content.dto';
 
 @Controller('contents')
-@ApiTags('contents')
+@ApiTags('Contents')
 export class ContentsController {
   constructor(private readonly contentsService: ContentsService) {}
 
@@ -89,7 +89,7 @@ export class ContentsController {
 }
 
 @Controller('category')
-@ApiTags('category')
+@ApiTags('Category')
 export class CategoryController {
   constructor(private readonly categoryService: CategoryService) {}
 

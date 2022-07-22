@@ -42,9 +42,6 @@ export class ContentsService {
     const queryRunner = await this.init();
     const queryRunnerManager: EntityManager = await queryRunner.manager;
     try {
-      if (!link) {
-        throw new Error('Missing required field.');
-      }
       const userInDb = await queryRunnerManager.findOne(User, {
         where: { id: user.id },
         relations: {
@@ -53,9 +50,15 @@ export class ContentsService {
         },
       });
 
+      // Get or create category
       const category = categoryName
         ? await this.getOrCreateCategory(categoryName, queryRunnerManager)
         : null;
+
+      // Check if content already exists
+      if (userInDb.contents.filter((content) => content.link === link)[0]) {
+        throw new Error('Content already exists.');
+      }
 
       const newContent = queryRunnerManager.create(Content, {
         link,
@@ -74,12 +77,12 @@ export class ContentsService {
       return {
         ok: true,
       };
-    } catch {
+    } catch (e) {
       await queryRunner.rollbackTransaction();
 
       return {
         ok: false,
-        error: 'Could not add Content',
+        error: e.message,
       };
     }
   }
@@ -134,12 +137,11 @@ export class ContentsService {
         ok: true,
       };
     } catch (e) {
-      console.log(e);
       await queryRunner.rollbackTransaction();
 
       return {
         ok: false,
-        error: 'Could not update Content',
+        error: e.message,
       };
     }
   }

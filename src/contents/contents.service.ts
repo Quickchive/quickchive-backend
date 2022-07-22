@@ -194,12 +194,6 @@ export class CategoryService {
     return category;
   }
 
-  // updateCategory
-  // 업데이트될 카테고리 우선 찾기
-  // 새로운 이름을 통해 카테고리를 생성하거나 이미 있는 카테고리를 가져오기
-  // 새로운 카테고리를 유저에게 추가하기
-  // 기존 카테고리를 유저에게에서 삭제하기
-  // 기존 컨텐츠들에 새로운 카테고리를 적용하기
   async updateCategory(
     user: User,
     { originalName, name }: UpdateCategoryBodyDto,

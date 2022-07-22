@@ -11,9 +11,9 @@ export class AddContentBodyDto extends PickType(Content, [
   @ApiProperty({ description: 'Category Name' })
   categoryName: string;
 }
-
 export class AddContentOutput extends CoreOutput {}
 
 export class UpdateContentBodyDto extends AddContentBodyDto {}
-
 export class UpdateContentOutput extends CoreOutput {}
+
+export class DeleteContentOutput extends CoreOutput {}

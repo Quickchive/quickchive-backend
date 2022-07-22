@@ -1,4 +1,11 @@
-import { Body, Controller, Post, UseGuards } from '@nestjs/common';
+import {
+  Body,
+  Controller,
+  Delete,
+  Post,
+  Param,
+  UseGuards,
+} from '@nestjs/common';
 import {
   ApiBearerAuth,
   ApiCreatedResponse,
@@ -16,6 +23,7 @@ import {
 import {
   AddContentBodyDto,
   AddContentOutput,
+  DeleteContentOutput,
   UpdateContentBodyDto,
   UpdateContentOutput,
 } from './dtos/content.dto';
@@ -59,6 +67,24 @@ export class ContentsController {
     @Body() content: UpdateContentBodyDto,
   ): Promise<UpdateContentOutput> {
     return await this.contentsService.updateContent(user, content);
+  }
+
+  @ApiOperation({
+    summary: '아티클 정보 삭제',
+    description: '아티클을 삭제하는 메서드',
+  })
+  @ApiCreatedResponse({
+    description: '아티클 삭제 성공 여부를 반환한다.',
+    type: UpdateContentOutput,
+  })
+  @ApiBearerAuth('Authorization')
+  @UseGuards(JwtAuthGuard)
+  @Delete('delete/:link')
+  async deleteContent(
+    @AuthUser() user: User,
+    @Param('link') link: string,
+  ): Promise<DeleteContentOutput> {
+    return await this.contentsService.deleteContent(user, link);
   }
 }
 

@@ -8,6 +8,7 @@ import {
 import {
   AddContentBodyDto,
   AddContentOutput,
+  DeleteContentOutput,
   UpdateContentBodyDto,
 } from './dtos/content.dto';
 import { Category } from './entities/category.entity';
@@ -103,6 +104,65 @@ export class ContentsService {
       if (categoryName) {
         category = await getOrCreateCategory(categoryName, queryRunnerManager);
         userInDb.categories.push(category);
+
+        // Update user categories
+        if (content.category) {
+          const userCurrentCategories = userInDb.categories.filter(
+            (category) => category.name === content.category.name,
+          );
+          if (userCurrentCategories.length === 1) {
+            userInDb.categories = userInDb.categories.filter(
+              (category) => category.name !== content.category.name,
+            );
+          }
+        }
+
+        queryRunnerManager.save(userInDb);
+      }
+
+      queryRunnerManager.save(Content, [
+        { id: content.id, ...newContentObj, ...(category && { category }) },
+      ]);
+
+      await queryRunner.commitTransaction();
+
+      return {
+        ok: true,
+      };
+    } catch (e) {
+      await queryRunner.rollbackTransaction();
+
+      return {
+        ok: false,
+        error: e.message,
+      };
+    }
+  }
+
+  async deleteContent(user: User, link: string): Promise<DeleteContentOutput> {
+    const queryRunner = await this.init();
+    const queryRunnerManager: EntityManager = await queryRunner.manager;
+    try {
+      const userInDb = await queryRunnerManager.findOne(User, {
+        where: { id: user.id },
+        relations: {
+          contents: {
+            category: true,
+          },
+          categories: true,
+        },
+      });
+
+      const content = userInDb.contents.filter(
+        (content) => content.link === link,
+      )[0];
+
+      if (!content) {
+        throw new Error('Content not found.');
+      }
+
+      // Update user categories
+      if (content.category) {
         const userCurrentCategories = userInDb.categories.filter(
           (category) => category.name === content.category.name,
         );
@@ -114,9 +174,8 @@ export class ContentsService {
         queryRunnerManager.save(userInDb);
       }
 
-      queryRunnerManager.save(Content, [
-        { id: content.id, ...newContentObj, ...(category && { category }) },
-      ]);
+      // delete content
+      queryRunnerManager.delete(Content, content.id);
 
       await queryRunner.commitTransaction();
 

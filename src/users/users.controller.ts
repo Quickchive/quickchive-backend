@@ -16,4 +16,12 @@ export class UsersController {
   ): Promise<LoadPersonalContentsOutput> {
     return await this.usersService.loadPersonalContents(user);
   }
+
+  @UseGuards(JwtAuthGuard)
+  @Get('load-categories')
+  async loadPersonalCategories(
+    @AuthUser() user: User,
+  ): Promise<LoadPersonalContentsOutput> {
+    return await this.usersService.loadPersonalCategories(user);
+  }
 }

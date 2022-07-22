@@ -75,7 +75,7 @@ export class ContentsController {
   })
   @ApiCreatedResponse({
     description: '아티클 삭제 성공 여부를 반환한다.',
-    type: UpdateContentOutput,
+    type: DeleteContentOutput,
   })
   @ApiBearerAuth('Authorization')
   @UseGuards(JwtAuthGuard)

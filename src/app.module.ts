@@ -7,6 +7,10 @@ import { AuthModule } from './auth/auth.module';
 import { MailModule } from './mail/mail.module';
 import { User } from './users/entities/user.entity';
 import { Verification } from './users/entities/verification.entity';
+import { ContentsModule } from './contents/contents.module';
+import { Content } from './contents/entities/content.entity';
+import { Category } from './contents/entities/category.entity';
+import { DataSource } from 'typeorm';
 
 @Module({
   imports: [
@@ -21,7 +25,7 @@ import { Verification } from './users/entities/verification.entity';
       synchronize: process.env.NODE_ENV !== 'prod',
       logging:
         process.env.NODE_ENV !== 'prod' && process.env.NODE_ENV !== 'test',
-      entities: [User, Verification],
+      entities: [User, Verification, Content, Category],
       ssl: {
         require: true,
         rejectUnauthorized: false,
@@ -35,8 +39,11 @@ import { Verification } from './users/entities/verification.entity';
       domain: process.env.MAILGUN_DOMAIN_NAME,
       fromEmail: process.env.MAILGUN_FROM_EMAIL,
     }),
+    ContentsModule,
   ],
   controllers: [],
   providers: [],
 })
-export class AppModule {}
+export class AppModule {
+  constructor(private dataSource: DataSource) {}
+}

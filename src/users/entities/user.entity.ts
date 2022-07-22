@@ -1,9 +1,19 @@
 import { Injectable, InternalServerErrorException } from '@nestjs/common';
-import { BeforeInsert, BeforeUpdate, Column, Entity } from 'typeorm';
+import {
+  BeforeInsert,
+  BeforeUpdate,
+  Column,
+  Entity,
+  JoinTable,
+  ManyToMany,
+  OneToMany,
+} from 'typeorm';
 import * as bcrypt from 'bcrypt';
 import { IsBoolean, IsEmail, IsEnum, IsString } from 'class-validator';
 import { CoreEntity } from 'src/common/entities/core.entity';
 import { ApiProperty } from '@nestjs/swagger';
+import { Content } from 'src/contents/entities/content.entity';
+import { Category } from 'src/contents/entities/category.entity';
 
 export enum UserRole {
   Client = 'Client',
@@ -43,8 +53,21 @@ export class User extends CoreEntity {
   @IsBoolean()
   verified: boolean;
 
-  @BeforeInsert() // Entity Listener
-  @BeforeUpdate() // password need to hashed before save.
+  @ApiProperty({ description: 'User Content List' })
+  @OneToMany((type) => Content, (content) => content.user, {
+    nullable: true,
+  })
+  contents?: Content[];
+
+  @ApiProperty({ description: 'User Category List' })
+  @ManyToMany((type) => Category, {
+    nullable: true,
+  })
+  @JoinTable()
+  categories?: Category[];
+
+  @BeforeInsert()
+  @BeforeUpdate()
   async hashPassword(): Promise<void> {
     if (this.password) {
       try {

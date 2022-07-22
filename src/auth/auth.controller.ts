@@ -11,6 +11,7 @@ import {
   ApiBearerAuth,
   ApiCreatedResponse,
   ApiOperation,
+  ApiTags,
 } from '@nestjs/swagger';
 import { User } from 'src/users/entities/user.entity';
 import { AuthUser } from './auth-user.decorator';
@@ -26,6 +27,7 @@ import { VerifyEmailOutput } from './dtos/verify-email.dto';
 import { JwtAuthGuard } from './jwt/jwt.guard';
 
 @Controller('auth')
+@ApiTags('Auth')
 export class AuthController {
   constructor(private readonly authService: AuthService) {}
 

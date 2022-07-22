@@ -17,28 +17,6 @@ import { Content } from './entities/content.entity';
 export class ContentsService {
   constructor(private readonly dataSource: DataSource) {}
 
-  async getOrCreateCategory(
-    name: string,
-    queryRunnerManager: EntityManager,
-  ): Promise<Category> {
-    const categoryName = name.trim().toLowerCase();
-    const categorySlug = categoryName.replace(/ /g, '-');
-    let category = await queryRunnerManager.findOneBy(Category, {
-      slug: categorySlug,
-    });
-
-    if (!category) {
-      category = await queryRunnerManager.save(
-        queryRunnerManager.create(Category, {
-          slug: categorySlug,
-          name: categoryName,
-        }),
-      );
-    }
-
-    return category;
-  }
-
   async addContent(
     user: User,
     { link, title, description, comment, categoryName }: AddContentBodyDto,
@@ -56,7 +34,7 @@ export class ContentsService {
 
       // Get or create category
       const category = categoryName
-        ? await this.getOrCreateCategory(categoryName, queryRunnerManager)
+        ? await getOrCreateCategory(categoryName, queryRunnerManager)
         : null;
 
       // Check if content already exists
@@ -123,10 +101,7 @@ export class ContentsService {
       // update content
       let category: Category = null;
       if (categoryName) {
-        category = await this.getOrCreateCategory(
-          categoryName,
-          queryRunnerManager,
-        );
+        category = await getOrCreateCategory(categoryName, queryRunnerManager);
         userInDb.categories.push(category);
         const userCurrentCategories = userInDb.categories.filter(
           (category) => category.name === content.category.name,
@@ -172,28 +147,6 @@ export class ContentsService {
 export class CategoryService {
   constructor(private readonly dataSource: DataSource) {}
 
-  async getOrCreateCategory(
-    name: string,
-    queryRunnerManager: EntityManager,
-  ): Promise<Category> {
-    const categoryName = name.trim().toLowerCase();
-    const categorySlug = categoryName.replace(/ /g, '-');
-    let category = await queryRunnerManager.findOneBy(Category, {
-      slug: categorySlug,
-    });
-
-    if (!category) {
-      category = await queryRunnerManager.save(
-        queryRunnerManager.create(Category, {
-          slug: categorySlug,
-          name: categoryName,
-        }),
-      );
-    }
-
-    return category;
-  }
-
   async updateCategory(
     user: User,
     { originalName, name }: UpdateCategoryBodyDto,
@@ -217,7 +170,7 @@ export class CategoryService {
       }
 
       // Get or create category
-      const category = await this.getOrCreateCategory(name, queryRunnerManager);
+      const category = await getOrCreateCategory(name, queryRunnerManager);
 
       // Check if user has category
       if (
@@ -263,4 +216,26 @@ export class CategoryService {
 
     return queryRunner;
   }
+}
+
+async function getOrCreateCategory(
+  name: string,
+  queryRunnerManager: EntityManager,
+): Promise<Category> {
+  const categoryName = name.trim().toLowerCase();
+  const categorySlug = categoryName.replace(/ /g, '-');
+  let category = await queryRunnerManager.findOneBy(Category, {
+    slug: categorySlug,
+  });
+
+  if (!category) {
+    category = await queryRunnerManager.save(
+      queryRunnerManager.create(Category, {
+        slug: categorySlug,
+        name: categoryName,
+      }),
+    );
+  }
+
+  return category;
 }

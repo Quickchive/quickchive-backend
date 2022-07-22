@@ -18,17 +18,3 @@ export class ContentsController {
     return await this.contentsService.addContent(user, content);
   }
 }
-
-// @Controller('category')
-// export class CategoryController {
-//   constructor(private readonly categoryService: CategoryService) {}
-
-//   @UseGuards(JwtAuthGuard)
-//   @Post('add')
-//   async addCategory(
-//     @AuthUser() user: User,
-//     @Body() categoryName: string,
-//   ): Promise<AddCategoryOutput> {
-//     return await this.categoryService.addCategory(user, categoryName);
-//   }
-// }

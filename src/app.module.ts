@@ -10,6 +10,7 @@ import { Verification } from './users/entities/verification.entity';
 import { ContentsModule } from './contents/contents.module';
 import { Content } from './contents/entities/content.entity';
 import { Category } from './contents/entities/category.entity';
+import { DataSource } from 'typeorm';
 
 @Module({
   imports: [
@@ -43,4 +44,6 @@ import { Category } from './contents/entities/category.entity';
   controllers: [],
   providers: [],
 })
-export class AppModule {}
+export class AppModule {
+  constructor(private dataSource: DataSource) {}
+}

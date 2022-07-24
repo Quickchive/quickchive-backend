@@ -99,6 +99,8 @@ export class UsersService {
       if (password && oldPassword) {
         if (user.checkPassword(oldPassword)) user.password = password;
         else return { ok: false, error: 'The password is incorrect' };
+      } else {
+        delete user.password;
       }
 
       await this.users.save(user);

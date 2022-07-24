@@ -58,7 +58,6 @@ export class AuthService {
     email,
     name,
     password,
-    role,
   }: CreateAccountBodyDto): Promise<CreateAccountOutput> {
     try {
       const user = await this.users.findOneBy({ email });
@@ -68,7 +67,7 @@ export class AuthService {
       }
 
       const newUser = await this.users.save(
-        this.users.create({ email, name, password, role }),
+        this.users.create({ email, name, password }),
       );
 
       // Email Verification
@@ -169,7 +168,7 @@ export class AuthService {
       if (!user) {
         throw new UnauthorizedException('User Not Found');
       }
-
+      console.log(password);
       const isPasswordCorrect = await user.checkPassword(password);
       delete user.password;
 
@@ -190,7 +189,7 @@ export class AuthService {
         where: { code },
         relations: { user: true },
       });
-      console.log(verification);
+
       if (verification.code === code) {
         verification.user.verified = true;
         this.users.save(verification.user); // verify

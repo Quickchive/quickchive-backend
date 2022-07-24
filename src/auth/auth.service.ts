@@ -28,11 +28,11 @@ export class AuthService {
     private readonly mailService: MailService,
   ) {}
 
-  async jwtLogin({ name, password }: LoginBodyDto): Promise<LoginOutput> {
+  async jwtLogin({ email, password }: LoginBodyDto): Promise<LoginOutput> {
     try {
-      const { ok, user, error } = await this.validateUser({ name, password });
+      const { ok, user, error } = await this.validateUser({ email, password });
       if (ok) {
-        const payload: Payload = { name, sub: user.id };
+        const payload: Payload = { email, sub: user.id };
         const refreshToken = await this.jwtService.sign(payload, {
           secret: process.env.JWT_REFRESH_TOKEN_PRIVATE_KEY,
           expiresIn: '1d',
@@ -131,9 +131,9 @@ export class AuthService {
 
       const user = await this.users.findOneBy({ id: decoded['sub'] });
       if (user && user.refresh_token === refresh_token) {
-        const name = user.name,
+        const email = user.email,
           sub = user.id;
-        const payload: Payload = { name, sub };
+        const payload: Payload = { email, sub };
         const newRefreshToken = this.jwtService.sign(payload, {
           secret: process.env.JWT_REFRESH_TOKEN_PRIVATE_KEY,
           expiresIn: '1d',
@@ -158,13 +158,13 @@ export class AuthService {
   }
 
   async validateUser({
-    name,
+    email,
     password,
   }: ValidateUserDto): Promise<ValidateUserOutput> {
     try {
       const user = await this.users.findOne({
-        where: { name },
-        select: { id: true, name: true, password: true },
+        where: { email },
+        select: { id: true, password: true },
       });
       if (!user) {
         throw new UnauthorizedException('User Not Found');

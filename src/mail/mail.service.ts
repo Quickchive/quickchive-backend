@@ -42,7 +42,7 @@ export class MailService {
   }
 
   sendVerificationEmail(email: string, name: string, code: string) {
-    this.sendEmail(email, 'Verify Your Email', 'verify-email', [
+    this.sendEmail(email, 'Verify Your Email', this.options.templateName, [
       { key: 'code', value: code },
       { key: 'username', value: name },
     ]);

@@ -1,6 +1,7 @@
 export interface MailModuleOptions {
   apiKey: string;
   domain: string;
+  templateName: string;
 }
 
 export interface EmailVar {

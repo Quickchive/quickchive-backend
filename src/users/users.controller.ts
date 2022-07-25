@@ -40,7 +40,7 @@ export class UsersController {
   })
   @ApiBearerAuth('Authorization')
   @UseGuards(JwtAuthGuard)
-  @Post('me')
+  @Get('me')
   me(@AuthUser() user: User): User {
     return user;
   }

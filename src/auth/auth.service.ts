@@ -126,7 +126,6 @@ export class AuthService {
       const decoded = this.jwtService.verify(refresh_token, {
         secret: process.env.JWT_REFRESH_TOKEN_PRIVATE_KEY,
       });
-      console.log(decoded);
 
       const user = await this.users.findOneBy({ id: decoded['sub'] });
       if (user && user.refresh_token === refresh_token) {
@@ -168,7 +167,7 @@ export class AuthService {
       if (!user) {
         throw new UnauthorizedException('User Not Found');
       }
-      console.log(password);
+
       const isPasswordCorrect = await user.checkPassword(password);
       delete user.password;
 
@@ -184,7 +183,6 @@ export class AuthService {
 
   async verifyEmail(code: string): Promise<VerifyEmailOutput> {
     try {
-      console.log('code : ', code);
       const verification = await this.verifications.findOne({
         where: { code },
         relations: { user: true },

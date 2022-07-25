@@ -33,6 +33,18 @@ export class UsersController {
     return await this.usersService.editProfile(user.id, editProfileBody);
   }
 
+  @ApiOperation({ summary: '프로필 조회', description: '프로필 조회 메서드' })
+  @ApiCreatedResponse({
+    description: '현재 유저의 정보를 반환한다.',
+    type: User,
+  })
+  @ApiBearerAuth('Authorization')
+  @UseGuards(JwtAuthGuard)
+  @Post('me')
+  me(@AuthUser() user: User): User {
+    return user;
+  }
+
   @ApiOperation({
     summary: '자신의 아티클 조회',
     description: '자신의 아티클을 조회하는 메서드',

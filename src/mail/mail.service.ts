@@ -53,13 +53,13 @@ export class MailService {
     );
   }
 
-  sendResetPasswordEmail(email: string, name: string) {
+  sendResetPasswordEmail(email: string, name: string, code: string) {
     this.sendEmail(
       email,
       'Reset Your Password',
       this.options.templateNameForResetPassword,
       [
-        { key: 'userEmail', value: email },
+        { key: 'code', value: code },
         { key: 'username', value: name },
       ],
     );

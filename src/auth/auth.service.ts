@@ -166,7 +166,19 @@ export class AuthService {
     try {
       const user = await this.users.findOneBy({ email });
       if (user) {
-        this.mailService.sendResetPasswordEmail(user.email, user.name);
+        if (!user.verified) {
+          throw new UnauthorizedException('User not verified');
+        }
+        const verification = await this.verifications.save(
+          this.verifications.create({ user }),
+        );
+
+        // send password reset email to user using mailgun
+        this.mailService.sendResetPasswordEmail(
+          user.email,
+          user.name,
+          verification.code,
+        );
 
         return { ok: true };
       } else {

@@ -30,7 +30,8 @@ import * as Joi from 'joi';
         JWT_REFRESH_TOKEN_PRIVATE_KEY: Joi.string().required(),
         MAILGUN_API_KEY: Joi.string().required(),
         MAILGUN_DOMAIN_NAME: Joi.string().required(),
-        MAILGUN_TEMPLATE_NAME: Joi.string().required(),
+        MAILGUN_TEMPLATE_NAME_FOR_VERIFY_EMAIL: Joi.string().required(),
+        MAILGUN_TEMPLATE_NAME_FOR_RESET_PASSWORD: Joi.string().required(),
       }),
     }),
     TypeOrmModule.forRoot({
@@ -59,7 +60,10 @@ import * as Joi from 'joi';
     MailModule.forRoot({
       apiKey: process.env.MAILGUN_API_KEY,
       domain: process.env.MAILGUN_DOMAIN_NAME,
-      templateName: process.env.MAILGUN_TEMPLATE_NAME,
+      templateNameForVerifyEmail:
+        process.env.MAILGUN_TEMPLATE_NAME_FOR_VERIFY_EMAIL,
+      templateNameForResetPassword:
+        process.env.MAILGUN_TEMPLATE_NAME_FOR_RESET_PASSWORD,
     }),
     ContentsModule,
   ],

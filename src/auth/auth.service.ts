@@ -1,4 +1,8 @@
-import { Injectable, UnauthorizedException } from '@nestjs/common';
+import {
+  Injectable,
+  NotFoundException,
+  UnauthorizedException,
+} from '@nestjs/common';
 import { JwtService } from '@nestjs/jwt';
 import { InjectRepository } from '@nestjs/typeorm';
 import { MailService } from 'src/mail/mail.service';
@@ -12,6 +16,7 @@ import {
 } from './dtos/create-account.dto';
 import { DeleteAccountOutput } from './dtos/delete-account.dto';
 import { LoginBodyDto, LoginOutput, LogoutOutput } from './dtos/login.dto';
+import { sendPasswordResetEmailOutput } from './dtos/send-password-reset-email.dto';
 import { RefreshTokenDto, RefreshTokenOutput } from './dtos/token.dto';
 import { ValidateUserDto, ValidateUserOutput } from './dtos/validate-user.dto';
 import { VerifyEmailOutput } from './dtos/verify-email.dto';
@@ -155,6 +160,57 @@ export class AuthService {
     }
   }
 
+  async sendPasswordResetEmail(
+    email: string,
+  ): Promise<sendPasswordResetEmailOutput> {
+    try {
+      const user = await this.users.findOneBy({ email });
+      if (user) {
+        if (!user.verified) {
+          throw new UnauthorizedException('User not verified');
+        }
+        const verification = await this.verifications.save(
+          this.verifications.create({ user }),
+        );
+
+        // send password reset email to user using mailgun
+        this.mailService.sendResetPasswordEmail(
+          user.email,
+          user.name,
+          verification.code,
+        );
+
+        return { ok: true };
+      } else {
+        throw new NotFoundException('User not found');
+      }
+    } catch (error) {
+      console.log(error);
+      return { ok: false, error: error.message };
+    }
+  }
+
+  async verifyEmail(code: string): Promise<VerifyEmailOutput> {
+    try {
+      const verification = await this.verifications.findOne({
+        where: { code },
+        relations: { user: true },
+      });
+
+      if (verification.code === code) {
+        verification.user.verified = true;
+        this.users.save(verification.user); // verify
+        await this.verifications.delete(verification.id); // delete verification value
+
+        return { ok: true };
+      } else {
+        return { ok: false, error: 'Wrong Code' };
+      }
+    } catch (error) {
+      return { ok: false, error: 'Could not verify email.' };
+    }
+  }
+
   async validateUser({
     email,
     password,
@@ -178,27 +234,6 @@ export class AuthService {
       }
     } catch (error) {
       return { ok: false, error };
-    }
-  }
-
-  async verifyEmail(code: string): Promise<VerifyEmailOutput> {
-    try {
-      const verification = await this.verifications.findOne({
-        where: { code },
-        relations: { user: true },
-      });
-
-      if (verification.code === code) {
-        verification.user.verified = true;
-        this.users.save(verification.user); // verify
-        await this.verifications.delete(verification.id); // delete verification value
-
-        return { ok: true };
-      } else {
-        return { ok: false, error: 'Wrong Code' };
-      }
-    } catch (error) {
-      return { ok: false, error: 'Could not verify email.' };
     }
   }
 }

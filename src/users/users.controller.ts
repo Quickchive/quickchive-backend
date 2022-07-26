@@ -10,6 +10,10 @@ import { JwtAuthGuard } from 'src/auth/jwt/jwt.guard';
 import { EditProfileInput, EditProfileOutput } from './dtos/edit-profile.dto';
 import { LoadPersonalCategoriesOutput } from './dtos/load-personal-categories.dto';
 import { LoadPersonalContentsOutput } from './dtos/load-personal-contents.dto';
+import {
+  ResetPasswordInput,
+  ResetPasswordOutput,
+} from './dtos/reset-password.dto';
 import { User } from './entities/user.entity';
 import { UsersService } from './users.service';
 
@@ -31,6 +35,21 @@ export class UsersController {
     @Body() editProfileBody: EditProfileInput,
   ): Promise<EditProfileOutput> {
     return await this.usersService.editProfile(user.id, editProfileBody);
+  }
+
+  @ApiOperation({
+    summary: '비밀번호 재설정',
+    description: '비밀번호 재설정 메서드',
+  })
+  @ApiCreatedResponse({
+    description: '비밀번호 재설정 성공 여부를 알려준다.',
+    type: ResetPasswordOutput,
+  })
+  @Post('reset-password')
+  async resetPassword(
+    @Body() resetPasswordBody: ResetPasswordInput,
+  ): Promise<ResetPasswordOutput> {
+    return await this.usersService.resetPassword(resetPasswordBody);
   }
 
   @ApiOperation({ summary: '프로필 조회', description: '프로필 조회 메서드' })

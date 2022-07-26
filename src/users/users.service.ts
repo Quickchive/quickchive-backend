@@ -89,6 +89,7 @@ export class UsersService {
         }
         user.password = password;
 
+        await this.verifications.delete(verification.id);
         await this.users.save(user);
 
         return { ok: true };

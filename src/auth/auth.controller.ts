@@ -3,6 +3,7 @@ import {
   Controller,
   Delete,
   Get,
+  Param,
   Post,
   Query,
   UseGuards,
@@ -101,9 +102,9 @@ export class AuthController {
     description: '비밀번호 재설정을 위한 메일 전송 성공 여부를 알려준다.',
     type: sendPasswordResetEmailOutput,
   })
-  @Get('send-password-reset-email')
+  @Get('send-password-reset-email/:email')
   async sendPasswordResetEmail(
-    email: string,
+    @Param('email') email: string,
   ): Promise<sendPasswordResetEmailOutput> {
     return await this.authService.sendPasswordResetEmail(email);
   }

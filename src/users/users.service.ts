@@ -80,7 +80,6 @@ export class UsersService {
       });
 
       if (verification) {
-        console.log(verification);
         const user = await this.users.findOne({
           where: { id: verification.user.id },
           select: { id: true, password: true },

@@ -18,6 +18,53 @@ export class UsersService {
     private readonly mailService: MailService,
   ) {}
 
+  async editProfile(
+    userId: number,
+    { email, password, oldPassword, name }: EditProfileInput,
+  ): Promise<EditProfileOutput> {
+    try {
+      const user = await this.users.findOne({
+        where: { id: userId },
+        select: { id: true, email: true, name: true, password: true },
+      });
+
+      if (email) {
+        user.email = email;
+        user.verified = false;
+
+        // Email Verification
+        const verification = await this.verifications.save(
+          this.verifications.create({ user }),
+        );
+
+        this.mailService.sendVerificationEmail(
+          user.email,
+          user.name,
+          verification.code,
+        );
+      }
+
+      if (name) {
+        user.name = name;
+      }
+
+      if (password && oldPassword) {
+        if (user.checkPassword(oldPassword)) user.password = password;
+        else return { ok: false, error: 'The password is incorrect' };
+      } else {
+        delete user.password;
+      }
+
+      await this.users.save(user);
+
+      return {
+        ok: true,
+      };
+    } catch (error) {
+      return { ok: false, error: 'Could not update profile.' };
+    }
+  }
+
   async loadPersonalContents(user: User): Promise<LoadPersonalContentsOutput> {
     try {
       const { contents } = await this.users.findOne({
@@ -63,53 +110,6 @@ export class UsersService {
         ok: false,
         error: 'Could not load Categories',
       };
-    }
-  }
-
-  async editProfile(
-    userId: number,
-    { email, password, oldPassword, name }: EditProfileInput,
-  ): Promise<EditProfileOutput> {
-    try {
-      const user = await this.users.findOne({
-        where: { id: userId },
-        select: { id: true, email: true, name: true, password: true },
-      });
-
-      if (email) {
-        user.email = email;
-        user.verified = false;
-
-        // Email Verification
-        const verification = await this.verifications.save(
-          this.verifications.create({ user }),
-        );
-
-        this.mailService.sendVerificationEmail(
-          user.email,
-          user.name,
-          verification.code,
-        );
-      }
-
-      if (name) {
-        user.name = name;
-      }
-
-      if (password && oldPassword) {
-        if (user.checkPassword(oldPassword)) user.password = password;
-        else return { ok: false, error: 'The password is incorrect' };
-      } else {
-        delete user.password;
-      }
-
-      await this.users.save(user);
-
-      return {
-        ok: true,
-      };
-    } catch (error) {
-      return { ok: false, error: 'Could not update profile.' };
     }
   }
 }

@@ -1,4 +1,8 @@
-import { Injectable, UnauthorizedException } from '@nestjs/common';
+import {
+  Injectable,
+  NotFoundException,
+  UnauthorizedException,
+} from '@nestjs/common';
 import { JwtService } from '@nestjs/jwt';
 import { InjectRepository } from '@nestjs/typeorm';
 import { MailService } from 'src/mail/mail.service';
@@ -12,6 +16,7 @@ import {
 } from './dtos/create-account.dto';
 import { DeleteAccountOutput } from './dtos/delete-account.dto';
 import { LoginBodyDto, LoginOutput, LogoutOutput } from './dtos/login.dto';
+import { sendPasswordResetEmailOutput } from './dtos/send-password-reset-email.dto';
 import { RefreshTokenDto, RefreshTokenOutput } from './dtos/token.dto';
 import { ValidateUserDto, ValidateUserOutput } from './dtos/validate-user.dto';
 import { VerifyEmailOutput } from './dtos/verify-email.dto';
@@ -126,7 +131,6 @@ export class AuthService {
       const decoded = this.jwtService.verify(refresh_token, {
         secret: process.env.JWT_REFRESH_TOKEN_PRIVATE_KEY,
       });
-      console.log(decoded);
 
       const user = await this.users.findOneBy({ id: decoded['sub'] });
       if (user && user.refresh_token === refresh_token) {
@@ -156,35 +160,38 @@ export class AuthService {
     }
   }
 
-  async validateUser({
-    email,
-    password,
-  }: ValidateUserDto): Promise<ValidateUserOutput> {
+  async sendPasswordResetEmail(
+    email: string,
+  ): Promise<sendPasswordResetEmailOutput> {
     try {
-      const user = await this.users.findOne({
-        where: { email },
-        select: { id: true, password: true },
-      });
-      if (!user) {
-        throw new UnauthorizedException('User Not Found');
-      }
-      console.log(password);
-      const isPasswordCorrect = await user.checkPassword(password);
-      delete user.password;
+      const user = await this.users.findOneBy({ email });
+      if (user) {
+        if (!user.verified) {
+          throw new UnauthorizedException('User not verified');
+        }
+        const verification = await this.verifications.save(
+          this.verifications.create({ user }),
+        );
 
-      if (isPasswordCorrect) {
-        return { ok: true, user };
+        // send password reset email to user using mailgun
+        this.mailService.sendResetPasswordEmail(
+          user.email,
+          user.name,
+          verification.code,
+        );
+
+        return { ok: true };
       } else {
-        return { ok: false, error: 'Wrong Password' };
+        throw new NotFoundException('User not found');
       }
     } catch (error) {
-      return { ok: false, error };
+      console.log(error);
+      return { ok: false, error: error.message };
     }
   }
 
   async verifyEmail(code: string): Promise<VerifyEmailOutput> {
     try {
-      console.log('code : ', code);
       const verification = await this.verifications.findOne({
         where: { code },
         relations: { user: true },
@@ -201,6 +208,32 @@ export class AuthService {
       }
     } catch (error) {
       return { ok: false, error: 'Could not verify email.' };
+    }
+  }
+
+  async validateUser({
+    email,
+    password,
+  }: ValidateUserDto): Promise<ValidateUserOutput> {
+    try {
+      const user = await this.users.findOne({
+        where: { email },
+        select: { id: true, password: true },
+      });
+      if (!user) {
+        throw new UnauthorizedException('User Not Found');
+      }
+
+      const isPasswordCorrect = await user.checkPassword(password);
+      delete user.password;
+
+      if (isPasswordCorrect) {
+        return { ok: true, user };
+      } else {
+        return { ok: false, error: 'Wrong Password' };
+      }
+    } catch (error) {
+      return { ok: false, error };
     }
   }
 }

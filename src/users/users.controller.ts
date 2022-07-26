@@ -10,6 +10,10 @@ import { JwtAuthGuard } from 'src/auth/jwt/jwt.guard';
 import { EditProfileInput, EditProfileOutput } from './dtos/edit-profile.dto';
 import { LoadPersonalCategoriesOutput } from './dtos/load-personal-categories.dto';
 import { LoadPersonalContentsOutput } from './dtos/load-personal-contents.dto';
+import {
+  ResetPasswordInput,
+  ResetPasswordOutput,
+} from './dtos/reset-password.dto';
 import { User } from './entities/user.entity';
 import { UsersService } from './users.service';
 

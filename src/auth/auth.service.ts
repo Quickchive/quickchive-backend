@@ -166,17 +166,7 @@ export class AuthService {
     try {
       const user = await this.users.findOneBy({ email });
       if (user) {
-        let verification = await this.verifications.findOneBy(user);
-        if (!verification) {
-          verification = await this.verifications.save(
-            this.verifications.create({ user: user }),
-          );
-        }
-        this.mailService.sendVerificationEmail(
-          user.email,
-          user.name,
-          verification.code,
-        );
+        this.mailService.sendResetPasswordEmail(user.email, user.name);
 
         return { ok: true };
       } else {

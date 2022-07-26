@@ -22,6 +22,7 @@ import {
 } from './dtos/create-account.dto';
 import { DeleteAccountOutput } from './dtos/delete-account.dto';
 import { LoginBodyDto, LoginOutput, LogoutOutput } from './dtos/login.dto';
+import { sendPasswordResetEmailOutput } from './dtos/send-password-reset-email.dto';
 import { RefreshTokenDto, RefreshTokenOutput } from './dtos/token.dto';
 import { VerifyEmailOutput } from './dtos/verify-email.dto';
 import { JwtAuthGuard } from './jwt/jwt.guard';
@@ -93,12 +94,27 @@ export class AuthController {
   }
 
   @ApiOperation({
+    summary: '비밀번호 재설정을 위한 메일 전송',
+    description: '비밀번호 재설정 메서드',
+  })
+  @ApiCreatedResponse({
+    description: '비밀번호 재설정을 위한 메일 전송 성공 여부를 알려준다.',
+    type: sendPasswordResetEmailOutput,
+  })
+  @Get('send-password-reset-email')
+  async sendPasswordResetEmail(
+    email: string,
+  ): Promise<sendPasswordResetEmailOutput> {
+    return await this.authService.sendPasswordResetEmail(email);
+  }
+
+  @ApiOperation({
     summary: '이메일 인증',
     description: '이메일 인증 메서드',
   })
   @ApiCreatedResponse({
     description: '이메일 인증 성공 여부를 알려준다.',
-    type: LoginOutput,
+    type: VerifyEmailOutput,
   })
   @Get('verify-email')
   async verifyEmail(@Query('code') code: string): Promise<VerifyEmailOutput> {

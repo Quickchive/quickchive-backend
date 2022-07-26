@@ -37,6 +37,21 @@ export class UsersController {
     return await this.usersService.editProfile(user.id, editProfileBody);
   }
 
+  @ApiOperation({
+    summary: '비밀번호 재설정',
+    description: '비밀번호 재설정 메서드',
+  })
+  @ApiCreatedResponse({
+    description: '비밀번호 재설정 성공 여부를 알려준다.',
+    type: ResetPasswordOutput,
+  })
+  @Post('reset-password')
+  async resetPassword(
+    @Body() resetPasswordBody: ResetPasswordInput,
+  ): Promise<ResetPasswordOutput> {
+    return await this.usersService.resetPassword(resetPasswordBody);
+  }
+
   @ApiOperation({ summary: '프로필 조회', description: '프로필 조회 메서드' })
   @ApiCreatedResponse({
     description: '현재 유저의 정보를 반환한다.',

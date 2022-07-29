@@ -5,6 +5,7 @@ import { Category } from 'src/contents/entities/category.entity';
 export class LoadPersonalCategoriesOutput extends CoreOutput {
   @ApiProperty({
     description: '카테고리 목록',
+    type: [Category],
   })
   categories?: Category[];
 }

@@ -59,7 +59,7 @@ export class User extends CoreEntity {
   })
   contents?: Content[];
 
-  @ApiProperty({ description: 'User Category List' })
+  @ApiProperty({ description: 'User Category List', type: [Category] })
   @ManyToMany((type) => Category, {
     nullable: true,
   })

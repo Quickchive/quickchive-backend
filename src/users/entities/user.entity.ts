@@ -53,13 +53,13 @@ export class User extends CoreEntity {
   @IsBoolean()
   verified: boolean;
 
-  @ApiProperty({ description: 'User Content List' })
+  @ApiProperty({ description: 'User Content List', type: [Content] })
   @OneToMany((type) => Content, (content) => content.user, {
     nullable: true,
   })
   contents?: Content[];
 
-  @ApiProperty({ description: 'User Category List' })
+  @ApiProperty({ description: 'User Category List', type: [Category] })
   @ManyToMany((type) => Category, {
     nullable: true,
   })

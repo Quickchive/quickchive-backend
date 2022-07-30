@@ -53,13 +53,13 @@ export class User extends CoreEntity {
   @IsBoolean()
   verified: boolean;
 
-  @ApiProperty({ description: 'User Content List' })
+  @ApiProperty({ description: 'User Content List', type: [Content] })
   @OneToMany((type) => Content, (content) => content.user, {
     nullable: true,
   })
   contents?: Content[];
 
-  @ApiProperty({ description: 'User Category List' })
+  @ApiProperty({ description: 'User Category List', type: [Category] })
   @ManyToMany((type) => Category, {
     nullable: true,
   })
@@ -81,8 +81,7 @@ export class User extends CoreEntity {
 
   async checkPassword(plainPassword: string): Promise<boolean> {
     try {
-      const ok = await bcrypt.compare(plainPassword, this.password);
-      return ok;
+      return await bcrypt.compare(plainPassword, this.password);
     } catch (e) {
       console.log(e);
       throw new InternalServerErrorException();

@@ -6,7 +6,6 @@ export class CreateAccountBodyDto extends PickType(User, [
   'email',
   'name',
   'password',
-  'role',
 ]) {}
 
 export class CreateAccountOutput extends CoreOutput {}

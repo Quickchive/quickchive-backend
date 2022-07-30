@@ -1,7 +1,8 @@
 export interface MailModuleOptions {
   apiKey: string;
   domain: string;
-  fromEmail: string;
+  templateNameForVerifyEmail: string;
+  templateNameForResetPassword: string;
 }
 
 export interface EmailVar {

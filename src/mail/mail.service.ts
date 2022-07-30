@@ -17,7 +17,7 @@ export class MailService {
     emailVars: EmailVar[],
   ) {
     const form = new FormData();
-    form.append('from', `Hou27 from Jalapeno <mailgun@${this.options.domain}>`);
+    form.append('from', `Hou27 from <mail@${this.options.domain}>`);
     form.append('to', to);
     form.append('subject', subject);
     form.append('template', template);
@@ -42,9 +42,26 @@ export class MailService {
   }
 
   sendVerificationEmail(email: string, name: string, code: string) {
-    this.sendEmail(email, 'Verify Your Email', 'verify-email', [
-      { key: 'code', value: code },
-      { key: 'username', value: name },
-    ]);
+    this.sendEmail(
+      email,
+      'Verify Your Email',
+      this.options.templateNameForVerifyEmail,
+      [
+        { key: 'code', value: code },
+        { key: 'username', value: name },
+      ],
+    );
+  }
+
+  sendResetPasswordEmail(email: string, name: string, code: string) {
+    this.sendEmail(
+      email,
+      'Reset Your Password',
+      this.options.templateNameForResetPassword,
+      [
+        { key: 'code', value: code },
+        { key: 'username', value: name },
+      ],
+    );
   }
 }

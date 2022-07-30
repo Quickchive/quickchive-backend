@@ -35,6 +35,7 @@ export class ContentsService {
         },
       });
 
+      let coverImg: string = '';
       // get og tag info from link
       const axiosResult: AddContentOutput = await axios
         .get(link)
@@ -52,12 +53,14 @@ export class ContentsService {
                 // if (meta.attr('property') === 'og:title') {
                 //   title = meta.attr('content');
                 // }
+                if (meta.attr('property') === 'og:image') {
+                  coverImg = meta.attr('content');
+                }
                 if (meta.attr('property') === 'og:description') {
                   description = meta.attr('content');
                 }
               });
             }
-            console.log(title, description);
             return { ok: true };
           }
         })
@@ -82,6 +85,7 @@ export class ContentsService {
       const newContent = queryRunnerManager.create(Content, {
         link,
         title,
+        coverImg,
         description,
         comment,
         category,

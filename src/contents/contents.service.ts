@@ -176,7 +176,10 @@ export class ContentsService {
     }
   }
 
-  async deleteContent(user: User, link: string): Promise<DeleteContentOutput> {
+  async deleteContent(
+    user: User,
+    contentId: number,
+  ): Promise<DeleteContentOutput> {
     const queryRunner = await this.init();
     const queryRunnerManager: EntityManager = await queryRunner.manager;
     try {
@@ -190,8 +193,9 @@ export class ContentsService {
         },
       });
 
+      console.log(typeof contentId);
       const content = userInDb.contents.filter(
-        (content) => content.link === link,
+        (content) => content.id === contentId,
       )[0];
 
       if (!content) {

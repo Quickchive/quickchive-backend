@@ -5,6 +5,7 @@ import {
   Post,
   Param,
   UseGuards,
+  ParseIntPipe,
 } from '@nestjs/common';
 import {
   ApiBearerAuth,
@@ -79,12 +80,12 @@ export class ContentsController {
   })
   @ApiBearerAuth('Authorization')
   @UseGuards(JwtAuthGuard)
-  @Delete('delete/:link')
+  @Delete('delete/:contentId')
   async deleteContent(
     @AuthUser() user: User,
-    @Param('link') link: string,
+    @Param('contentId', new ParseIntPipe()) contentId: number,
   ): Promise<DeleteContentOutput> {
-    return await this.contentsService.deleteContent(user, link);
+    return await this.contentsService.deleteContent(user, contentId);
   }
 }
 

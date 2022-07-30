@@ -1,4 +1,5 @@
 import { Injectable } from '@nestjs/common';
+import axios from 'axios';
 import { User } from 'src/users/entities/user.entity';
 import { DataSource, EntityManager, QueryRunner } from 'typeorm';
 import {
@@ -32,6 +33,36 @@ export class ContentsService {
           categories: true,
         },
       });
+
+      // get og tag info from link
+      const axiosResult: AddContentOutput = await axios
+        .get(link)
+        .then((res) => {
+          if (res.status !== 200) {
+            console.log(res.status);
+            throw new Error('잘못된 링크입니다.');
+          } else {
+            const data = res.data;
+            console.log(typeof data);
+            if (typeof data === 'string') {
+              title = data.includes('<title>')
+                ? data.split('<title>')[1]?.split('</title>')[0]
+                : null;
+              description = data.includes('og:description')
+                ? data.split('"og:description" content="')[1]?.split('">')[0]
+                : null;
+            }
+            console.log(title, description);
+            return { ok: true };
+          }
+        })
+        .catch((e) => {
+          return { ok: false, error: e.message };
+        });
+
+      if (!axiosResult.ok) {
+        return axiosResult;
+      }
 
       // Get or create category
       const category = categoryName

@@ -19,6 +19,11 @@ export class Content extends CoreEntity {
   @IsString()
   title?: string;
 
+  @ApiProperty({ description: 'Article Cover Image' })
+  @Column({ nullable: true })
+  @IsString()
+  coverImg?: string;
+
   @ApiProperty({ description: 'Article Description' })
   @Column({ nullable: true })
   @IsOptional()

@@ -35,8 +35,8 @@ export class ContentsService {
         },
       });
 
-      let coverImg: string = '';
       // get og tag info from link
+      let coverImg: string = '';
       const axiosResult: AddContentOutput = await axios
         .get(link)
         .then((res) => {
@@ -50,9 +50,6 @@ export class ContentsService {
               title = $('title').text() !== '' ? $('title').text() : 'Untitled';
               $('meta').each((i, el) => {
                 const meta = $(el);
-                // if (meta.attr('property') === 'og:title') {
-                //   title = meta.attr('content');
-                // }
                 if (meta.attr('property') === 'og:image') {
                   coverImg = meta.attr('content');
                 }

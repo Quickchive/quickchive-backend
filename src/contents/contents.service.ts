@@ -35,8 +35,8 @@ export class ContentsService {
         },
       });
 
-      let coverImg: string = '';
       // get og tag info from link
+      let coverImg: string = '';
       const axiosResult: AddContentOutput = await axios
         .get(link)
         .then((res) => {
@@ -50,9 +50,6 @@ export class ContentsService {
               title = $('title').text() !== '' ? $('title').text() : 'Untitled';
               $('meta').each((i, el) => {
                 const meta = $(el);
-                // if (meta.attr('property') === 'og:title') {
-                //   title = meta.attr('content');
-                // }
                 if (meta.attr('property') === 'og:image') {
                   coverImg = meta.attr('content');
                 }
@@ -179,7 +176,10 @@ export class ContentsService {
     }
   }
 
-  async deleteContent(user: User, link: string): Promise<DeleteContentOutput> {
+  async deleteContent(
+    user: User,
+    contentId: number,
+  ): Promise<DeleteContentOutput> {
     const queryRunner = await this.init();
     const queryRunnerManager: EntityManager = await queryRunner.manager;
     try {
@@ -193,8 +193,9 @@ export class ContentsService {
         },
       });
 
+      console.log(typeof contentId);
       const content = userInDb.contents.filter(
-        (content) => content.link === link,
+        (content) => content.id === contentId,
       )[0];
 
       if (!content) {

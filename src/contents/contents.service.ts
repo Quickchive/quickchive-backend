@@ -37,7 +37,7 @@ export class ContentsService {
 
       // get og tag info from link
       let coverImg: string = '';
-      const axiosResult: AddContentOutput = await axios
+      await axios
         .get(link)
         .then((res) => {
           if (res.status !== 200) {
@@ -58,16 +58,13 @@ export class ContentsService {
                 }
               });
             }
-            return { ok: true };
           }
         })
         .catch((e) => {
-          return { ok: false, error: e.message };
+          console.log(e.message);
+          // Control unreachable link
+          title = link.split('/').at(-1);
         });
-
-      if (!axiosResult.ok) {
-        return axiosResult;
-      }
 
       // Get or create category
       const category = categoryName

@@ -1,5 +1,6 @@
 import { Injectable } from '@nestjs/common';
 import axios from 'axios';
+import * as cheerio from 'cheerio';
 import { User } from 'src/users/entities/user.entity';
 import { DataSource, EntityManager, QueryRunner } from 'typeorm';
 import {
@@ -43,14 +44,18 @@ export class ContentsService {
             throw new Error('잘못된 링크입니다.');
           } else {
             const data = res.data;
-            console.log(typeof data);
             if (typeof data === 'string') {
-              title = data.includes('<title>')
-                ? data.split('<title>')[1]?.split('</title>')[0]
-                : null;
-              description = data.includes('og:description')
-                ? data.split('"og:description" content="')[1]?.split('">')[0]
-                : null;
+              const $ = cheerio.load(data);
+              title = $('title').text() !== '' ? $('title').text() : 'Untitled';
+              $('meta').each((i, el) => {
+                const meta = $(el);
+                // if (meta.attr('property') === 'og:title') {
+                //   title = meta.attr('content');
+                // }
+                if (meta.attr('property') === 'og:description') {
+                  description = meta.attr('content');
+                }
+              });
             }
             console.log(title, description);
             return { ok: true };

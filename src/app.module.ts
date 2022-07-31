@@ -46,7 +46,7 @@ import { RefreshToken } from './users/entities/refresh-token.entity';
             password: process.env.DB_PW,
             database: process.env.DB_NAME,
           }),
-      synchronize: true,
+      synchronize: process.env.NODE_ENV !== 'prod',
       logging:
         process.env.NODE_ENV !== 'prod' && process.env.NODE_ENV !== 'test',
       entities: [User, Verification, Content, Category, RefreshToken],

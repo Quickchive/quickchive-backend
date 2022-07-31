@@ -1,8 +1,8 @@
 import { ApiProperty, PickType } from '@nestjs/swagger';
 import { CoreOutput } from 'src/common/dtos/output.dto';
-import { User } from 'src/users/entities/user.entity';
+import { RefreshToken } from 'src/users/entities/refresh-token.entity';
 
-export class RefreshTokenDto extends PickType(User, ['refresh_token']) {}
+export class RefreshTokenDto extends PickType(RefreshToken, ['refreshToken']) {}
 
 export class RefreshTokenOutput extends CoreOutput {
   @ApiProperty()

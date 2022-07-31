@@ -12,6 +12,7 @@ import { Content } from './contents/entities/content.entity';
 import { Category } from './contents/entities/category.entity';
 import { DataSource } from 'typeorm';
 import * as Joi from 'joi';
+import { RefreshToken } from './users/entities/refresh-token.entity';
 
 @Module({
   imports: [
@@ -48,7 +49,7 @@ import * as Joi from 'joi';
       synchronize: true,
       logging:
         process.env.NODE_ENV !== 'prod' && process.env.NODE_ENV !== 'test',
-      entities: [User, Verification, Content, Category],
+      entities: [User, Verification, Content, Category, RefreshToken],
       ssl: {
         require: true,
         rejectUnauthorized: false,

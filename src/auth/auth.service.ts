@@ -6,6 +6,7 @@ import {
 import { JwtService } from '@nestjs/jwt';
 import { InjectRepository } from '@nestjs/typeorm';
 import { MailService } from 'src/mail/mail.service';
+import { RefreshToken } from 'src/users/entities/refresh-token.entity';
 import { User } from 'src/users/entities/user.entity';
 import { Verification } from 'src/users/entities/verification.entity';
 // import { Verification } from 'src/users/entities/verification.entity';
@@ -31,6 +32,8 @@ export class AuthService {
     @InjectRepository(Verification)
     private readonly verifications: Repository<Verification>,
     private readonly mailService: MailService,
+    @InjectRepository(RefreshToken)
+    private readonly refreshTokens: Repository<RefreshToken>,
   ) {}
 
   async jwtLogin({ email, password }: LoginBodyDto): Promise<LoginOutput> {
@@ -42,8 +45,8 @@ export class AuthService {
           secret: process.env.JWT_REFRESH_TOKEN_PRIVATE_KEY,
           expiresIn: '1d',
         });
-        user.refresh_token = refreshToken;
-        await this.users.save(user);
+        // user.refresh_token = refreshToken;
+        await this.refreshTokens.save({ refreshToken, userId: user.id });
 
         return {
           ok: true,
@@ -55,7 +58,7 @@ export class AuthService {
       }
     } catch (error) {
       console.log(error);
-      return { ok: false, error };
+      return { ok: false, error: error.message };
     }
   }
 
@@ -97,15 +100,20 @@ export class AuthService {
     try {
       const user = await this.users.findOneBy({ id: userId });
       if (user) {
-        user.refresh_token = null;
-        await this.users.save(user);
+        const refreshTokenInDb = await this.refreshTokens.findOneBy({
+          userId: user.id,
+        });
+
+        if (refreshTokenInDb) {
+          await this.refreshTokens.remove(refreshTokenInDb);
+        }
 
         return { ok: true };
       } else {
         return { ok: false, error: 'Error in logout process' };
       }
     } catch (error) {
-      return { ok: false, error };
+      return { ok: false, error: error.message };
     }
   }
 
@@ -124,36 +132,46 @@ export class AuthService {
   }
 
   async regenerateToken({
-    refresh_token,
+    refreshToken,
   }: RefreshTokenDto): Promise<RefreshTokenOutput> {
     try {
       // decoding refresh token
-      const decoded = this.jwtService.verify(refresh_token, {
+      const decoded = this.jwtService.verify(refreshToken, {
         secret: process.env.JWT_REFRESH_TOKEN_PRIVATE_KEY,
       });
 
-      const user = await this.users.findOneBy({ id: decoded['sub'] });
-      if (user && user.refresh_token === refresh_token) {
-        const email = user.email,
-          sub = user.id;
-        const payload: Payload = { email, sub };
-        const newRefreshToken = this.jwtService.sign(payload, {
-          secret: process.env.JWT_REFRESH_TOKEN_PRIVATE_KEY,
-          expiresIn: '1d',
-        });
+      const refreshTokenInDb = await this.refreshTokens.findOneBy({
+        refreshToken,
+      });
 
-        await this.users.save([
-          { id: user.id, refresh_token: newRefreshToken },
-        ]);
-
-        return {
-          ok: true,
-          access_token: this.jwtService.sign(payload),
-          refresh_token: newRefreshToken,
-        };
-      } else {
-        return { ok: false, error: 'User Not Found with that ID' };
+      if (!refreshTokenInDb) {
+        throw new NotFoundException('There is no refresh token');
       }
+
+      const user = await this.users.findOneBy({ id: decoded.sub });
+
+      if (!user) {
+        throw new NotFoundException('User not found');
+      }
+
+      const payload: Payload = { email: user.email, sub: user.id };
+      const accessToken = this.jwtService.sign(payload);
+      const newRefreshToken = await this.jwtService.sign(payload, {
+        secret: process.env.JWT_REFRESH_TOKEN_PRIVATE_KEY,
+        expiresIn: '1d',
+      });
+
+      await this.refreshTokens.remove(refreshTokenInDb);
+      await this.refreshTokens.save({
+        refreshToken: newRefreshToken,
+        userId: user.id,
+      });
+
+      return {
+        ok: true,
+        access_token: accessToken,
+        refresh_token: refreshToken,
+      };
     } catch (error) {
       console.log(error);
       return { ok: false, error };
@@ -233,7 +251,7 @@ export class AuthService {
         return { ok: false, error: 'Wrong Password' };
       }
     } catch (error) {
-      return { ok: false, error };
+      return { ok: false, error: error.message };
     }
   }
 }

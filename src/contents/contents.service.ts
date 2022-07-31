@@ -1,4 +1,6 @@
 import { Injectable } from '@nestjs/common';
+import axios from 'axios';
+import * as cheerio from 'cheerio';
 import { User } from 'src/users/entities/user.entity';
 import { DataSource, EntityManager, QueryRunner } from 'typeorm';
 import {
@@ -33,6 +35,37 @@ export class ContentsService {
         },
       });
 
+      // get og tag info from link
+      let coverImg: string = '';
+      await axios
+        .get(link)
+        .then((res) => {
+          if (res.status !== 200) {
+            console.log(res.status);
+            throw new Error('잘못된 링크입니다.');
+          } else {
+            const data = res.data;
+            if (typeof data === 'string') {
+              const $ = cheerio.load(data);
+              title = $('title').text() !== '' ? $('title').text() : 'Untitled';
+              $('meta').each((i, el) => {
+                const meta = $(el);
+                if (meta.attr('property') === 'og:image') {
+                  coverImg = meta.attr('content');
+                }
+                if (meta.attr('property') === 'og:description') {
+                  description = meta.attr('content');
+                }
+              });
+            }
+          }
+        })
+        .catch((e) => {
+          console.log(e.message);
+          // Control unreachable link
+          title = link.split('/').at(-1);
+        });
+
       // Get or create category
       const category = categoryName
         ? await getOrCreateCategory(categoryName, queryRunnerManager)
@@ -46,6 +79,7 @@ export class ContentsService {
       const newContent = queryRunnerManager.create(Content, {
         link,
         title,
+        coverImg,
         description,
         comment,
         category,
@@ -139,7 +173,10 @@ export class ContentsService {
     }
   }
 
-  async deleteContent(user: User, link: string): Promise<DeleteContentOutput> {
+  async deleteContent(
+    user: User,
+    contentId: number,
+  ): Promise<DeleteContentOutput> {
     const queryRunner = await this.init();
     const queryRunnerManager: EntityManager = await queryRunner.manager;
     try {
@@ -154,7 +191,7 @@ export class ContentsService {
       });
 
       const content = userInDb.contents.filter(
-        (content) => content.link === link,
+        (content) => content.id === contentId,
       )[0];
 
       if (!content) {

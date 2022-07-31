@@ -43,11 +43,6 @@ export class User extends CoreEntity {
   @IsEnum(UserRole)
   role: UserRole;
 
-  @ApiProperty({ description: 'User Refresh Token' })
-  @Column({ nullable: true })
-  @IsString()
-  refresh_token?: string;
-
   @ApiProperty({ description: 'User Verified' })
   @Column({ default: false })
   @IsBoolean()

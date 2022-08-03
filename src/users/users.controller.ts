@@ -1,8 +1,17 @@
-import { Body, Controller, Get, Post, UseGuards } from '@nestjs/common';
+import {
+  Body,
+  Controller,
+  Get,
+  ParseIntPipe,
+  Post,
+  Query,
+  UseGuards,
+} from '@nestjs/common';
 import {
   ApiBearerAuth,
   ApiCreatedResponse,
   ApiOperation,
+  ApiQuery,
   ApiTags,
 } from '@nestjs/swagger';
 import { AuthUser } from 'src/auth/auth-user.decorator';
@@ -68,8 +77,15 @@ export class UsersController {
     summary: '자신의 아티클 조회',
     description: '자신의 아티클을 조회하는 메서드',
   })
+  @ApiQuery({
+    name: 'categoryId',
+    description: '카테고리 아이디(기입하지 않을 시 전체를 불러온다.)',
+    type: Number,
+    required: false,
+  })
   @ApiCreatedResponse({
-    description: '아티클 목록을 반환한다.',
+    description:
+      '아티클 목록을 반환한다. 만약 categoryId가 없을 시 전부를 반환한다.',
     type: LoadPersonalContentsOutput,
   })
   @ApiBearerAuth('Authorization')
@@ -77,8 +93,9 @@ export class UsersController {
   @Get('load-contents')
   async loadPersonalContents(
     @AuthUser() user: User,
+    @Query('categoryId') categoryId?: number,
   ): Promise<LoadPersonalContentsOutput> {
-    return await this.usersService.loadPersonalContents(user);
+    return await this.usersService.loadPersonalContents(user, +categoryId);
   }
 
   @ApiOperation({

@@ -102,9 +102,12 @@ export class UsersService {
     }
   }
 
-  async loadPersonalContents(user: User): Promise<LoadPersonalContentsOutput> {
+  async loadPersonalContents(
+    user: User,
+    categoryId: number,
+  ): Promise<LoadPersonalContentsOutput> {
     try {
-      const { contents } = await this.users.findOne({
+      let { contents } = await this.users.findOne({
         where: { id: user.id },
         relations: {
           contents: {
@@ -112,6 +115,11 @@ export class UsersService {
           },
         },
       });
+      if (categoryId) {
+        contents = contents.filter(
+          (content) => content?.category?.id === categoryId,
+        );
+      }
 
       return {
         ok: true,

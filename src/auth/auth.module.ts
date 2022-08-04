@@ -9,13 +9,16 @@ import { AuthController } from './auth.controller';
 import { AuthService } from './auth.service';
 import { JwtStrategy } from './jwt/jwt.strategy';
 
+const accessTokenExpiration = '2m';
+export const refreshTokenExpiration = '30d';
+
 @Module({
   imports: [
     PassportModule.register({ defaultStrategy: 'jwt', session: false }),
     JwtModule.registerAsync({
       useFactory: () => ({
         secret: process.env.JWT_ACCESS_TOKEN_PRIVATE_KEY,
-        signOptions: { expiresIn: '1h' },
+        signOptions: { expiresIn: accessTokenExpiration },
       }),
     }),
     TypeOrmModule.forFeature([User, Verification, RefreshToken]),

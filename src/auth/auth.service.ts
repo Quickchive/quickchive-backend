@@ -11,6 +11,7 @@ import { User } from 'src/users/entities/user.entity';
 import { Verification } from 'src/users/entities/verification.entity';
 // import { Verification } from 'src/users/entities/verification.entity';
 import { Repository } from 'typeorm';
+import { refreshTokenExpiration } from './auth.module';
 import {
   CreateAccountBodyDto,
   CreateAccountOutput,
@@ -43,7 +44,7 @@ export class AuthService {
         const payload: Payload = { email, sub: user.id };
         const refreshToken = await this.jwtService.sign(payload, {
           secret: process.env.JWT_REFRESH_TOKEN_PRIVATE_KEY,
-          expiresIn: '1d',
+          expiresIn: refreshTokenExpiration,
         });
         // user.refresh_token = refreshToken;
         await this.refreshTokens.save({ refreshToken, userId: user.id });
@@ -158,7 +159,7 @@ export class AuthService {
       const accessToken = this.jwtService.sign(payload);
       const newRefreshToken = await this.jwtService.sign(payload, {
         secret: process.env.JWT_REFRESH_TOKEN_PRIVATE_KEY,
-        expiresIn: '1d',
+        expiresIn: refreshTokenExpiration,
       });
 
       await this.refreshTokens.remove(refreshTokenInDb);

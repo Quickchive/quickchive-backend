@@ -42,10 +42,7 @@ export class AuthService {
       const { ok, user, error } = await this.validateUser({ email, password });
       if (ok) {
         const payload: Payload = { email, sub: user.id };
-        const refreshToken = await this.jwtService.sign(payload, {
-          secret: process.env.JWT_REFRESH_TOKEN_PRIVATE_KEY,
-          expiresIn: refreshTokenExpiration,
-        });
+        const refreshToken = await this.generateRefreshToken(payload);
         // user.refresh_token = refreshToken;
         await this.refreshTokens.save({ refreshToken, userId: user.id });
 
@@ -157,10 +154,7 @@ export class AuthService {
 
       const payload: Payload = { email: user.email, sub: user.id };
       const accessToken = this.jwtService.sign(payload);
-      const newRefreshToken = await this.jwtService.sign(payload, {
-        secret: process.env.JWT_REFRESH_TOKEN_PRIVATE_KEY,
-        expiresIn: refreshTokenExpiration,
-      });
+      const newRefreshToken = await this.generateRefreshToken(payload);
 
       await this.refreshTokens.remove(refreshTokenInDb);
       await this.refreshTokens.save({
@@ -254,5 +248,12 @@ export class AuthService {
     } catch (error) {
       return { ok: false, error: error.message };
     }
+  }
+
+  async generateRefreshToken(payload: Payload): Promise<string> {
+    return await this.jwtService.sign(payload, {
+      secret: process.env.JWT_REFRESH_TOKEN_PRIVATE_KEY,
+      expiresIn: refreshTokenExpiration,
+    });
   }
 }

@@ -1,9 +1,10 @@
-import { IsOptional, IsString, isURL, IsUrl, Length } from 'class-validator';
+import { IsDate, IsOptional, IsString, IsUrl } from 'class-validator';
 import { CoreEntity } from 'src/common/entities/core.entity';
 import { Column, Entity, ManyToOne, RelationId } from 'typeorm';
 import { User } from 'src/users/entities/user.entity';
 import { ApiProperty } from '@nestjs/swagger';
 import { Category } from './category.entity';
+import { Transform } from 'class-transformer';
 
 @Entity()
 export class Content extends CoreEntity {
@@ -13,30 +14,36 @@ export class Content extends CoreEntity {
   @IsUrl()
   link: string;
 
-  @ApiProperty({ description: 'Article Title' })
+  @ApiProperty({ description: 'Article Title', required: false })
   @Column({ nullable: true })
   @IsOptional()
   @IsString()
   title?: string;
 
-  @ApiProperty({ description: 'Article Cover Image' })
+  @ApiProperty({ description: 'Article Cover Image', required: false })
   @Column({ nullable: true })
   @IsString()
   coverImg?: string;
 
-  @ApiProperty({ description: 'Article Description' })
+  @ApiProperty({ description: 'Article Description', required: false })
   @Column({ nullable: true })
   @IsOptional()
   @IsString()
   description?: string;
 
-  @ApiProperty({ description: 'User Comment' })
+  @ApiProperty({ description: 'User Comment', required: false })
   @Column({ nullable: true })
   @IsOptional()
   @IsString()
   comment?: string;
 
-  @ApiProperty({ description: 'Article Category' })
+  @ApiProperty({ description: 'Article Deadline', required: false })
+  @Column({ nullable: true })
+  @IsDate()
+  @Transform(({ value }) => new Date(value))
+  deadline?: Date;
+
+  @ApiProperty({ description: 'Article Category', required: false })
   @ManyToOne((type) => Category, (category) => category.contents, {
     nullable: true,
     onDelete: 'SET NULL',

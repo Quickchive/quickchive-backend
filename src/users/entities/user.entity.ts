@@ -33,11 +33,7 @@ export class User extends CoreEntity {
   @IsEmail()
   email: string;
 
-  @ApiProperty({
-    example: 'p@ssw0rd',
-    description: 'User Password',
-    required: false,
-  })
+  @ApiProperty({ example: 'p@ssw0rd', description: 'User Password' })
   @Column({ select: false })
   @IsString()
   password: string;

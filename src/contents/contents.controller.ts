@@ -6,6 +6,7 @@ import {
   Param,
   UseGuards,
   ParseIntPipe,
+  Patch,
 } from '@nestjs/common';
 import {
   ApiBearerAuth,
@@ -25,6 +26,7 @@ import {
   AddContentBodyDto,
   AddContentOutput,
   DeleteContentOutput,
+  toggleFavoriteOutput,
   UpdateContentBodyDto,
   UpdateContentOutput,
 } from './dtos/content.dto';
@@ -68,6 +70,24 @@ export class ContentsController {
     @Body() content: UpdateContentBodyDto,
   ): Promise<UpdateContentOutput> {
     return await this.contentsService.updateContent(user, content);
+  }
+
+  @ApiOperation({
+    summary: '즐겨찾기 등록 및 해제',
+    description: '즐겨찾기에 등록 및 해제하는 메서드',
+  })
+  @ApiCreatedResponse({
+    description: '즐겨찾기 등록 및 해제 성공 여부를 반환한다.',
+    type: toggleFavoriteOutput,
+  })
+  @ApiBearerAuth('Authorization')
+  @UseGuards(JwtAuthGuard)
+  @Patch('favorite/:contentId')
+  async toggleFavorite(
+    @AuthUser() user: User,
+    @Param('contentId', new ParseIntPipe()) contentId: number,
+  ): Promise<toggleFavoriteOutput> {
+    return await this.contentsService.toggleFavorite(user, contentId);
   }
 
   @ApiOperation({

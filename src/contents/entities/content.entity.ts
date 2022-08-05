@@ -47,7 +47,6 @@ export class Content extends CoreEntity {
   @Transform(({ value }) => new Date(value))
   deadline?: Date;
 
-  // 즐겨찾기
   @ApiProperty({ description: 'Favorite' })
   @Column({ default: false })
   favorite: boolean;

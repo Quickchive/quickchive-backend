@@ -25,3 +25,5 @@ export class UpdateContentBodyDto extends AddContentBodyDto {}
 export class UpdateContentOutput extends CoreOutput {}
 
 export class DeleteContentOutput extends CoreOutput {}
+
+export class toggleFavoriteOutput extends CoreOutput {}

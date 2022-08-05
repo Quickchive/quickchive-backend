@@ -2,6 +2,7 @@ import { Injectable } from '@nestjs/common';
 import axios from 'axios';
 import * as cheerio from 'cheerio';
 import { User } from 'src/users/entities/user.entity';
+import { UsersController } from 'src/users/users.controller';
 import { DataSource, EntityManager, QueryRunner } from 'typeorm';
 import {
   UpdateCategoryBodyDto,
@@ -11,6 +12,7 @@ import {
   AddContentBodyDto,
   AddContentOutput,
   DeleteContentOutput,
+  toggleFavoriteOutput,
   UpdateContentBodyDto,
 } from './dtos/content.dto';
 import { Category } from './entities/category.entity';
@@ -166,6 +168,45 @@ export class ContentsService {
         { id: content.id, ...newContentObj, ...(category && { category }) },
       ]);
 
+      await queryRunner.commitTransaction();
+
+      return {
+        ok: true,
+      };
+    } catch (e) {
+      await queryRunner.rollbackTransaction();
+
+      return {
+        ok: false,
+        error: e.message,
+      };
+    }
+  }
+
+  async toggleFavorite(
+    user: User,
+    contentId: number,
+  ): Promise<toggleFavoriteOutput> {
+    const queryRunner = await this.init();
+    const queryRunnerManager: EntityManager = await queryRunner.manager;
+    try {
+      const userInDb = await queryRunnerManager.findOne(User, {
+        where: { id: user.id },
+        relations: {
+          contents: true,
+        },
+      });
+
+      const content = userInDb.contents.filter(
+        (content) => content.id === contentId,
+      )[0];
+
+      if (!content) {
+        throw new Error('Content not found.');
+      }
+
+      content.favorite = !content.favorite;
+      await queryRunnerManager.save(content);
       await queryRunner.commitTransaction();
 
       return {

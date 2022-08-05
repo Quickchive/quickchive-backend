@@ -33,7 +33,11 @@ export class User extends CoreEntity {
   @IsEmail()
   email: string;
 
-  @ApiProperty({ example: 'p@ssw0rd', description: 'User Password' })
+  @ApiProperty({
+    example: 'p@ssw0rd',
+    description: 'User Password',
+    required: false,
+  })
   @Column({ select: false })
   @IsString()
   password: string;
@@ -43,23 +47,26 @@ export class User extends CoreEntity {
   @IsEnum(UserRole)
   role: UserRole;
 
-  @ApiProperty({ description: 'User Refresh Token' })
-  @Column({ nullable: true })
-  @IsString()
-  refresh_token?: string;
-
   @ApiProperty({ description: 'User Verified' })
   @Column({ default: false })
   @IsBoolean()
   verified: boolean;
 
-  @ApiProperty({ description: 'User Content List', type: [Content] })
+  @ApiProperty({
+    description: 'User Content List',
+    type: [Content],
+    required: false,
+  })
   @OneToMany((type) => Content, (content) => content.user, {
     nullable: true,
   })
   contents?: Content[];
 
-  @ApiProperty({ description: 'User Category List', type: [Category] })
+  @ApiProperty({
+    description: 'User Category List',
+    type: [Category],
+    required: false,
+  })
   @ManyToMany((type) => Category, {
     nullable: true,
   })

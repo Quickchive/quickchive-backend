@@ -190,7 +190,6 @@ export class ContentsService {
         },
       });
 
-      console.log(typeof contentId);
       const content = userInDb.contents.filter(
         (content) => content.id === contentId,
       )[0];

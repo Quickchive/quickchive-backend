@@ -5,10 +5,10 @@ import { User } from '../../users/entities/user.entity';
 export class LoginBodyDto extends PickType(User, ['email', 'password']) {}
 
 export class LoginOutput extends CoreOutput {
-  @ApiProperty()
+  @ApiProperty({ description: 'access token', required: false })
   access_token?: string;
 
-  @ApiProperty()
+  @ApiProperty({ description: 'refresh token', required: false })
   refresh_token?: string;
 }
 

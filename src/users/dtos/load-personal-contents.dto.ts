@@ -6,6 +6,7 @@ export class LoadPersonalContentsOutput extends CoreOutput {
   @ApiProperty({
     description: '아티클 목록',
     type: [Content],
+    required: false,
   })
   contents?: Content[];
 }

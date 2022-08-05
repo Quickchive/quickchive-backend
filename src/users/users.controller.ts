@@ -22,6 +22,7 @@ import {
   LoadFavoritesOutput,
   LoadPersonalContentsOutput,
 } from './dtos/load-personal-contents.dto';
+import { meOutput } from './dtos/me.dto';
 import {
   ResetPasswordInput,
   ResetPasswordOutput,
@@ -67,12 +68,12 @@ export class UsersController {
   @ApiOperation({ summary: '프로필 조회', description: '프로필 조회 메서드' })
   @ApiCreatedResponse({
     description: '현재 유저의 정보를 반환한다.',
-    type: User,
+    type: meOutput,
   })
   @ApiBearerAuth('Authorization')
   @UseGuards(JwtAuthGuard)
   @Get('me')
-  me(@AuthUser() user: User): User {
+  me(@AuthUser() user: User): meOutput {
     return user;
   }
 

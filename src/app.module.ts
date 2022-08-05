@@ -13,6 +13,7 @@ import { Category } from './contents/entities/category.entity';
 import { DataSource } from 'typeorm';
 import * as Joi from 'joi';
 import { RefreshToken } from './users/entities/refresh-token.entity';
+import { CollectionsModule } from './collections/collections.module';
 
 @Module({
   imports: [
@@ -67,6 +68,7 @@ import { RefreshToken } from './users/entities/refresh-token.entity';
         process.env.MAILGUN_TEMPLATE_NAME_FOR_RESET_PASSWORD,
     }),
     ContentsModule,
+    CollectionsModule,
   ],
   controllers: [],
   providers: [],

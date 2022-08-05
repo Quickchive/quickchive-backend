@@ -1,9 +1,13 @@
-import { IntersectionType, PickType } from '@nestjs/swagger';
+import { ApiProperty, IntersectionType, PickType } from '@nestjs/swagger';
 import { CoreOutput } from 'src/common/dtos/output.dto';
 import { User } from '../entities/user.entity';
 import { Verification } from '../entities/verification.entity';
 
-class passwordForResetPassword extends PickType(User, ['password']) {}
+// class passwordForResetPassword extends PickType(User, ['password']) {}
+class passwordForResetPassword {
+  @ApiProperty({ example: 'p@ssw0rd', description: 'Password' })
+  password: string;
+}
 class codeForResetPassword extends PickType(Verification, ['code']) {}
 
 export class ResetPasswordInput extends IntersectionType(

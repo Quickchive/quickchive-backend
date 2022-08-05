@@ -22,7 +22,14 @@ export class ContentsService {
 
   async addContent(
     user: User,
-    { link, title, description, comment, categoryName }: AddContentBodyDto,
+    {
+      link,
+      title,
+      description,
+      comment,
+      deadline,
+      categoryName,
+    }: AddContentBodyDto,
   ): Promise<AddContentOutput> {
     const queryRunner = await this.init();
     const queryRunnerManager: EntityManager = await queryRunner.manager;
@@ -82,6 +89,7 @@ export class ContentsService {
         coverImg,
         description,
         comment,
+        deadline,
         category,
       });
       await queryRunnerManager.save(newContent);

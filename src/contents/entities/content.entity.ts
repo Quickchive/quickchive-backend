@@ -37,7 +37,11 @@ export class Content extends CoreEntity {
   @IsString()
   comment?: string;
 
-  @ApiProperty({ description: 'Article Deadline', required: false })
+  @ApiProperty({
+    example: '2022-08-20T15:00:00.000Z',
+    description: 'Article Deadline(YYYY-MM-DD HH:mm:ss)',
+    required: false,
+  })
   @Column({ nullable: true })
   @IsDate()
   @Transform(({ value }) => new Date(value))

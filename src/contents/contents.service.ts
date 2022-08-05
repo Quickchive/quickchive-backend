@@ -119,9 +119,9 @@ export class ContentsService {
     const queryRunner = await this.init();
     const queryRunnerManager: EntityManager = await queryRunner.manager;
 
-    const { link, title, description, comment, categoryName } =
+    const { link, title, description, comment, deadline, categoryName } =
       updateContentBody;
-    const newContentObj = { link, title, description, comment };
+    const newContentObj = { link, title, description, comment, deadline };
     try {
       const userInDb = await queryRunnerManager.findOne(User, {
         where: { id: user.id },

@@ -9,8 +9,8 @@ import { Category } from './category.entity';
 export class Content extends CoreEntity {
   @ApiProperty({ example: 'ex.com', description: 'Article Link' })
   @Column()
-  @IsString({ message: 'Must be a string!' })
-  @IsUrl({ message: 'Link is not valid.' })
+  @IsString({ message: 'String URL must be required.' })
+  @IsUrl()
   link: string;
 
   @ApiProperty({ description: 'Article Title' })

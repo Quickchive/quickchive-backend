@@ -5,9 +5,9 @@ import { RefreshToken } from 'src/users/entities/refresh-token.entity';
 export class RefreshTokenDto extends PickType(RefreshToken, ['refreshToken']) {}
 
 export class RefreshTokenOutput extends CoreOutput {
-  @ApiProperty()
+  @ApiProperty({ description: 'access token', required: false })
   access_token?: string;
 
-  @ApiProperty()
+  @ApiProperty({ description: 'refresh token', required: false })
   refresh_token?: string;
 }

@@ -90,7 +90,7 @@ export class AuthService {
       return { ok: true };
     } catch (error) {
       console.log(error);
-      return { ok: false, error };
+      return { ok: false, error: error.message };
     }
   }
 
@@ -169,7 +169,7 @@ export class AuthService {
       };
     } catch (error) {
       console.log(error);
-      return { ok: false, error };
+      return { ok: false, error: error.message };
     }
   }
 

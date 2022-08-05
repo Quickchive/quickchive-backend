@@ -1,10 +1,14 @@
 import { Injectable, NotFoundException } from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
+import { Content } from 'src/contents/entities/content.entity';
 import { MailService } from 'src/mail/mail.service';
 import { Repository } from 'typeorm';
 import { EditProfileInput, EditProfileOutput } from './dtos/edit-profile.dto';
 import { LoadPersonalCategoriesOutput } from './dtos/load-personal-categories.dto';
-import { LoadPersonalContentsOutput } from './dtos/load-personal-contents.dto';
+import {
+  LoadFavoritesOutput,
+  LoadPersonalContentsOutput,
+} from './dtos/load-personal-contents.dto';
 import {
   ResetPasswordInput,
   ResetPasswordOutput,
@@ -130,6 +134,32 @@ export class UsersService {
       return {
         ok: false,
         error: 'Could not load Contents',
+      };
+    }
+  }
+
+  async loadFavorites(user: User): Promise<LoadFavoritesOutput> {
+    try {
+      const { contents } = await this.users.findOne({
+        where: { id: user.id },
+        relations: {
+          contents: true,
+        },
+      });
+
+      const favorites: Content[] = contents.filter(
+        (content) => content.favorite,
+      );
+
+      return {
+        ok: true,
+        favorites,
+      };
+    } catch (e) {
+      console.log(e);
+      return {
+        ok: false,
+        error: 'Could not load Favorites',
       };
     }
   }

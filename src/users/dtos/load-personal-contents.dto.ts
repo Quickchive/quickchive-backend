@@ -10,3 +10,12 @@ export class LoadPersonalContentsOutput extends CoreOutput {
   })
   contents?: Content[];
 }
+
+export class LoadFavoritesOutput extends CoreOutput {
+  @ApiProperty({
+    description: '즐겨찾기 목록',
+    type: [Content],
+    required: false,
+  })
+  favorites?: Content[];
+}

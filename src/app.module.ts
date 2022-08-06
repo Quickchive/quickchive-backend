@@ -14,6 +14,7 @@ import { DataSource } from 'typeorm';
 import * as Joi from 'joi';
 import { RefreshToken } from './users/entities/refresh-token.entity';
 import { CollectionsModule } from './collections/collections.module';
+import { Collection } from './collections/entities/collection.entity';
 
 @Module({
   imports: [
@@ -50,7 +51,14 @@ import { CollectionsModule } from './collections/collections.module';
       synchronize: process.env.NODE_ENV !== 'prod',
       logging:
         process.env.NODE_ENV !== 'prod' && process.env.NODE_ENV !== 'test',
-      entities: [User, Verification, Content, Category, RefreshToken],
+      entities: [
+        User,
+        Verification,
+        Content,
+        Category,
+        RefreshToken,
+        Collection,
+      ],
       ssl: {
         require: true,
         rejectUnauthorized: false,

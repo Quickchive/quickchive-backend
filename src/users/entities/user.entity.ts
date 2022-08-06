@@ -14,6 +14,7 @@ import { CoreEntity } from 'src/common/entities/core.entity';
 import { ApiProperty } from '@nestjs/swagger';
 import { Content } from 'src/contents/entities/content.entity';
 import { Category } from 'src/contents/entities/category.entity';
+import { Collection } from 'src/collections/entities/collection.entity';
 
 export enum UserRole {
   Client = 'Client',
@@ -72,6 +73,16 @@ export class User extends CoreEntity {
   })
   @JoinTable()
   categories?: Category[];
+
+  @ApiProperty({
+    description: 'User Content List',
+    type: [Content],
+    required: false,
+  })
+  @OneToMany((type) => Collection, (collection) => collection.user, {
+    nullable: true,
+  })
+  collections?: Collection[];
 
   @BeforeInsert()
   @BeforeUpdate()

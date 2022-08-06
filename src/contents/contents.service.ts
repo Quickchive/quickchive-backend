@@ -336,7 +336,7 @@ export class CategoryService {
       userInDb.categories = userInDb.categories.filter(
         (category) => category.name !== originalName,
       );
-      queryRunnerManager.save(userInDb);
+      await queryRunnerManager.save(userInDb);
 
       await queryRunner.commitTransaction();
 

@@ -13,6 +13,8 @@ import { Category } from './contents/entities/category.entity';
 import { DataSource } from 'typeorm';
 import * as Joi from 'joi';
 import { RefreshToken } from './users/entities/refresh-token.entity';
+import { CollectionsModule } from './collections/collections.module';
+import { Collection } from './collections/entities/collection.entity';
 
 @Module({
   imports: [
@@ -49,7 +51,14 @@ import { RefreshToken } from './users/entities/refresh-token.entity';
       synchronize: process.env.NODE_ENV !== 'prod',
       logging:
         process.env.NODE_ENV !== 'prod' && process.env.NODE_ENV !== 'test',
-      entities: [User, Verification, Content, Category, RefreshToken],
+      entities: [
+        User,
+        Verification,
+        Content,
+        Category,
+        RefreshToken,
+        Collection,
+      ],
       ssl: {
         require: true,
         rejectUnauthorized: false,
@@ -67,6 +76,7 @@ import { RefreshToken } from './users/entities/refresh-token.entity';
         process.env.MAILGUN_TEMPLATE_NAME_FOR_RESET_PASSWORD,
     }),
     ContentsModule,
+    CollectionsModule,
   ],
   controllers: [],
   providers: [],

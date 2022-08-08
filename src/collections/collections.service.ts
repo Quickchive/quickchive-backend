@@ -1,7 +1,7 @@
-import { Injectable } from '@nestjs/common';
+import { HttpException, Injectable, NotFoundException } from '@nestjs/common';
 import { Content } from 'src/contents/entities/content.entity';
 import { User } from 'src/users/entities/user.entity';
-import { DataSource, EntityManager, In, QueryRunner } from 'typeorm';
+import { DataSource, EntityManager, In, Not, QueryRunner } from 'typeorm';
 import {
   AddCollectionBodyDto,
   AddCollectionOutput,
@@ -25,6 +25,9 @@ export class CollectionsService {
           collections: true,
         },
       });
+      if (!userInDb) {
+        throw new NotFoundException('User not found');
+      }
 
       // Check if content already exists
       if (
@@ -32,7 +35,10 @@ export class CollectionsService {
           (collection) => collection.title === title,
         )[0]
       ) {
-        throw new Error('Collection with that title already exists.');
+        throw new HttpException(
+          'Collection with that title already exists.',
+          409,
+        );
       }
 
       let contents: Content[] = [];
@@ -56,23 +62,15 @@ export class CollectionsService {
         user,
       });
       await queryRunnerManager.save(newCollection);
-      // userInDb.contents.push(newContent);
-      // userInDb.categories.push(category);
-      // queryRunnerManager.save(userInDb);
 
       await queryRunner.commitTransaction();
 
-      return {
-        ok: true,
-      };
+      return;
     } catch (e) {
       await queryRunner.rollbackTransaction();
 
       console.log(e);
-      return {
-        ok: false,
-        error: e.message,
-      };
+      throw new HttpException(e.message, e.statusCode);
     }
   }
 

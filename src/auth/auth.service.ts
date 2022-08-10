@@ -158,6 +158,29 @@ export class AuthService {
     };
   }
 
+  async sendVerifyEmail(email: string): Promise<VerifyEmailOutput> {
+    const user = await this.users.findOneBy({ email });
+    if (user) {
+      throw new BadRequestException('Already exist');
+    }
+    const newUser = await this.users.save(
+      this.users.create({ email, name: 'unverified', password: 'unverified' }),
+    );
+
+    // Email Verification
+    const verification = await this.verifications.save(
+      this.verifications.create({ user: newUser }),
+    );
+
+    this.mailService.sendVerificationEmail(
+      newUser.email,
+      newUser.name,
+      verification.code,
+    );
+
+    return;
+  }
+
   async sendPasswordResetEmail(
     email: string,
   ): Promise<sendPasswordResetEmailOutput> {

@@ -4,6 +4,7 @@ import {
   ExecutionContext,
   CallHandler,
 } from '@nestjs/common';
+import { ApiProperty } from '@nestjs/swagger';
 import { Observable } from 'rxjs';
 import { map } from 'rxjs/operators';
 
@@ -15,7 +16,10 @@ export class SuccessInterceptor implements NestInterceptor {
         const statusCode: number = context
           .switchToHttp()
           .getResponse().statusCode;
-        return { statusCode: statusCode, ...returnValue };
+        return {
+          statusCode: statusCode,
+          ...returnValue,
+        };
       }),
     );
   }

@@ -1,6 +1,8 @@
 import {
   BadRequestException,
+  CACHE_MANAGER,
   HttpException,
+  Inject,
   Injectable,
   NotFoundException,
   UnauthorizedException,
@@ -11,7 +13,6 @@ import { MailService } from 'src/mail/mail.service';
 import { RefreshToken } from 'src/users/entities/refresh-token.entity';
 import { User } from 'src/users/entities/user.entity';
 import { Verification } from 'src/users/entities/verification.entity';
-// import { Verification } from 'src/users/entities/verification.entity';
 import { Repository } from 'typeorm';
 import { refreshTokenExpiration } from './auth.module';
 import {
@@ -25,6 +26,7 @@ import { RefreshTokenDto, RefreshTokenOutput } from './dtos/token.dto';
 import { ValidateUserDto, ValidateUserOutput } from './dtos/validate-user.dto';
 import { VerifyEmailOutput } from './dtos/verify-email.dto';
 import { Payload } from './jwt/jwt.payload';
+import { Cache } from 'cache-manager';
 
 @Injectable()
 export class AuthService {
@@ -37,7 +39,14 @@ export class AuthService {
     private readonly mailService: MailService,
     @InjectRepository(RefreshToken)
     private readonly refreshTokens: Repository<RefreshToken>,
-  ) {}
+    @Inject(CACHE_MANAGER)
+    private readonly cacheManager: Cache,
+  ) {
+    this.cacheManager.set('users', {
+      // max: 100,
+      ttl: 5,
+    });
+  }
 
   async jwtLogin({ email, password }: LoginBodyDto): Promise<LoginOutput> {
     try {

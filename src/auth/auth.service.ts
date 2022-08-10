@@ -10,7 +10,6 @@ import {
 import { JwtService } from '@nestjs/jwt';
 import { InjectRepository } from '@nestjs/typeorm';
 import { MailService } from 'src/mail/mail.service';
-import { RefreshToken } from 'src/users/entities/refresh-token.entity';
 import { User } from 'src/users/entities/user.entity';
 import { Verification } from 'src/users/entities/verification.entity';
 import { Repository } from 'typeorm';
@@ -47,8 +46,6 @@ export class AuthService {
     @InjectRepository(Verification)
     private readonly verifications: Repository<Verification>,
     private readonly mailService: MailService,
-    @InjectRepository(RefreshToken)
-    private readonly refreshTokens: Repository<RefreshToken>,
     @Inject(CACHE_MANAGER)
     private readonly cacheManager: Cache,
   ) {}
@@ -104,7 +101,7 @@ export class AuthService {
 
   async logout(
     userId: number,
-    { refreshToken }: LogoutBodyDto,
+    { refresh_token: refreshToken }: LogoutBodyDto,
   ): Promise<LogoutOutput> {
     const user = await this.users.findOneBy({ id: userId });
     if (user) {
@@ -140,7 +137,7 @@ export class AuthService {
   }
 
   async regenerateToken({
-    refreshToken,
+    refresh_token: refreshToken,
   }: RefreshTokenDto): Promise<RefreshTokenOutput> {
     // decoding refresh token
     const decoded = this.jwtService.verify(refreshToken, {

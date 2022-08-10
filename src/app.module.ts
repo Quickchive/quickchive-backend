@@ -12,7 +12,6 @@ import { Content } from './contents/entities/content.entity';
 import { Category } from './contents/entities/category.entity';
 import { DataSource } from 'typeorm';
 import * as Joi from 'joi';
-import { RefreshToken } from './users/entities/refresh-token.entity';
 import { CollectionsModule } from './collections/collections.module';
 import { Collection } from './collections/entities/collection.entity';
 
@@ -51,14 +50,7 @@ import { Collection } from './collections/entities/collection.entity';
       synchronize: process.env.NODE_ENV !== 'prod',
       logging:
         process.env.NODE_ENV !== 'prod' && process.env.NODE_ENV !== 'test',
-      entities: [
-        User,
-        Verification,
-        Content,
-        Category,
-        RefreshToken,
-        Collection,
-      ],
+      entities: [User, Verification, Content, Category, Collection],
       ssl: {
         require: true,
         rejectUnauthorized: false,

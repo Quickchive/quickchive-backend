@@ -2,7 +2,6 @@ import { CacheModule, Module } from '@nestjs/common';
 import { JwtModule } from '@nestjs/jwt';
 import { PassportModule } from '@nestjs/passport';
 import { TypeOrmModule } from '@nestjs/typeorm';
-import { RefreshToken } from 'src/users/entities/refresh-token.entity';
 import { User } from 'src/users/entities/user.entity';
 import { Verification } from 'src/users/entities/verification.entity';
 import { AuthController } from './auth.controller';
@@ -23,7 +22,7 @@ export const refreshTokenExpirationInCache = 60 * 60 * 24 * 30;
         signOptions: { expiresIn: accessTokenExpiration },
       }),
     }),
-    TypeOrmModule.forFeature([User, Verification, RefreshToken]),
+    TypeOrmModule.forFeature([User, Verification]),
     CacheModule.register({
       store: redisStore,
       ...(process.env.REDIS_URL

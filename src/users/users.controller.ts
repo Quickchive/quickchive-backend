@@ -18,7 +18,11 @@ import { AuthUser } from 'src/auth/auth-user.decorator';
 import { JwtAuthGuard } from 'src/auth/jwt/jwt.guard';
 import { EditProfileInput, EditProfileOutput } from './dtos/edit-profile.dto';
 import { LoadPersonalCategoriesOutput } from './dtos/load-personal-categories.dto';
-import { LoadPersonalContentsOutput } from './dtos/load-personal-contents.dto';
+import {
+  LoadFavoritesOutput,
+  LoadPersonalContentsOutput,
+} from './dtos/load-personal-contents.dto';
+import { meOutput } from './dtos/me.dto';
 import {
   ResetPasswordInput,
   ResetPasswordOutput,
@@ -64,12 +68,12 @@ export class UsersController {
   @ApiOperation({ summary: '프로필 조회', description: '프로필 조회 메서드' })
   @ApiCreatedResponse({
     description: '현재 유저의 정보를 반환한다.',
-    type: User,
+    type: meOutput,
   })
   @ApiBearerAuth('Authorization')
   @UseGuards(JwtAuthGuard)
   @Get('me')
-  me(@AuthUser() user: User): User {
+  me(@AuthUser() user: User): meOutput {
     return user;
   }
 
@@ -96,6 +100,21 @@ export class UsersController {
     @Query('categoryId') categoryId?: number,
   ): Promise<LoadPersonalContentsOutput> {
     return await this.usersService.loadPersonalContents(user, +categoryId);
+  }
+
+  @ApiOperation({
+    summary: '자신의 즐겨찾기 조회',
+    description: '자신의 즐겨찾기를 조회하는 메서드',
+  })
+  @ApiCreatedResponse({
+    description: '즐겨찾기 목록을 반환한다.',
+    type: LoadFavoritesOutput,
+  })
+  @ApiBearerAuth('Authorization')
+  @UseGuards(JwtAuthGuard)
+  @Get('load-favorites')
+  async loadFavorites(@AuthUser() user: User): Promise<LoadFavoritesOutput> {
+    return await this.usersService.loadFavorites(user);
   }
 
   @ApiOperation({

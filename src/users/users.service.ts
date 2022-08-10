@@ -1,10 +1,19 @@
-import { Injectable, NotFoundException } from '@nestjs/common';
+import {
+  HttpException,
+  Injectable,
+  NotFoundException,
+  UnauthorizedException,
+} from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
+import { Content } from 'src/contents/entities/content.entity';
 import { MailService } from 'src/mail/mail.service';
 import { Repository } from 'typeorm';
 import { EditProfileInput, EditProfileOutput } from './dtos/edit-profile.dto';
 import { LoadPersonalCategoriesOutput } from './dtos/load-personal-categories.dto';
-import { LoadPersonalContentsOutput } from './dtos/load-personal-contents.dto';
+import {
+  LoadFavoritesOutput,
+  LoadPersonalContentsOutput,
+} from './dtos/load-personal-contents.dto';
 import {
   ResetPasswordInput,
   ResetPasswordOutput,
@@ -54,18 +63,16 @@ export class UsersService {
 
       if (password && oldPassword) {
         if (user.checkPassword(oldPassword)) user.password = password;
-        else return { ok: false, error: 'The password is incorrect' };
+        else throw new UnauthorizedException('The password is incorrect');
       } else {
         delete user.password;
       }
 
       await this.users.save(user);
 
-      return {
-        ok: true,
-      };
-    } catch (error) {
-      return { ok: false, error: 'Could not update profile.' };
+      return;
+    } catch (e) {
+      throw new HttpException(e.message, e.statusCode);
     }
   }
 
@@ -92,13 +99,12 @@ export class UsersService {
         await this.verifications.delete(verification.id);
         await this.users.save(user);
 
-        return { ok: true };
+        return;
       } else {
         throw new NotFoundException('Reset Code not found');
       }
-    } catch (error) {
-      console.log(error);
-      return { ok: false, error: error.message };
+    } catch (e) {
+      throw new HttpException(e.message, e.statusCode);
     }
   }
 
@@ -122,15 +128,31 @@ export class UsersService {
       }
 
       return {
-        ok: true,
         contents,
       };
     } catch (e) {
-      console.log(e);
+      throw new HttpException(e.message, e.statusCode);
+    }
+  }
+
+  async loadFavorites(user: User): Promise<LoadFavoritesOutput> {
+    try {
+      const { contents } = await this.users.findOne({
+        where: { id: user.id },
+        relations: {
+          contents: true,
+        },
+      });
+
+      const favorites: Content[] = contents.filter(
+        (content) => content.favorite,
+      );
+
       return {
-        ok: false,
-        error: 'Could not load Contents',
+        favorites,
       };
+    } catch (e) {
+      throw new HttpException(e.message, e.statusCode);
     }
   }
 
@@ -146,15 +168,10 @@ export class UsersService {
       });
 
       return {
-        ok: true,
         categories,
       };
     } catch (e) {
-      console.log(e);
-      return {
-        ok: false,
-        error: 'Could not load Categories',
-      };
+      throw new HttpException(e.message, e.statusCode);
     }
   }
 }

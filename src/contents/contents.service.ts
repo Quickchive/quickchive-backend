@@ -1,7 +1,8 @@
-import { Injectable } from '@nestjs/common';
+import { HttpException, Injectable, NotFoundException } from '@nestjs/common';
 import axios from 'axios';
 import * as cheerio from 'cheerio';
 import { User } from 'src/users/entities/user.entity';
+import { UsersController } from 'src/users/users.controller';
 import { DataSource, EntityManager, QueryRunner } from 'typeorm';
 import {
   UpdateCategoryBodyDto,
@@ -11,6 +12,7 @@ import {
   AddContentBodyDto,
   AddContentOutput,
   DeleteContentOutput,
+  toggleFavoriteOutput,
   UpdateContentBodyDto,
 } from './dtos/content.dto';
 import { Category } from './entities/category.entity';
@@ -22,7 +24,14 @@ export class ContentsService {
 
   async addContent(
     user: User,
-    { link, title, description, comment, categoryName }: AddContentBodyDto,
+    {
+      link,
+      title,
+      description,
+      comment,
+      deadline,
+      categoryName,
+    }: AddContentBodyDto,
   ): Promise<AddContentOutput> {
     const queryRunner = await this.init();
     const queryRunnerManager: EntityManager = await queryRunner.manager;
@@ -34,6 +43,9 @@ export class ContentsService {
           categories: true,
         },
       });
+      if (!userInDb) {
+        throw new NotFoundException('User not found');
+      }
 
       // get og tag info from link
       let coverImg: string = '';
@@ -73,7 +85,7 @@ export class ContentsService {
 
       // Check if content already exists
       if (userInDb.contents.filter((content) => content.link === link)[0]) {
-        throw new Error('Content already exists.');
+        throw new HttpException('Content with that title already exists.', 409);
       }
 
       const newContent = queryRunnerManager.create(Content, {
@@ -82,6 +94,7 @@ export class ContentsService {
         coverImg,
         description,
         comment,
+        deadline,
         category,
       });
       await queryRunnerManager.save(newContent);
@@ -91,16 +104,11 @@ export class ContentsService {
 
       await queryRunner.commitTransaction();
 
-      return {
-        ok: true,
-      };
+      return;
     } catch (e) {
       await queryRunner.rollbackTransaction();
 
-      return {
-        ok: false,
-        error: e.message,
-      };
+      throw new HttpException(e.message, e.statusCode);
     }
   }
 
@@ -111,9 +119,9 @@ export class ContentsService {
     const queryRunner = await this.init();
     const queryRunnerManager: EntityManager = await queryRunner.manager;
 
-    const { link, title, description, comment, categoryName } =
+    const { link, title, description, comment, deadline, categoryName } =
       updateContentBody;
-    const newContentObj = { link, title, description, comment };
+    const newContentObj = { link, title, description, comment, deadline };
     try {
       const userInDb = await queryRunnerManager.findOne(User, {
         where: { id: user.id },
@@ -124,13 +132,15 @@ export class ContentsService {
           categories: true,
         },
       });
+      if (!userInDb) {
+        throw new NotFoundException('User not found');
+      }
 
       const content = userInDb.contents.filter(
         (content) => content.link === link,
       )[0];
-
       if (!content) {
-        throw new Error('Content not found.');
+        throw new NotFoundException('Content not found.');
       }
 
       // update content
@@ -160,16 +170,48 @@ export class ContentsService {
 
       await queryRunner.commitTransaction();
 
-      return {
-        ok: true,
-      };
+      return;
     } catch (e) {
       await queryRunner.rollbackTransaction();
 
-      return {
-        ok: false,
-        error: e.message,
-      };
+      throw new HttpException(e.message, e.statusCode);
+    }
+  }
+
+  async toggleFavorite(
+    user: User,
+    contentId: number,
+  ): Promise<toggleFavoriteOutput> {
+    const queryRunner = await this.init();
+    const queryRunnerManager: EntityManager = await queryRunner.manager;
+    try {
+      const userInDb = await queryRunnerManager.findOne(User, {
+        where: { id: user.id },
+        relations: {
+          contents: true,
+        },
+      });
+      if (!userInDb) {
+        throw new NotFoundException('User not found');
+      }
+
+      const content = userInDb.contents.filter(
+        (content) => content.id === contentId,
+      )[0];
+
+      if (!content) {
+        throw new NotFoundException('Content not found.');
+      }
+
+      content.favorite = !content.favorite;
+      await queryRunnerManager.save(content);
+      await queryRunner.commitTransaction();
+
+      return;
+    } catch (e) {
+      await queryRunner.rollbackTransaction();
+
+      throw new HttpException(e.message, e.statusCode);
     }
   }
 
@@ -189,13 +231,16 @@ export class ContentsService {
           categories: true,
         },
       });
+      if (!userInDb) {
+        throw new NotFoundException('User not found');
+      }
 
       const content = userInDb.contents.filter(
         (content) => content.id === contentId,
       )[0];
 
       if (!content) {
-        throw new Error('Content not found.');
+        throw new NotFoundException('Content not found.');
       }
 
       // Update user categories
@@ -216,16 +261,11 @@ export class ContentsService {
 
       await queryRunner.commitTransaction();
 
-      return {
-        ok: true,
-      };
+      return;
     } catch (e) {
       await queryRunner.rollbackTransaction();
 
-      return {
-        ok: false,
-        error: e.message,
-      };
+      throw new HttpException(e.message, e.statusCode);
     }
   }
 
@@ -259,10 +299,9 @@ export class CategoryService {
           categories: true,
         },
       });
-
       // Check if user exists
       if (!userInDb) {
-        throw new Error('User not found.');
+        throw new NotFoundException('User not found.');
       }
 
       // Get or create category
@@ -274,7 +313,7 @@ export class CategoryService {
           (category) => category.name === originalName,
         )[0]
       ) {
-        throw new Error("Category doesn't exists in current user.");
+        throw new NotFoundException("Category doesn't exists in current user.");
       }
       // Update and delete previous category
       userInDb.categories.push(category);
@@ -287,20 +326,15 @@ export class CategoryService {
       userInDb.categories = userInDb.categories.filter(
         (category) => category.name !== originalName,
       );
-      queryRunnerManager.save(userInDb);
+      await queryRunnerManager.save(userInDb);
 
       await queryRunner.commitTransaction();
 
-      return {
-        ok: true,
-      };
+      return;
     } catch (e) {
       await queryRunner.rollbackTransaction();
 
-      return {
-        ok: false,
-        error: e.message,
-      };
+      throw new HttpException(e.message, e.statusCode);
     }
   }
 

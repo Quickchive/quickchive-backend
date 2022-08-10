@@ -14,6 +14,7 @@ import { CoreEntity } from 'src/common/entities/core.entity';
 import { ApiProperty } from '@nestjs/swagger';
 import { Content } from 'src/contents/entities/content.entity';
 import { Category } from 'src/contents/entities/category.entity';
+import { Collection } from 'src/collections/entities/collection.entity';
 
 export enum UserRole {
   Client = 'Client',
@@ -38,7 +39,11 @@ export class User extends CoreEntity {
   @IsString()
   password: string;
 
-  @ApiProperty({ example: 'Client', description: 'User Role' })
+  @ApiProperty({
+    example: 'Client',
+    description: 'User Role',
+    enum: Object.values(UserRole),
+  })
   @Column({ type: 'enum', enum: UserRole, default: UserRole.Client })
   @IsEnum(UserRole)
   role: UserRole;
@@ -48,18 +53,36 @@ export class User extends CoreEntity {
   @IsBoolean()
   verified: boolean;
 
-  @ApiProperty({ description: 'User Content List', type: [Content] })
+  @ApiProperty({
+    description: 'User Content List',
+    type: [Content],
+    required: false,
+  })
   @OneToMany((type) => Content, (content) => content.user, {
     nullable: true,
   })
   contents?: Content[];
 
-  @ApiProperty({ description: 'User Category List', type: [Category] })
+  @ApiProperty({
+    description: 'User Category List',
+    type: [Category],
+    required: false,
+  })
   @ManyToMany((type) => Category, {
     nullable: true,
   })
   @JoinTable()
   categories?: Category[];
+
+  @ApiProperty({
+    description: 'User Content List',
+    type: [Content],
+    required: false,
+  })
+  @OneToMany((type) => Collection, (collection) => collection.user, {
+    nullable: true,
+  })
+  collections?: Collection[];
 
   @BeforeInsert()
   @BeforeUpdate()

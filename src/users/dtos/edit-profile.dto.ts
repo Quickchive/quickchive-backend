@@ -7,6 +7,6 @@ export class EditProfileOutput extends CoreOutput {}
 export class EditProfileInput extends PartialType(
   PickType(User, ['email', 'password', 'name']),
 ) {
-  @ApiProperty({ description: '기존 비밀번호' })
+  @ApiProperty({ description: '기존 비밀번호', required: false })
   oldPassword?: string;
 }

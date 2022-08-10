@@ -14,19 +14,29 @@ import { RefreshToken } from 'src/users/entities/refresh-token.entity';
 import { User } from 'src/users/entities/user.entity';
 import { Verification } from 'src/users/entities/verification.entity';
 import { Repository } from 'typeorm';
-import { refreshTokenExpiration } from './auth.module';
+import {
+  refreshTokenExpiration,
+  refreshTokenExpirationInCache,
+} from './auth.module';
 import {
   CreateAccountBodyDto,
   CreateAccountOutput,
 } from './dtos/create-account.dto';
 import { DeleteAccountOutput } from './dtos/delete-account.dto';
-import { LoginBodyDto, LoginOutput, LogoutOutput } from './dtos/login.dto';
+import {
+  LoginBodyDto,
+  LoginOutput,
+  LogoutBodyDto,
+  LogoutOutput,
+} from './dtos/login.dto';
 import { sendPasswordResetEmailOutput } from './dtos/send-password-reset-email.dto';
 import { RefreshTokenDto, RefreshTokenOutput } from './dtos/token.dto';
 import { ValidateUserDto, ValidateUserOutput } from './dtos/validate-user.dto';
 import { VerifyEmailOutput } from './dtos/verify-email.dto';
 import { Payload } from './jwt/jwt.payload';
 import { Cache } from 'cache-manager';
+// import { v4 as uuidv4 } from 'uuid';
+// import { stringify } from 'querystring';
 
 @Injectable()
 export class AuthService {
@@ -41,12 +51,7 @@ export class AuthService {
     private readonly refreshTokens: Repository<RefreshToken>,
     @Inject(CACHE_MANAGER)
     private readonly cacheManager: Cache,
-  ) {
-    this.cacheManager.set('users', {
-      // max: 100,
-      ttl: 5,
-    });
-  }
+  ) {}
 
   async jwtLogin({ email, password }: LoginBodyDto): Promise<LoginOutput> {
     try {
@@ -55,7 +60,10 @@ export class AuthService {
         const payload: Payload = { email, sub: user.id };
         const refreshToken = await this.generateRefreshToken(payload);
         // user.refresh_token = refreshToken;
-        await this.refreshTokens.save({ refreshToken, userId: user.id });
+        // await this.refreshTokens.save({ refreshToken, userId: user.id });
+        await this.cacheManager.set(refreshToken, user.id, {
+          ttl: refreshTokenExpirationInCache,
+        });
 
         return {
           access_token: this.jwtService.sign(payload),
@@ -94,18 +102,28 @@ export class AuthService {
     }
   }
 
-  async logout(userId: number): Promise<LogoutOutput> {
+  async logout(
+    userId: number,
+    { refreshToken }: LogoutBodyDto,
+  ): Promise<LogoutOutput> {
     const user = await this.users.findOneBy({ id: userId });
     if (user) {
-      const refreshTokenInDb = await this.refreshTokens.findOneBy({
-        userId: user.id,
-      });
+      if (refreshToken && typeof refreshToken === 'string') {
+        const refreshTokenInCache = await this.cacheManager.get(refreshToken);
 
-      if (refreshTokenInDb) {
-        await this.refreshTokens.remove(refreshTokenInDb);
+        if (refreshTokenInCache) {
+          if (refreshTokenInCache === userId) {
+            await this.cacheManager.del(refreshToken);
+            return;
+          } else {
+            throw new BadRequestException('Invalid refresh token');
+          }
+        } else {
+          throw new NotFoundException('Refresh token not found');
+        }
+      } else {
+        throw new BadRequestException('Invalid refresh token');
       }
-
-      return;
     } else {
       throw new NotFoundException('User not found');
     }

@@ -12,4 +12,9 @@ export class LoginOutput extends CoreOutput {
   refresh_token?: string;
 }
 
+export class LogoutBodyDto {
+  @ApiProperty({ description: 'Refresh Token', required: true })
+  refreshToken: string;
+}
+
 export class LogoutOutput extends CoreOutput {}

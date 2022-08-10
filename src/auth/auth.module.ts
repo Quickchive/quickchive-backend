@@ -12,6 +12,7 @@ import * as redisStore from 'cache-manager-redis-store';
 
 const accessTokenExpiration = '2m';
 export const refreshTokenExpiration = '30d';
+export const refreshTokenExpirationInCache = 60 * 60 * 24 * 30;
 
 @Module({
   imports: [
@@ -25,8 +26,11 @@ export const refreshTokenExpiration = '30d';
     TypeOrmModule.forFeature([User, Verification, RefreshToken]),
     CacheModule.register({
       store: redisStore,
-      host: process.env.REDIS_HOST,
-      port: 6379,
+      ...(process.env.REDIS_URL
+        ? { url: process.env.REDIS_URL }
+        : {
+            port: 6379,
+          }),
     }),
   ],
   controllers: [AuthController],

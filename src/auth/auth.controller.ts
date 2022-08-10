@@ -22,7 +22,12 @@ import {
   CreateAccountOutput,
 } from './dtos/create-account.dto';
 import { DeleteAccountOutput } from './dtos/delete-account.dto';
-import { LoginBodyDto, LoginOutput, LogoutOutput } from './dtos/login.dto';
+import {
+  LoginBodyDto,
+  LoginOutput,
+  LogoutBodyDto,
+  LogoutOutput,
+} from './dtos/login.dto';
 import { sendPasswordResetEmailOutput } from './dtos/send-password-reset-email.dto';
 import { RefreshTokenDto, RefreshTokenOutput } from './dtos/token.dto';
 import { VerifyEmailOutput } from './dtos/verify-email.dto';
@@ -62,9 +67,12 @@ export class AuthController {
   })
   @ApiBearerAuth('Authorization')
   @UseGuards(JwtAuthGuard)
-  @Get('logout')
-  async logout(@AuthUser() user: User): Promise<LogoutOutput> {
-    return await this.authService.logout(user.id);
+  @Post('logout')
+  async logout(
+    @AuthUser() user: User,
+    @Body() logoutBody: LogoutBodyDto,
+  ): Promise<LogoutOutput> {
+    return await this.authService.logout(user.id, logoutBody);
   }
 
   @ApiOperation({ summary: '회원탈퇴', description: '회원탈퇴 메서드' })

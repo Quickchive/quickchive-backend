@@ -147,11 +147,13 @@ export class AuthService {
       secret: process.env.JWT_REFRESH_TOKEN_PRIVATE_KEY,
     });
 
-    const refreshTokenInDb = await this.refreshTokens.findOneBy({
-      refreshToken,
-    });
+    // const refreshTokenInDb = await this.refreshTokens.findOneBy({
+    //   refreshToken,
+    // });
 
-    if (!refreshTokenInDb) {
+    const refreshTokenInCache = await this.cacheManager.get(refreshToken);
+
+    if (!refreshTokenInCache) {
       throw new NotFoundException('There is no refresh token');
     }
 
@@ -165,15 +167,14 @@ export class AuthService {
     const accessToken = this.jwtService.sign(payload);
     const newRefreshToken = await this.generateRefreshToken(payload);
 
-    await this.refreshTokens.remove(refreshTokenInDb);
-    await this.refreshTokens.save({
-      refreshToken: newRefreshToken,
-      userId: user.id,
+    await this.cacheManager.del(refreshToken);
+    await this.cacheManager.set(newRefreshToken, user.id, {
+      ttl: refreshTokenExpirationInCache,
     });
 
     return {
       access_token: accessToken,
-      refresh_token: refreshToken,
+      refresh_token: newRefreshToken,
     };
   }
 

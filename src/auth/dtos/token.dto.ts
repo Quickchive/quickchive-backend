@@ -2,7 +2,7 @@ import { ApiProperty, PickType } from '@nestjs/swagger';
 import { CoreOutput } from 'src/common/dtos/output.dto';
 
 export class RefreshTokenDto {
-  @ApiProperty({ description: 'Refresh Token', required: true })
+  @ApiProperty({ description: 'refresh token', required: true })
   refresh_token: string;
 }
 

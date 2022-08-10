@@ -96,10 +96,10 @@ export class AuthController {
     type: RefreshTokenOutput,
   })
   @Post('reissue')
-  async regenerateToken(
+  async reissueToken(
     @Body() regenerateBody: RefreshTokenDto,
   ): Promise<RefreshTokenOutput> {
-    return await this.authService.regenerateToken(regenerateBody);
+    return await this.authService.reissueToken(regenerateBody);
   }
 
   @ApiOperation({

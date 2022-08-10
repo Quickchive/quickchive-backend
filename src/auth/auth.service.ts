@@ -136,7 +136,7 @@ export class AuthService {
     }
   }
 
-  async regenerateToken({
+  async reissueToken({
     refresh_token: refreshToken,
   }: RefreshTokenDto): Promise<RefreshTokenOutput> {
     // decoding refresh token

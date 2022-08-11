@@ -38,29 +38,13 @@ export class UsersService {
 
   async editProfile(
     userId: number,
-    { email, password, oldPassword, name }: EditProfileInput,
+    { password, oldPassword, name }: EditProfileInput,
   ): Promise<EditProfileOutput> {
     try {
       const user = await this.users.findOne({
         where: { id: userId },
         select: { id: true, email: true, name: true, password: true },
       });
-
-      if (email) {
-        user.email = email;
-        user.verified = false;
-
-        // Email Verification
-        const verification = await this.verifications.save(
-          this.verifications.create({ user }),
-        );
-
-        this.mailService.sendVerificationEmail(
-          user.email,
-          user.name,
-          verification.code,
-        );
-      }
 
       if (name) {
         user.name = name;

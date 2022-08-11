@@ -70,7 +70,7 @@ export class CollectionsService {
       await queryRunner.rollbackTransaction();
 
       console.log(e);
-      throw new HttpException(e.message, e.statusCode);
+      throw new HttpException(e.message, e.status);
     }
   }
 

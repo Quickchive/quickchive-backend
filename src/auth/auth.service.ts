@@ -1,5 +1,6 @@
 import {
   BadRequestException,
+  HttpException,
   Injectable,
   NotFoundException,
   UnauthorizedException,
@@ -67,29 +68,20 @@ export class AuthService {
     try {
       const user = await this.users.findOneBy({ email });
 
-      if (user) {
-        throw new BadRequestException('Already exist');
+      if (!user) {
+        throw new NotFoundException('User Not Found');
+      } else if (user.verified) {
+        user.name = name;
+        user.password = password;
+        await this.users.save(user);
+
+        return;
+      } else {
+        throw new BadRequestException('User is not verified');
       }
-
-      const newUser = await this.users.save(
-        this.users.create({ email, name, password }),
-      );
-
-      // Email Verification
-      const verification = await this.verifications.save(
-        this.verifications.create({ user: newUser }),
-      );
-
-      this.mailService.sendVerificationEmail(
-        newUser.email,
-        newUser.name,
-        verification.code,
-      );
-
-      return;
-    } catch (error) {
-      console.log(error);
-      throw new BadRequestException(error.message);
+    } catch (e) {
+      console.log(e);
+      throw new HttpException(e.message, e.status);
     }
   }
 
@@ -156,6 +148,29 @@ export class AuthService {
       access_token: accessToken,
       refresh_token: refreshToken,
     };
+  }
+
+  async sendVerifyEmail(email: string): Promise<VerifyEmailOutput> {
+    const user = await this.users.findOneBy({ email });
+    if (user) {
+      throw new BadRequestException('Already exist');
+    }
+    const newUser = await this.users.save(
+      this.users.create({ email, name: 'unverified', password: 'unverified' }),
+    );
+
+    // Email Verification
+    const verification = await this.verifications.save(
+      this.verifications.create({ user: newUser }),
+    );
+
+    this.mailService.sendVerificationEmail(
+      newUser.email,
+      newUser.name,
+      verification.code,
+    );
+
+    return;
   }
 
   async sendPasswordResetEmail(

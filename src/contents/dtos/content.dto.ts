@@ -21,7 +21,13 @@ export class AddContentBodyDto extends IntersectionType(
 ) {}
 export class AddContentOutput extends CoreOutput {}
 
-export class UpdateContentBodyDto extends AddContentBodyDto {}
+class ContentBody extends PartialType(AddContentBodyDto) {}
+class ContentId extends PickType(Content, ['id']) {}
+
+export class UpdateContentBodyDto extends IntersectionType(
+  ContentId,
+  ContentBody,
+) {}
 export class UpdateContentOutput extends CoreOutput {}
 
 export class DeleteContentOutput extends CoreOutput {}

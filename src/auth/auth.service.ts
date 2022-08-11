@@ -81,7 +81,7 @@ export class AuthService {
       }
     } catch (e) {
       console.log(e);
-      throw new HttpException(e.message, e.statusCode);
+      throw new HttpException(e.message, e.status);
     }
   }
 

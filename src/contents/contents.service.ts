@@ -121,7 +121,7 @@ export class ContentsService {
     } catch (e) {
       await queryRunner.rollbackTransaction();
 
-      throw new HttpException(e.message, e.statusCode);
+      throw new HttpException(e.message, e.status);
     }
   }
 
@@ -239,7 +239,7 @@ export class ContentsService {
     } catch (e) {
       await queryRunner.rollbackTransaction();
 
-      throw new HttpException(e.message, e.statusCode);
+      throw new HttpException(e.message, e.status);
     }
   }
 
@@ -293,7 +293,7 @@ export class ContentsService {
     } catch (e) {
       await queryRunner.rollbackTransaction();
 
-      throw new HttpException(e.message, e.statusCode);
+      throw new HttpException(e.message, e.status);
     }
   }
 
@@ -362,7 +362,7 @@ export class CategoryService {
     } catch (e) {
       await queryRunner.rollbackTransaction();
 
-      throw new HttpException(e.message, e.statusCode);
+      throw new HttpException(e.message, e.status);
     }
   }
 

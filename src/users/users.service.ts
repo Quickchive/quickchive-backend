@@ -1,5 +1,7 @@
 import {
+  CACHE_MANAGER,
   HttpException,
+  Inject,
   Injectable,
   NotFoundException,
   UnauthorizedException,
@@ -20,6 +22,7 @@ import {
 } from './dtos/reset-password.dto';
 import { User } from './entities/user.entity';
 import { Verification } from './entities/verification.entity';
+import { Cache } from 'cache-manager';
 
 @Injectable()
 export class UsersService {
@@ -29,6 +32,8 @@ export class UsersService {
     @InjectRepository(Verification)
     private readonly verifications: Repository<Verification>,
     private readonly mailService: MailService,
+    @Inject(CACHE_MANAGER)
+    private readonly cacheManager: Cache,
   ) {}
 
   async editProfile(
@@ -81,14 +86,15 @@ export class UsersService {
     password,
   }: ResetPasswordInput): Promise<ResetPasswordOutput> {
     try {
-      const verification = await this.verifications.findOne({
-        where: { code },
-        relations: { user: true },
-      });
+      const userId: number = await this.cacheManager.get(code);
+      // const verification = await this.verifications.findOne({
+      //   where: { code },
+      //   relations: { user: true },
+      // });
 
-      if (verification) {
+      if (userId) {
         const user = await this.users.findOne({
-          where: { id: verification.user.id },
+          where: { id: userId },
           select: { id: true, password: true },
         });
         if (!user) {
@@ -96,8 +102,9 @@ export class UsersService {
         }
         user.password = password;
 
-        await this.verifications.delete(verification.id);
+        // await this.verifications.delete(verification.id);
         await this.users.save(user);
+        await this.cacheManager.del(code); // delete verification value
 
         return;
       } else {

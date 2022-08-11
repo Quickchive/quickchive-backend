@@ -51,14 +51,7 @@ import { NestedContent } from './collections/entities/nested-content.entity';
       synchronize: process.env.NODE_ENV !== 'prod',
       logging:
         process.env.NODE_ENV !== 'prod' && process.env.NODE_ENV !== 'test',
-      entities: [
-        User,
-        Verification,
-        Content,
-        Category,
-        Collection,
-        NestedContent,
-      ],
+      entities: [User, Content, Category, Collection, NestedContent],
       ssl: {
         require: true,
         rejectUnauthorized: false,

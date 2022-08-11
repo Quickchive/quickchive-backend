@@ -103,11 +103,11 @@ export class AuthController {
   }
 
   @ApiOperation({
-    summary: '유저 인증을 위한 메일 전송',
+    summary: '새 유저 인증을 위한 메일 전송',
     description: '유저 인증 메일 전송 메서드',
   })
   @ApiCreatedResponse({
-    description: '유저 인증을 위한 메일 전송 성공 여부를 알려준다.',
+    description: '새 유저 인증을 위한 메일 전송 성공 여부를 알려준다.',
     type: VerifyEmailOutput,
   })
   @Get('send-verify-email/:email')

@@ -1,5 +1,6 @@
 import {
   BadRequestException,
+  ConflictException,
   HttpException,
   Injectable,
   NotFoundException,
@@ -161,7 +162,7 @@ export class ContentsService {
         (contentInFilter) =>
           contentInFilter.link === content.link &&
           contentInFilter.id !== id &&
-          contentInFilter?.category.name === categoryName,
+          contentInFilter?.category?.name === categoryName,
       )[0];
       if (contentThatSameLinkAndCategory) {
         throw new HttpException(
@@ -342,6 +343,12 @@ export class CategoryService {
         )[0]
       ) {
         throw new NotFoundException("Category doesn't exists in current user.");
+      }
+      // Check if user has category with same name
+      if (userInDb.categories.filter((category) => category.name === name)[0]) {
+        throw new ConflictException(
+          'Category with that name already exists in current user.',
+        );
       }
       // Update and delete previous category
       userInDb.categories.push(category);

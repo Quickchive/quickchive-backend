@@ -53,8 +53,6 @@ export class AuthService {
       if (user) {
         const payload: Payload = { email, sub: user.id };
         const refreshToken = await this.generateRefreshToken(payload);
-        // user.refresh_token = refreshToken;
-        // await this.refreshTokens.save({ refreshToken, userId: user.id });
         await this.cacheManager.set(refreshToken, user.id, {
           ttl: refreshTokenExpirationInCache,
         });
@@ -184,9 +182,6 @@ export class AuthService {
     await this.cacheManager.set(code, newUser.id, {
       ttl: verifyEmailExpiration,
     });
-    // const verification = await this.verifications.save(
-    //   this.verifications.create({ user: newUser }),
-    // );
 
     this.mailService.sendVerificationEmail(newUser.email, newUser.name, code);
 
@@ -206,9 +201,6 @@ export class AuthService {
       await this.cacheManager.set(code, user.id, {
         ttl: verifyEmailExpiration,
       });
-      // const verification = await this.verifications.save(
-      //   this.verifications.create({ user }),
-      // );
 
       // send password reset email to user using mailgun
       this.mailService.sendResetPasswordEmail(user.email, user.name, code);
@@ -220,10 +212,6 @@ export class AuthService {
   }
 
   async verifyEmail(code: string): Promise<VerifyEmailOutput> {
-    // const verification = await this.verifications.findOne({
-    //   where: { code },
-    //   relations: { user: true },
-    // });
     const userId: number = await this.cacheManager.get(code);
 
     if (userId) {

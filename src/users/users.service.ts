@@ -71,10 +71,6 @@ export class UsersService {
   }: ResetPasswordInput): Promise<ResetPasswordOutput> {
     try {
       const userId: number = await this.cacheManager.get(code);
-      // const verification = await this.verifications.findOne({
-      //   where: { code },
-      //   relations: { user: true },
-      // });
 
       if (userId) {
         const user = await this.users.findOne({
@@ -86,8 +82,7 @@ export class UsersService {
         }
         user.password = password;
 
-        // await this.verifications.delete(verification.id);
-        await this.users.save(user);
+        await this.users.save(user); // update password
         await this.cacheManager.del(code); // delete verification value
 
         return;

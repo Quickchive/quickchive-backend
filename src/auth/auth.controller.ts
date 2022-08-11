@@ -22,7 +22,12 @@ import {
   CreateAccountOutput,
 } from './dtos/create-account.dto';
 import { DeleteAccountOutput } from './dtos/delete-account.dto';
-import { LoginBodyDto, LoginOutput, LogoutOutput } from './dtos/login.dto';
+import {
+  LoginBodyDto,
+  LoginOutput,
+  LogoutBodyDto,
+  LogoutOutput,
+} from './dtos/login.dto';
 import { sendPasswordResetEmailOutput } from './dtos/send-password-reset-email.dto';
 import { RefreshTokenDto, RefreshTokenOutput } from './dtos/token.dto';
 import { VerifyEmailOutput } from './dtos/verify-email.dto';
@@ -62,9 +67,12 @@ export class AuthController {
   })
   @ApiBearerAuth('Authorization')
   @UseGuards(JwtAuthGuard)
-  @Get('logout')
-  async logout(@AuthUser() user: User): Promise<LogoutOutput> {
-    return await this.authService.logout(user.id);
+  @Post('logout')
+  async logout(
+    @AuthUser() user: User,
+    @Body() logoutBody: LogoutBodyDto,
+  ): Promise<LogoutOutput> {
+    return await this.authService.logout(user.id, logoutBody);
   }
 
   @ApiOperation({ summary: '회원탈퇴', description: '회원탈퇴 메서드' })
@@ -88,18 +96,18 @@ export class AuthController {
     type: RefreshTokenOutput,
   })
   @Post('reissue')
-  async regenerateToken(
+  async reissueToken(
     @Body() regenerateBody: RefreshTokenDto,
   ): Promise<RefreshTokenOutput> {
-    return await this.authService.regenerateToken(regenerateBody);
+    return await this.authService.reissueToken(regenerateBody);
   }
 
   @ApiOperation({
-    summary: '유저 인증을 위한 메일 전송',
+    summary: '새 유저 인증을 위한 메일 전송',
     description: '유저 인증 메일 전송 메서드',
   })
   @ApiCreatedResponse({
-    description: '유저 인증을 위한 메일 전송 성공 여부를 알려준다.',
+    description: '새 유저 인증을 위한 메일 전송 성공 여부를 알려준다.',
     type: VerifyEmailOutput,
   })
   @Get('send-verify-email/:email')

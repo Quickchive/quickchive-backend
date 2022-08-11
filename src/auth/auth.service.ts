@@ -1,6 +1,8 @@
 import {
   BadRequestException,
+  CACHE_MANAGER,
   HttpException,
+  Inject,
   Injectable,
   NotFoundException,
   UnauthorizedException,
@@ -8,23 +10,31 @@ import {
 import { JwtService } from '@nestjs/jwt';
 import { InjectRepository } from '@nestjs/typeorm';
 import { MailService } from 'src/mail/mail.service';
-import { RefreshToken } from 'src/users/entities/refresh-token.entity';
 import { User } from 'src/users/entities/user.entity';
-import { Verification } from 'src/users/entities/verification.entity';
-// import { Verification } from 'src/users/entities/verification.entity';
 import { Repository } from 'typeorm';
-import { refreshTokenExpiration } from './auth.module';
+import {
+  refreshTokenExpiration,
+  refreshTokenExpirationInCache,
+  verifyEmailExpiration,
+} from './auth.module';
 import {
   CreateAccountBodyDto,
   CreateAccountOutput,
 } from './dtos/create-account.dto';
 import { DeleteAccountOutput } from './dtos/delete-account.dto';
-import { LoginBodyDto, LoginOutput, LogoutOutput } from './dtos/login.dto';
+import {
+  LoginBodyDto,
+  LoginOutput,
+  LogoutBodyDto,
+  LogoutOutput,
+} from './dtos/login.dto';
 import { sendPasswordResetEmailOutput } from './dtos/send-password-reset-email.dto';
 import { RefreshTokenDto, RefreshTokenOutput } from './dtos/token.dto';
 import { ValidateUserDto, ValidateUserOutput } from './dtos/validate-user.dto';
 import { VerifyEmailOutput } from './dtos/verify-email.dto';
 import { Payload } from './jwt/jwt.payload';
+import { Cache } from 'cache-manager';
+import { v4 as uuidv4 } from 'uuid';
 
 @Injectable()
 export class AuthService {
@@ -32,11 +42,9 @@ export class AuthService {
     private readonly jwtService: JwtService,
     @InjectRepository(User)
     private readonly users: Repository<User>,
-    @InjectRepository(Verification)
-    private readonly verifications: Repository<Verification>,
     private readonly mailService: MailService,
-    @InjectRepository(RefreshToken)
-    private readonly refreshTokens: Repository<RefreshToken>,
+    @Inject(CACHE_MANAGER)
+    private readonly cacheManager: Cache,
   ) {}
 
   async jwtLogin({ email, password }: LoginBodyDto): Promise<LoginOutput> {
@@ -45,8 +53,9 @@ export class AuthService {
       if (user) {
         const payload: Payload = { email, sub: user.id };
         const refreshToken = await this.generateRefreshToken(payload);
-        // user.refresh_token = refreshToken;
-        await this.refreshTokens.save({ refreshToken, userId: user.id });
+        await this.cacheManager.set(refreshToken, user.id, {
+          ttl: refreshTokenExpirationInCache,
+        });
 
         return {
           access_token: this.jwtService.sign(payload),
@@ -85,18 +94,30 @@ export class AuthService {
     }
   }
 
-  async logout(userId: number): Promise<LogoutOutput> {
+  async logout(
+    userId: number,
+    { refresh_token: refreshToken }: LogoutBodyDto,
+  ): Promise<LogoutOutput> {
     const user = await this.users.findOneBy({ id: userId });
     if (user) {
-      const refreshTokenInDb = await this.refreshTokens.findOneBy({
-        userId: user.id,
-      });
+      if (refreshToken && typeof refreshToken === 'string') {
+        const refreshTokenInCache: number = await this.cacheManager.get(
+          refreshToken,
+        );
 
-      if (refreshTokenInDb) {
-        await this.refreshTokens.remove(refreshTokenInDb);
+        if (refreshTokenInCache) {
+          if (refreshTokenInCache === userId) {
+            await this.cacheManager.del(refreshToken);
+            return;
+          } else {
+            throw new BadRequestException('Invalid refresh token');
+          }
+        } else {
+          throw new NotFoundException('Refresh token not found');
+        }
+      } else {
+        throw new BadRequestException('Invalid refresh token');
       }
-
-      return;
     } else {
       throw new NotFoundException('User not found');
     }
@@ -112,19 +133,17 @@ export class AuthService {
     }
   }
 
-  async regenerateToken({
-    refreshToken,
+  async reissueToken({
+    refresh_token: refreshToken,
   }: RefreshTokenDto): Promise<RefreshTokenOutput> {
     // decoding refresh token
     const decoded = this.jwtService.verify(refreshToken, {
       secret: process.env.JWT_REFRESH_TOKEN_PRIVATE_KEY,
     });
 
-    const refreshTokenInDb = await this.refreshTokens.findOneBy({
-      refreshToken,
-    });
+    const refreshTokenInCache = await this.cacheManager.get(refreshToken);
 
-    if (!refreshTokenInDb) {
+    if (!refreshTokenInCache) {
       throw new NotFoundException('There is no refresh token');
     }
 
@@ -138,15 +157,14 @@ export class AuthService {
     const accessToken = this.jwtService.sign(payload);
     const newRefreshToken = await this.generateRefreshToken(payload);
 
-    await this.refreshTokens.remove(refreshTokenInDb);
-    await this.refreshTokens.save({
-      refreshToken: newRefreshToken,
-      userId: user.id,
+    await this.cacheManager.del(refreshToken);
+    await this.cacheManager.set(newRefreshToken, user.id, {
+      ttl: refreshTokenExpirationInCache,
     });
 
     return {
       access_token: accessToken,
-      refresh_token: refreshToken,
+      refresh_token: newRefreshToken,
     };
   }
 
@@ -160,15 +178,12 @@ export class AuthService {
     );
 
     // Email Verification
-    const verification = await this.verifications.save(
-      this.verifications.create({ user: newUser }),
-    );
+    const code: string = uuidv4();
+    await this.cacheManager.set(code, newUser.id, {
+      ttl: verifyEmailExpiration,
+    });
 
-    this.mailService.sendVerificationEmail(
-      newUser.email,
-      newUser.name,
-      verification.code,
-    );
+    this.mailService.sendVerificationEmail(newUser.email, newUser.name, code);
 
     return;
   }
@@ -181,16 +196,14 @@ export class AuthService {
       if (!user.verified) {
         throw new UnauthorizedException('User not verified');
       }
-      const verification = await this.verifications.save(
-        this.verifications.create({ user }),
-      );
+      // Email Verification
+      const code: string = uuidv4();
+      await this.cacheManager.set(code, user.id, {
+        ttl: verifyEmailExpiration,
+      });
 
       // send password reset email to user using mailgun
-      this.mailService.sendResetPasswordEmail(
-        user.email,
-        user.name,
-        verification.code,
-      );
+      this.mailService.sendResetPasswordEmail(user.email, user.name, code);
 
       return;
     } else {
@@ -199,15 +212,13 @@ export class AuthService {
   }
 
   async verifyEmail(code: string): Promise<VerifyEmailOutput> {
-    const verification = await this.verifications.findOne({
-      where: { code },
-      relations: { user: true },
-    });
+    const userId: number = await this.cacheManager.get(code);
 
-    if (verification.code === code) {
-      verification.user.verified = true;
-      this.users.save(verification.user); // verify
-      await this.verifications.delete(verification.id); // delete verification value
+    if (userId) {
+      const user = await this.users.findOneBy({ id: userId });
+      user.verified = true;
+      await this.users.save(user); // verify
+      await this.cacheManager.del(code); // delete verification value
 
       return;
     } else {

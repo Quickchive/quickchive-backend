@@ -38,7 +38,7 @@ export class Content extends CoreEntity {
   comment?: string;
 
   @ApiProperty({
-    example: '2022-08-20T15:00:00.000Z',
+    example: '2022-08-20',
     description: 'Article Deadline(YYYY-MM-DD HH:mm:ss)',
     required: false,
   })

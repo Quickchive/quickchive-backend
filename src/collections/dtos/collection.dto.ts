@@ -8,10 +8,10 @@ export class AddCollectionBodyDto extends PickType(Collection, [
 ]) {
   @ApiProperty({
     description: 'Contents ID List',
-    type: [Number],
+    type: [String],
     required: false,
   })
-  contentIdList?: number[];
+  contentLinkList?: string[];
 }
 export class AddCollectionOutput extends CoreOutput {}
 

@@ -3,16 +3,9 @@
 import { Injectable } from '@nestjs/common';
 import { ApiProperty } from '@nestjs/swagger';
 import { CoreEntity } from 'src/common/entities/core.entity';
-import { Content } from 'src/contents/entities/content.entity';
+import { NestedContent } from './nested-content.entity';
 import { User } from 'src/users/entities/user.entity';
-import {
-  Column,
-  Entity,
-  JoinTable,
-  ManyToMany,
-  ManyToOne,
-  RelationId,
-} from 'typeorm';
+import { Column, Entity, ManyToOne, OneToMany, RelationId } from 'typeorm';
 
 @Injectable()
 @Entity()
@@ -30,14 +23,17 @@ export class Collection extends CoreEntity {
 
   @ApiProperty({
     description: 'Content List in Collection',
-    type: [Content],
+    type: [NestedContent],
     required: false,
   })
-  @ManyToMany((type) => Content, {
-    nullable: true,
-  })
-  @JoinTable()
-  contents?: Content[];
+  @OneToMany(
+    (type) => NestedContent,
+    (nestedContent) => nestedContent.collection,
+    {
+      nullable: true,
+    },
+  )
+  contents?: NestedContent[];
 
   @ApiProperty({ description: 'Collection Order' })
   @Column('int', { array: true, nullable: true })
@@ -49,6 +45,6 @@ export class Collection extends CoreEntity {
   user: User;
 
   @ApiProperty({ description: 'Owner ID' })
-  @RelationId((content: Content) => content.user)
+  @RelationId((collection: Collection) => collection.user)
   userId: number;
 }

@@ -7,9 +7,7 @@ import {
 } from '@nestjs/common';
 import axios from 'axios';
 import * as cheerio from 'cheerio';
-import { contents } from 'cheerio/lib/api/traversing';
 import { User } from 'src/users/entities/user.entity';
-import { UsersController } from 'src/users/users.controller';
 import { DataSource, EntityManager, QueryRunner } from 'typeorm';
 import {
   UpdateCategoryBodyDto,

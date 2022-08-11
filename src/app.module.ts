@@ -15,6 +15,7 @@ import * as Joi from 'joi';
 import { RefreshToken } from './users/entities/refresh-token.entity';
 import { CollectionsModule } from './collections/collections.module';
 import { Collection } from './collections/entities/collection.entity';
+import { NestedContent } from './collections/entities/nested-content.entity';
 
 @Module({
   imports: [
@@ -58,6 +59,7 @@ import { Collection } from './collections/entities/collection.entity';
         Category,
         RefreshToken,
         Collection,
+        NestedContent,
       ],
       ssl: {
         require: true,

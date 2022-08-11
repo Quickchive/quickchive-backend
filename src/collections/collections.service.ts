@@ -1,4 +1,9 @@
-import { HttpException, Injectable, NotFoundException } from '@nestjs/common';
+import {
+  BadRequestException,
+  HttpException,
+  Injectable,
+  NotFoundException,
+} from '@nestjs/common';
 import { Content } from 'src/contents/entities/content.entity';
 import { User } from 'src/users/entities/user.entity';
 import { DataSource, EntityManager, In, Not, QueryRunner } from 'typeorm';
@@ -7,6 +12,13 @@ import {
   AddCollectionOutput,
 } from './dtos/collection.dto';
 import { Collection } from './entities/collection.entity';
+import * as cheerio from 'cheerio';
+import axios from 'axios';
+import { NestedContent } from './entities/nested-content.entity';
+import {
+  NestedAddContentBodyDto,
+  NestedAddContentOutput,
+} from './dtos/nested-content.dto';
 
 @Injectable()
 export class CollectionsService {
@@ -14,7 +26,7 @@ export class CollectionsService {
 
   async addCollection(
     user: User,
-    { title, comment, contentIdList }: AddCollectionBodyDto,
+    { title, comment, contentLinkList }: AddCollectionBodyDto,
   ): Promise<AddCollectionOutput> {
     const queryRunner = await this.init();
     const queryRunnerManager: EntityManager = await queryRunner.manager;
@@ -41,23 +53,30 @@ export class CollectionsService {
         );
       }
 
-      let contents: Content[] = [];
+      // Create collection order array
+      let nestedContentList: NestedContent[] = [];
 
-      // Load contents if contentIdList is not empty
-      if (contentIdList) {
-        contents = await queryRunnerManager.find(Content, {
-          where: { id: In(contentIdList) },
-        });
+      console.log(contentLinkList);
+      // Load contents if contentLinkList is not empty
+      if (contentLinkList) {
+        for (const contentLink of contentLinkList) {
+          const { nestedContent } = await this.addNestedContent({
+            link: contentLink,
+          });
+          nestedContentList.push(nestedContent);
+        }
       }
 
       // Create collection order
-      const order: number[] = [...contents.map((content) => content.id)];
+      const order: number[] = [
+        ...nestedContentList.map((content) => content.id),
+      ];
 
       // Create collection
       const newCollection = queryRunnerManager.create(Collection, {
         title,
         comment,
-        contents,
+        contents: nestedContentList,
         order,
         user,
       });
@@ -70,6 +89,66 @@ export class CollectionsService {
       await queryRunner.rollbackTransaction();
 
       console.log(e);
+      throw new HttpException(e.message, e.status);
+    }
+  }
+
+  // Add nested content to the database
+  async addNestedContent({
+    link,
+    title,
+    description,
+    comment,
+  }: NestedAddContentBodyDto): Promise<NestedAddContentOutput> {
+    const queryRunner = await this.init();
+    const queryRunnerManager: EntityManager = await queryRunner.manager;
+    try {
+      // get og tag info from link
+      let coverImg: string = '';
+      await axios
+        .get(link)
+        .then((res) => {
+          if (res.status !== 200) {
+            console.log(res.status);
+            throw new BadRequestException('잘못된 링크입니다.');
+          } else {
+            const data = res.data;
+            if (typeof data === 'string') {
+              const $ = cheerio.load(data);
+              title = $('title').text() !== '' ? $('title').text() : 'Untitled';
+              $('meta').each((i, el) => {
+                const meta = $(el);
+                if (meta.attr('property') === 'og:image') {
+                  coverImg = meta.attr('content');
+                }
+                if (meta.attr('property') === 'og:description') {
+                  description = meta.attr('content');
+                }
+              });
+            }
+          }
+        })
+        .catch((e) => {
+          console.log(e.message);
+          // Control unreachable link
+          title = link.split('/').at(-1);
+        });
+
+      const newNestedContent = queryRunnerManager.create(NestedContent, {
+        link,
+        title,
+        coverImg,
+        description,
+        comment,
+      });
+      await queryRunnerManager.save(newNestedContent);
+
+      await queryRunner.commitTransaction();
+
+      return { nestedContent: newNestedContent };
+    } catch (e) {
+      await queryRunner.rollbackTransaction();
+
       throw new HttpException(e.message, e.status);
     }
   }

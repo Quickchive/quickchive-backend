@@ -1,6 +1,12 @@
-import { HttpException, Injectable, NotFoundException } from '@nestjs/common';
+import {
+  BadRequestException,
+  HttpException,
+  Injectable,
+  NotFoundException,
+} from '@nestjs/common';
 import axios from 'axios';
 import * as cheerio from 'cheerio';
+import { contents } from 'cheerio/lib/api/traversing';
 import { User } from 'src/users/entities/user.entity';
 import { UsersController } from 'src/users/users.controller';
 import { DataSource, EntityManager, QueryRunner } from 'typeorm';
@@ -54,7 +60,7 @@ export class ContentsService {
         .then((res) => {
           if (res.status !== 200) {
             console.log(res.status);
-            throw new Error('잘못된 링크입니다.');
+            throw new BadRequestException('잘못된 링크입니다.');
           } else {
             const data = res.data;
             if (typeof data === 'string') {
@@ -83,9 +89,16 @@ export class ContentsService {
         ? await getOrCreateCategory(categoryName, queryRunnerManager)
         : null;
 
-      // Check if content already exists
-      if (userInDb.contents.filter((content) => content.link === link)[0]) {
-        throw new HttpException('Content with that title already exists.', 409);
+      // Check if content already exists in same category
+      if (
+        userInDb.contents.filter(
+          (content) => content.link === link && content.category === category,
+        )[0]
+      ) {
+        throw new HttpException(
+          'Content with that link already exists in same category.',
+          409,
+        );
       }
 
       const newContent = queryRunnerManager.create(Content, {
@@ -119,7 +132,7 @@ export class ContentsService {
     const queryRunner = await this.init();
     const queryRunnerManager: EntityManager = await queryRunner.manager;
 
-    const { link, title, description, comment, deadline, categoryName } =
+    const { id, link, title, description, comment, deadline, categoryName } =
       updateContentBody;
     const newContentObj = { link, title, description, comment, deadline };
     try {
@@ -137,10 +150,24 @@ export class ContentsService {
       }
 
       const content = userInDb.contents.filter(
-        (content) => content.link === link,
+        (content) => content.id === id,
       )[0];
       if (!content) {
         throw new NotFoundException('Content not found.');
+      }
+
+      // Check if content already exists in same category
+      const contentThatSameLinkAndCategory = userInDb.contents.filter(
+        (contentInFilter) =>
+          contentInFilter.link === content.link &&
+          contentInFilter.id !== id &&
+          contentInFilter?.category.name === categoryName,
+      )[0];
+      if (contentThatSameLinkAndCategory) {
+        throw new HttpException(
+          'Content with that link already exists in same category.',
+          409,
+        );
       }
 
       // update content
@@ -174,7 +201,8 @@ export class ContentsService {
     } catch (e) {
       await queryRunner.rollbackTransaction();
 
-      throw new HttpException(e.message, e.statusCode);
+      console.log(e);
+      throw new HttpException(e.message, e.status);
     }
   }
 

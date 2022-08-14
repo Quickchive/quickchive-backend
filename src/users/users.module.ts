@@ -11,11 +11,8 @@ import * as redisStore from 'cache-manager-redis-store';
     TypeOrmModule.forFeature([User, Verification]),
     CacheModule.register({
       store: redisStore,
-      ...(process.env.REDIS_URL
-        ? { url: process.env.REDIS_URL }
-        : {
-            port: 6379,
-          }),
+      host: process.env.REDIS_HOST,
+      port: process.env.REDIS_PORT,
     }),
   ],
   controllers: [UsersController],

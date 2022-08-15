@@ -4,8 +4,8 @@ import { PassportModule } from '@nestjs/passport';
 import { TypeOrmModule } from '@nestjs/typeorm';
 import { User } from 'src/users/entities/user.entity';
 import { Verification } from 'src/users/entities/verification.entity';
-import { AuthController } from './auth.controller';
-import { AuthService } from './auth.service';
+import { AuthController, OauthController } from './auth.controller';
+import { AuthService, OauthService } from './auth.service';
 import { JwtStrategy } from './jwt/jwt.strategy';
 import * as redisStore from 'cache-manager-redis-store';
 
@@ -30,8 +30,8 @@ export const verifyEmailExpiration = 60 * 5;
       port: process.env.REDIS_PORT,
     }),
   ],
-  controllers: [AuthController],
-  providers: [AuthService, JwtStrategy],
+  controllers: [AuthController, OauthController],
+  providers: [AuthService, JwtStrategy, OauthService],
   exports: [AuthService],
 })
 export class AuthModule {}

@@ -10,7 +10,10 @@ import {
 } from '@nestjs/common';
 import {
   ApiBearerAuth,
+  ApiConflictResponse,
   ApiCreatedResponse,
+  ApiNotFoundResponse,
+  ApiOkResponse,
   ApiOperation,
   ApiTags,
 } from '@nestjs/swagger';
@@ -106,9 +109,11 @@ export class AuthController {
     summary: '새 유저 인증을 위한 메일 전송',
     description: '유저 인증 메일 전송 메서드',
   })
-  @ApiCreatedResponse({
+  @ApiOkResponse({
     description: '새 유저 인증을 위한 메일 전송 성공 여부를 알려준다.',
-    type: VerifyEmailOutput,
+  })
+  @ApiConflictResponse({
+    description: '해당 이메일이 이미 인증됐다고 알려준다.',
   })
   @Get('send-verify-email/:email')
   async sendVerifyEmail(
@@ -121,9 +126,11 @@ export class AuthController {
     summary: '비밀번호 재설정을 위한 메일 전송',
     description: '비밀번호 재설정 메서드',
   })
-  @ApiCreatedResponse({
+  @ApiOkResponse({
     description: '비밀번호 재설정을 위한 메일 전송 성공 여부를 알려준다.',
-    type: sendPasswordResetEmailOutput,
+  })
+  @ApiNotFoundResponse({
+    description: '유저가 존재하지 않음을 알려준다.',
   })
   @Get('send-password-reset-email/:email')
   async sendPasswordResetEmail(
@@ -136,9 +143,11 @@ export class AuthController {
     summary: '이메일 인증',
     description: '이메일 인증 메서드',
   })
-  @ApiCreatedResponse({
+  @ApiOkResponse({
     description: '이메일 인증 성공 여부를 알려준다.',
-    type: VerifyEmailOutput,
+  })
+  @ApiNotFoundResponse({
+    description: '이메일 인증 코드가 존재하지 않음을 알려준다.',
   })
   @Get('verify-email')
   async verifyEmail(@Query('code') code: string): Promise<VerifyEmailOutput> {

@@ -192,7 +192,7 @@ export class AuthService {
       ttl: verifyEmailExpiration,
     });
 
-    this.mailService.sendVerificationEmail(newUser.email, newUser.name, code);
+    this.mailService.sendVerificationEmail(newUser.email, newUser.email, code);
 
     return;
   }

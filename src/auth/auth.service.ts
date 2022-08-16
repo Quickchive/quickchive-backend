@@ -1,6 +1,7 @@
 import {
   BadRequestException,
   CACHE_MANAGER,
+  ConflictException,
   HttpException,
   Inject,
   Injectable,
@@ -61,22 +62,18 @@ export class AuthService {
   async jwtLogin({ email, password }: LoginBodyDto): Promise<LoginOutput> {
     try {
       const { user } = await this.validateUser({ email, password });
-      if (user) {
-        const payload: Payload = { email, sub: user.id };
-        const refreshToken = await this.generateRefreshToken(payload);
-        await this.cacheManager.set(refreshToken, user.id, {
-          ttl: refreshTokenExpirationInCache,
-        });
+      const payload: Payload = { email, sub: user.id };
+      const refreshToken = await this.generateRefreshToken(payload);
+      await this.cacheManager.set(refreshToken, user.id, {
+        ttl: refreshTokenExpirationInCache,
+      });
 
-        return {
-          access_token: this.jwtService.sign(payload),
-          refresh_token: refreshToken,
-        };
-      } else {
-        throw new UnauthorizedException('Error in login');
-      }
-    } catch (error) {
-      throw new UnauthorizedException(error.message);
+      return {
+        access_token: this.jwtService.sign(payload),
+        refresh_token: refreshToken,
+      };
+    } catch (e) {
+      throw new HttpException(e.message, e.status);
     }
   }
 
@@ -97,7 +94,7 @@ export class AuthService {
 
         return;
       } else {
-        throw new BadRequestException('User is not verified');
+        throw new NotFoundException('User is not verified');
       }
     } catch (e) {
       console.log(e);
@@ -181,12 +178,26 @@ export class AuthService {
 
   async sendVerifyEmail(email: string): Promise<VerifyEmailOutput> {
     const user = await this.users.findOneBy({ email });
-    if (user) {
-      throw new BadRequestException('Already exist');
+    let newUser: User = null;
+    if (user && user.verified === true) {
+      if (user.name === 'unverified') {
+        throw new ConflictException(
+          'User is already verified now please register',
+        );
+      } else {
+        throw new ConflictException('User already exist with this email');
+      }
+    } else if (user && user.verified === false) {
+      newUser = user;
+    } else {
+      newUser = await this.users.save(
+        this.users.create({
+          email,
+          name: 'unverified',
+          password: 'unverified',
+        }),
+      );
     }
-    const newUser = await this.users.save(
-      this.users.create({ email, name: 'unverified', password: 'unverified' }),
-    );
 
     // Email Verification
     const code: string = uuidv4();
@@ -194,7 +205,7 @@ export class AuthService {
       ttl: verifyEmailExpiration,
     });
 
-    this.mailService.sendVerificationEmail(newUser.email, newUser.name, code);
+    this.mailService.sendVerificationEmail(newUser.email, newUser.email, code);
 
     return;
   }
@@ -247,7 +258,7 @@ export class AuthService {
         select: { id: true, password: true },
       });
       if (!user) {
-        throw new UnauthorizedException('User Not Found');
+        throw new NotFoundException('User Not Found');
       }
 
       const isPasswordCorrect = await user.checkPassword(password);
@@ -256,10 +267,10 @@ export class AuthService {
       if (isPasswordCorrect) {
         return { user };
       } else {
-        throw new UnauthorizedException('Wrong Password');
+        throw new BadRequestException('Wrong Password');
       }
-    } catch (error) {
-      throw new UnauthorizedException(error.message);
+    } catch (e) {
+      throw new HttpException(e.message, e.status);
     }
   }
 
@@ -292,7 +303,7 @@ export class OauthService {
       const formData = {
         grant_type: 'authorization_code',
         client_id: process.env.KAKAO_REST_API_KEY,
-        redirect_uri: process.env.REDIRECT_URI_LOGIN,
+        redirect_uri: process.env.KAKAO_REDIRECT_URI_LOGIN,
         code,
         client_secret: process.env.KAKAO_CLIENT_SECRET,
       };
@@ -395,7 +406,7 @@ export class OauthService {
 
   async kakaoAuthorize(): Promise<KakaoAuthorizeOutput> {
     try {
-      const kakaoAuthorizeUrl = `https://kauth.kakao.com/oauth/authorize?client_id=${process.env.KAKAO_REST_API_KEY}&redirect_uri=${process.env.REDIRECT_URI_LOGIN}&response_type=code`;
+      const kakaoAuthorizeUrl = `https://kauth.kakao.com/oauth/authorize?client_id=${process.env.KAKAO_REST_API_KEY}&redirect_uri=${process.env.KAKAO_REDIRECT_URI_LOGIN}&response_type=code`;
       const {
         request: {
           res: { responseUrl },

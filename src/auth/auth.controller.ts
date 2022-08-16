@@ -137,7 +137,8 @@ export class AuthController {
     type: VerifyEmailOutput,
   })
   @ApiConflictResponse({
-    description: '해당 이메일이 이미 인증됐다고 알려준다.',
+    description:
+      '해당 이메일이 이미 인증됐다고 알려준다.(이미 회원가입이 된 경우와 메일만 인증된 경우가 존재한다.)',
   })
   @Get('send-verify-email/:email')
   async sendVerifyEmail(

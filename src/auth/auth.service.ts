@@ -169,7 +169,13 @@ export class AuthService {
     const user = await this.users.findOneBy({ email });
     let newUser: User = null;
     if (user && user.verified === true) {
-      throw new ConflictException('Already exist');
+      if (user.name === 'unverified') {
+        throw new ConflictException(
+          'User is already verified now please register',
+        );
+      } else {
+        throw new ConflictException('User already exist with this email');
+      }
     } else if (user && user.verified === false) {
       newUser = user;
     } else {

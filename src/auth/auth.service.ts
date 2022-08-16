@@ -1,6 +1,7 @@
 import {
   BadRequestException,
   CACHE_MANAGER,
+  ConflictException,
   HttpException,
   Inject,
   Injectable,
@@ -170,12 +171,20 @@ export class AuthService {
 
   async sendVerifyEmail(email: string): Promise<VerifyEmailOutput> {
     const user = await this.users.findOneBy({ email });
-    if (user) {
-      throw new BadRequestException('Already exist');
+    let newUser: User = null;
+    if (user && user.verified === true) {
+      throw new ConflictException('Already exist');
+    } else if (user && user.verified === false) {
+      newUser = user;
+    } else {
+      newUser = await this.users.save(
+        this.users.create({
+          email,
+          name: 'unverified',
+          password: 'unverified',
+        }),
+      );
     }
-    const newUser = await this.users.save(
-      this.users.create({ email, name: 'unverified', password: 'unverified' }),
-    );
 
     // Email Verification
     const code: string = uuidv4();

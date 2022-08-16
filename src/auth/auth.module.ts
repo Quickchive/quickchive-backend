@@ -8,6 +8,7 @@ import { AuthController, OauthController } from './auth.controller';
 import { AuthService, OauthService } from './auth.service';
 import { JwtStrategy } from './jwt/jwt.strategy';
 import * as redisStore from 'cache-manager-redis-store';
+import { GoogleStrategy } from './passport/google/google.strategy';
 
 const accessTokenExpiration = '2m';
 export const refreshTokenExpiration = '30d';
@@ -31,7 +32,7 @@ export const verifyEmailExpiration = 60 * 5;
     }),
   ],
   controllers: [AuthController, OauthController],
-  providers: [AuthService, JwtStrategy, OauthService],
+  providers: [AuthService, JwtStrategy, OauthService, GoogleStrategy],
   exports: [AuthService],
 })
 export class AuthModule {}

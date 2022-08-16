@@ -6,9 +6,10 @@ import {
   Param,
   Post,
   Query,
-  Redirect,
+  Res,
   UseGuards,
 } from '@nestjs/common';
+import { AuthGuard } from '@nestjs/passport';
 import {
   ApiBadRequestResponse,
   ApiBearerAuth,
@@ -17,10 +18,10 @@ import {
   ApiNotFoundResponse,
   ApiOkResponse,
   ApiOperation,
-  ApiResponse,
   ApiTags,
   ApiUnauthorizedResponse,
 } from '@nestjs/swagger';
+import { Response } from 'express';
 import { User } from 'src/users/entities/user.entity';
 import { AuthUser } from './auth-user.decorator';
 import { AuthService, OauthService } from './auth.service';
@@ -199,7 +200,9 @@ export class OauthController {
     type: KakaoAuthorizeOutput,
   })
   @Get('kakao-auth')
-  async kakaoAuthorize(): Promise<KakaoAuthorizeOutput> {
+  async kakaoAuthorize(/*@Res() res: Response*/): Promise<KakaoAuthorizeOutput> {
+    // const { url } = await this.oauthService.kakaoAuthorize();
+    // return res.redirect(url);
     return await this.oauthService.kakaoAuthorize();
   }
 
@@ -221,5 +224,11 @@ export class OauthController {
     @Body() loginWithKakaoBody: LoginWithKakaoDto,
   ): Promise<LoginOutput> {
     return await this.oauthService.kakaoOauth(loginWithKakaoBody);
+  }
+
+  @Get('google-auth')
+  @UseGuards(AuthGuard('google'))
+  async googleOauth(@AuthUser() user: User): Promise<void> {
+    console.log(user);
   }
 }

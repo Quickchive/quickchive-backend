@@ -6,6 +6,7 @@ import {
   Param,
   Post,
   Query,
+  Redirect,
   UseGuards,
 } from '@nestjs/common';
 import {
@@ -16,17 +17,19 @@ import {
   ApiNotFoundResponse,
   ApiOkResponse,
   ApiOperation,
+  ApiResponse,
   ApiTags,
   ApiUnauthorizedResponse,
 } from '@nestjs/swagger';
 import { User } from 'src/users/entities/user.entity';
 import { AuthUser } from './auth-user.decorator';
-import { AuthService } from './auth.service';
+import { AuthService, OauthService } from './auth.service';
 import {
   CreateAccountBodyDto,
   CreateAccountOutput,
 } from './dtos/create-account.dto';
 import { DeleteAccountOutput } from './dtos/delete-account.dto';
+import { KakaoAuthorizeOutput, LoginWithKakaoDto } from './dtos/kakao.dto';
 import {
   LoginBodyDto,
   LoginOutput,
@@ -179,5 +182,44 @@ export class AuthController {
   @Get('verify-email')
   async verifyEmail(@Query('code') code: string): Promise<VerifyEmailOutput> {
     return await this.authService.verifyEmail(code);
+  }
+}
+
+@Controller('oauth')
+@ApiTags('OAuth')
+export class OauthController {
+  constructor(private readonly oauthService: OauthService) {}
+
+  @ApiOperation({
+    summary: '카카오 계정 로그인 요청',
+    description: '카카오 계정 로그인 요청 메서드',
+  })
+  @ApiOkResponse({
+    description: '카카오 계정 로그인 URL을 반환한다.',
+    type: KakaoAuthorizeOutput,
+  })
+  @Get('kakao-auth')
+  async kakaoAuthorize(): Promise<KakaoAuthorizeOutput> {
+    return await this.oauthService.kakaoAuthorize();
+  }
+
+  @ApiOperation({
+    summary: '카카오 로그인',
+    description:
+      '카카오 로그인 메서드. (회원가입이 안되어 있으면 회원가입 처리 후 로그인 처리)',
+  })
+  @ApiCreatedResponse({
+    description: '로그인 성공 여부와 함께 access, refresh token을 반환한다.',
+    type: LoginOutput,
+  })
+  @ApiUnauthorizedResponse({
+    description: '카카오 로그인 실패 여부를 알려준다.',
+    type: LoginOutput,
+  })
+  @Post('kakao-login')
+  async kakaoOauth(
+    @Body() loginWithKakaoBody: LoginWithKakaoDto,
+  ): Promise<LoginOutput> {
+    return await this.oauthService.kakaoOauth(loginWithKakaoBody);
   }
 }

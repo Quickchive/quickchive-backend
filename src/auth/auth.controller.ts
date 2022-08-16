@@ -6,12 +6,15 @@ import {
   Param,
   Post,
   Query,
+  Redirect,
   UseGuards,
 } from '@nestjs/common';
 import {
   ApiBearerAuth,
   ApiCreatedResponse,
+  ApiOkResponse,
   ApiOperation,
+  ApiResponse,
   ApiTags,
   ApiUnauthorizedResponse,
 } from '@nestjs/swagger';
@@ -23,7 +26,7 @@ import {
   CreateAccountOutput,
 } from './dtos/create-account.dto';
 import { DeleteAccountOutput } from './dtos/delete-account.dto';
-import { LoginWithKakaoDto } from './dtos/kakao.dto';
+import { KakaoAuthorizeOutput, LoginWithKakaoDto } from './dtos/kakao.dto';
 import {
   LoginBodyDto,
   LoginOutput,
@@ -152,6 +155,19 @@ export class AuthController {
 @ApiTags('OAuth')
 export class OauthController {
   constructor(private readonly oauthService: OauthService) {}
+
+  @ApiOperation({
+    summary: '카카오 계정 로그인 요청',
+    description: '카카오 계정 로그인 요청 메서드',
+  })
+  @ApiOkResponse({
+    description: '카카오 계정 로그인 URL을 반환한다.',
+    type: KakaoAuthorizeOutput,
+  })
+  @Get('kakao-auth')
+  async kakaoAuthorize(): Promise<KakaoAuthorizeOutput> {
+    return await this.oauthService.kakaoAuthorize();
+  }
 
   @ApiOperation({
     summary: '카카오 로그인',

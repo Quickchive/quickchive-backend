@@ -43,6 +43,7 @@ import {
   CreateKakaoAccountOutput,
   GetKakaoAccessTokenOutput,
   GetKakaoUserInfoOutput,
+  KakaoAuthorizeOutput,
   LoginWithKakaoDto,
 } from './dtos/kakao.dto';
 
@@ -280,6 +281,10 @@ export class OauthService {
     private readonly cacheManager: Cache,
   ) {}
 
+  /*
+   * Kakao Auth methods
+   */
+
   // Get access token from Kakao Auth Server
   async getKakaoAccessToken(code: string): Promise<GetKakaoAccessTokenOutput> {
     console.log(code);
@@ -381,6 +386,31 @@ export class OauthService {
       }
     } catch (error) {
       throw new UnauthorizedException(error.message);
+    }
+  }
+
+  /*
+   * end of Kakao Auth methods
+   */
+
+  async kakaoAuthorize(): Promise<KakaoAuthorizeOutput> {
+    try {
+      const kakaoAuthorizeUrl = `https://kauth.kakao.com/oauth/authorize?client_id=${process.env.KAKAO_REST_API_KEY}&redirect_uri=${process.env.REDIRECT_URI_LOGIN}&response_type=code`;
+      const {
+        request: {
+          res: { responseUrl },
+        },
+      } = await axios
+        .get(kakaoAuthorizeUrl)
+        .then((res) => {
+          return res;
+        })
+        .catch((e) => {
+          throw new BadRequestException(e.message);
+        });
+      return { url: responseUrl };
+    } catch (e) {
+      throw new HttpException(e.message, e.status ? e.status : 500);
     }
   }
 

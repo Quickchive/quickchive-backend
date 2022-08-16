@@ -9,6 +9,7 @@ import {
   UseGuards,
 } from '@nestjs/common';
 import {
+  ApiBadRequestResponse,
   ApiBearerAuth,
   ApiConflictResponse,
   ApiCreatedResponse,
@@ -16,6 +17,7 @@ import {
   ApiOkResponse,
   ApiOperation,
   ApiTags,
+  ApiUnauthorizedResponse,
 } from '@nestjs/swagger';
 import { User } from 'src/users/entities/user.entity';
 import { AuthUser } from './auth-user.decorator';
@@ -46,6 +48,9 @@ export class AuthController {
     description: '회원가입 성공 여부를 알려준다.',
     type: CreateAccountOutput,
   })
+  @ApiNotFoundResponse({
+    description: '메일 인증된 유저가 존재하지 않는다.',
+  })
   @Post('register')
   async register(
     @Body() createAccountBody: CreateAccountBodyDto,
@@ -58,6 +63,12 @@ export class AuthController {
     description: '로그인 성공 여부와 함께 access, refresh token을 반환한다.',
     type: LoginOutput,
   })
+  @ApiBadRequestResponse({
+    description: '잘못된 파라미터로 요청 시 반환되는 응답',
+  })
+  @ApiNotFoundResponse({
+    description: '해당 이메일의 유저가 존재하지 않는다.',
+  })
   @Post('login')
   async login(@Body() loginBody: LoginBodyDto): Promise<LoginOutput> {
     return await this.authService.jwtLogin(loginBody);
@@ -67,6 +78,12 @@ export class AuthController {
   @ApiCreatedResponse({
     description: '로그아웃 성공 여부를 알려준다.',
     type: LogoutOutput,
+  })
+  @ApiNotFoundResponse({
+    description: '유저가 존재하지 않거나 refresh token이 DB에 존재하지 않는다.',
+  })
+  @ApiBadRequestResponse({
+    description: 'Refresh token이 잘못되었다.',
   })
   @ApiBearerAuth('Authorization')
   @UseGuards(JwtAuthGuard)
@@ -79,9 +96,12 @@ export class AuthController {
   }
 
   @ApiOperation({ summary: '회원탈퇴', description: '회원탈퇴 메서드' })
-  @ApiCreatedResponse({
-    description: '회원탈퇴 성공 여부를 알려준니다.',
+  @ApiOkResponse({
+    description: '회원탈퇴 성공 여부를 알려준다.',
     type: DeleteAccountOutput,
+  })
+  @ApiNotFoundResponse({
+    description: '유저가 존재하지 않는다.',
   })
   @ApiBearerAuth('Authorization')
   @UseGuards(JwtAuthGuard)
@@ -98,6 +118,9 @@ export class AuthController {
     description: '재발행된 토큰들을 반환한다.',
     type: RefreshTokenOutput,
   })
+  @ApiNotFoundResponse({
+    description: '존재하지 않는 refresh token이므로 재발행할 수 없다.',
+  })
   @Post('reissue')
   async reissueToken(
     @Body() regenerateBody: RefreshTokenDto,
@@ -111,6 +134,7 @@ export class AuthController {
   })
   @ApiOkResponse({
     description: '새 유저 인증을 위한 메일 전송 성공 여부를 알려준다.',
+    type: VerifyEmailOutput,
   })
   @ApiConflictResponse({
     description: '해당 이메일이 이미 인증됐다고 알려준다.',
@@ -128,6 +152,7 @@ export class AuthController {
   })
   @ApiOkResponse({
     description: '비밀번호 재설정을 위한 메일 전송 성공 여부를 알려준다.',
+    type: sendPasswordResetEmailOutput,
   })
   @ApiNotFoundResponse({
     description: '유저가 존재하지 않음을 알려준다.',
@@ -145,6 +170,7 @@ export class AuthController {
   })
   @ApiOkResponse({
     description: '이메일 인증 성공 여부를 알려준다.',
+    type: VerifyEmailOutput,
   })
   @ApiNotFoundResponse({
     description: '이메일 인증 코드가 존재하지 않음을 알려준다.',

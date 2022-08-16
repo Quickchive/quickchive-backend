@@ -51,22 +51,18 @@ export class AuthService {
   async jwtLogin({ email, password }: LoginBodyDto): Promise<LoginOutput> {
     try {
       const { user } = await this.validateUser({ email, password });
-      if (user) {
-        const payload: Payload = { email, sub: user.id };
-        const refreshToken = await this.generateRefreshToken(payload);
-        await this.cacheManager.set(refreshToken, user.id, {
-          ttl: refreshTokenExpirationInCache,
-        });
+      const payload: Payload = { email, sub: user.id };
+      const refreshToken = await this.generateRefreshToken(payload);
+      await this.cacheManager.set(refreshToken, user.id, {
+        ttl: refreshTokenExpirationInCache,
+      });
 
-        return {
-          access_token: this.jwtService.sign(payload),
-          refresh_token: refreshToken,
-        };
-      } else {
-        throw new UnauthorizedException('Error in login');
-      }
-    } catch (error) {
-      throw new UnauthorizedException(error.message);
+      return {
+        access_token: this.jwtService.sign(payload),
+        refresh_token: refreshToken,
+      };
+    } catch (e) {
+      throw new HttpException(e.message, e.status);
     }
   }
 
@@ -87,7 +83,7 @@ export class AuthService {
 
         return;
       } else {
-        throw new BadRequestException('User is not verified');
+        throw new NotFoundException('User is not verified');
       }
     } catch (e) {
       console.log(e);
@@ -245,7 +241,7 @@ export class AuthService {
         select: { id: true, password: true },
       });
       if (!user) {
-        throw new UnauthorizedException('User Not Found');
+        throw new NotFoundException('User Not Found');
       }
 
       const isPasswordCorrect = await user.checkPassword(password);
@@ -254,10 +250,10 @@ export class AuthService {
       if (isPasswordCorrect) {
         return { user };
       } else {
-        throw new UnauthorizedException('Wrong Password');
+        throw new BadRequestException('Wrong Password');
       }
-    } catch (error) {
-      throw new UnauthorizedException(error.message);
+    } catch (e) {
+      throw new HttpException(e.message, e.status);
     }
   }
 

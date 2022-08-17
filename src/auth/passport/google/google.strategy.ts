@@ -9,6 +9,7 @@ export class GoogleStrategy extends PassportStrategy(Strategy) {
     super({
       clientID: process.env.GOOGLE_CLIENT_ID,
       clientSecret: process.env.GOOGLE_SECRET,
+      callbackURL: process.env.GOOGLE_REDIRECT_URI,
       scope: ['email', 'profile'],
     });
   }
@@ -19,12 +20,13 @@ export class GoogleStrategy extends PassportStrategy(Strategy) {
     profile: any,
     done: VerifyCallback,
   ): Promise<any> {
-    const { name, emails, photos } = profile;
+    const { name, emails /*photos*/ } = profile;
     const user = {
       email: emails[0].value,
-      firstName: name.givenName,
-      lastName: name.familyName,
-      picture: photos[0].value,
+      name: name.familyName + name.givenName,
+      // firstName: name.givenName,
+      // lastName: name.familyName,
+      // picture: photos[0].value,
       accessToken,
     };
     done(null, user);

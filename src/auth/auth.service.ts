@@ -47,6 +47,7 @@ import {
   KakaoAuthorizeOutput,
   LoginWithKakaoDto,
 } from './dtos/kakao.dto';
+import { googleUserInfo } from './dtos/google.dto';
 
 @Injectable()
 export class AuthService {
@@ -378,28 +379,6 @@ export class OauthService {
     }
   }
 
-  async kakaoLogin(email: string): Promise<LoginOutput> {
-    try {
-      const user: User = await this.users.findOneBy({ email });
-      if (user) {
-        const payload: Payload = { email, sub: user.id };
-        const refreshToken = await this.generateRefreshToken(payload);
-        await this.cacheManager.set(refreshToken, user.id, {
-          ttl: refreshTokenExpirationInCache,
-        });
-
-        return {
-          access_token: this.jwtService.sign(payload),
-          refresh_token: refreshToken,
-        };
-      } else {
-        throw new UnauthorizedException('Error in Kakao login');
-      }
-    } catch (error) {
-      throw new UnauthorizedException(error.message);
-    }
-  }
-
   /*
    * end of Kakao Auth methods
    */
@@ -425,6 +404,33 @@ export class OauthService {
     }
   }
 
+  // OAuth Login
+  async oauthLogin(email: string): Promise<LoginOutput> {
+    try {
+      const user: User = await this.users.findOneBy({ email });
+      if (user) {
+        const payload: Payload = { email, sub: user.id };
+        const refreshToken = await this.generateRefreshToken(payload);
+        await this.cacheManager.set(refreshToken, user.id, {
+          ttl: refreshTokenExpirationInCache,
+        });
+
+        return {
+          access_token: this.jwtService.sign(payload),
+          refresh_token: refreshToken,
+        };
+      } else {
+        throw new UnauthorizedException('Error in OAuth login');
+      }
+    } catch (error) {
+      throw new UnauthorizedException(error.message);
+    }
+  }
+
+  /*
+   * Get user info from Kakao Auth Server then create account,
+   * login and return access token and refresh token
+   */
   async kakaoOauth({ code }: LoginWithKakaoDto): Promise<LoginOutput> {
     try {
       const { access_token, error: accessTokenError } =
@@ -442,13 +448,7 @@ export class OauthService {
         return { error: 'Please go back and Try again' };
       }
 
-      console.log('userInfo: ', userInfo);
-      const name = userInfo.properties.nickname;
       const email = userInfo.kakao_account.email;
-
-      const password = CryptoJS.SHA256(
-        email + process.env.KAKAO_JS_KEY,
-      ).toString();
 
       // check user exist with email
       const userInDb = await this.users.findOne({
@@ -459,21 +459,56 @@ export class OauthService {
       // control user
       let createAccountResult = null;
       if (!userInDb) {
+        const name = userInfo.properties.nickname;
+        const password = CryptoJS.SHA256(
+          email + process.env.KAKAO_JS_KEY,
+        ).toString();
         const { user } = await this.createKakaoAccount({
           name,
           email,
           password,
         });
         createAccountResult = user;
-      }
-
-      if (userInDb) {
-        console.log(userInDb);
-        return await this.kakaoLogin(userInDb.email);
+      } else if (userInDb) {
+        return await this.oauthLogin(userInDb.email);
       } else if (createAccountResult) {
-        return await this.kakaoLogin(email);
+        return await this.oauthLogin(email);
       } else {
         throw new BadRequestException("Couldn't log in with Kakao");
+      }
+    } catch (e) {
+      console.log(e);
+      throw new HttpException(e.message, e.status);
+    }
+  }
+
+  // Login with Google account info
+  async googleOauth({ email, name }: googleUserInfo): Promise<LoginOutput> {
+    try {
+      // check user exist with email
+      const userInDb = await this.users.findOne({
+        where: { email },
+        select: { id: true, email: true, password: true },
+      });
+
+      // control user
+      let createAccountResult = null;
+      if (!userInDb) {
+        const password = CryptoJS.SHA256(
+          email + process.env.GOOGLE_CLIENT_ID,
+        ).toString();
+        const { user } = await this.createKakaoAccount({
+          name,
+          email,
+          password,
+        });
+        createAccountResult = user;
+      } else if (userInDb) {
+        return await this.oauthLogin(userInDb.email);
+      } else if (createAccountResult) {
+        return await this.oauthLogin(email);
+      } else {
+        throw new BadRequestException("Couldn't log in with Google");
       }
     } catch (e) {
       console.log(e);

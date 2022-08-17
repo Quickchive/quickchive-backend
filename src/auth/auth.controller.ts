@@ -18,6 +18,7 @@ import {
   ApiNotFoundResponse,
   ApiOkResponse,
   ApiOperation,
+  ApiResponse,
   ApiTags,
   ApiUnauthorizedResponse,
 } from '@nestjs/swagger';
@@ -30,7 +31,8 @@ import {
   CreateAccountOutput,
 } from './dtos/create-account.dto';
 import { DeleteAccountOutput } from './dtos/delete-account.dto';
-import { KakaoAuthorizeOutput, LoginWithKakaoDto } from './dtos/kakao.dto';
+import { googleUserInfo } from './dtos/google.dto';
+import { LoginWithKakaoDto } from './dtos/kakao.dto';
 import {
   LoginBodyDto,
   LoginOutput,
@@ -195,15 +197,15 @@ export class OauthController {
     summary: '카카오 계정 로그인 요청',
     description: '카카오 계정 로그인 요청 메서드',
   })
-  @ApiOkResponse({
-    description: '카카오 계정 로그인 URL을 반환한다.',
-    type: KakaoAuthorizeOutput,
+  @ApiResponse({
+    description: '카카오 계정 로그인 창이 켜지는 Redirect URL을 반환한다.',
+    status: 302,
   })
   @Get('kakao-auth')
-  async kakaoAuthorize(/*@Res() res: Response*/): Promise<KakaoAuthorizeOutput> {
-    // const { url } = await this.oauthService.kakaoAuthorize();
-    // return res.redirect(url);
-    return await this.oauthService.kakaoAuthorize();
+  async kakaoAuthorize(@Res() res: Response): Promise<void> {
+    const { url } = await this.oauthService.kakaoAuthorize();
+    return res.redirect(url);
+    // return await this.oauthService.kakaoAuthorize();
   }
 
   @ApiOperation({
@@ -226,9 +228,36 @@ export class OauthController {
     return await this.oauthService.kakaoOauth(loginWithKakaoBody);
   }
 
+  @ApiOperation({
+    summary: '구글 계정 로그인 요청',
+    description: '구글 계정 로그인 요청 메서드',
+  })
+  @ApiResponse({
+    description: '구글 계정 로그인 창이 켜지는 Redirect URL을 반환한다.',
+    status: 302,
+  })
   @Get('google-auth')
   @UseGuards(AuthGuard('google'))
-  async googleOauth(@AuthUser() user: User): Promise<void> {
+  googleOauth(): void {}
+
+  @ApiOperation({
+    summary: '구글 로그인',
+    description:
+      '구글 로그인 메서드. (회원가입이 안되어 있으면 회원가입 처리 후 로그인 처리)',
+  })
+  @ApiOkResponse({
+    description: '로그인 성공 여부와 함께 access, refresh token을 반환한다.',
+    type: LoginOutput,
+  })
+  @ApiBadRequestResponse({
+    description: 'code가 잘못된 경우',
+  })
+  @Get('google-login')
+  @UseGuards(AuthGuard('google'))
+  async googleAuthRedirect(
+    @AuthUser() user: googleUserInfo,
+  ): Promise<LoginOutput> {
     console.log(user);
+    return await this.oauthService.googleOauth(user);
   }
 }

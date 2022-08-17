@@ -176,7 +176,7 @@ export class AuthController {
     description: '이메일 인증 메서드',
   })
   @ApiOkResponse({
-    description: '이메일 인증 성공 여부를 알려준다.',
+    description: '이메일 인증 성공 여부와 해당 이메일을 반환한다.',
     type: VerifyEmailOutput,
   })
   @ApiNotFoundResponse({

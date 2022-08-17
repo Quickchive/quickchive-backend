@@ -243,7 +243,7 @@ export class AuthService {
       await this.users.save(user); // verify
       await this.cacheManager.del(code); // delete verification value
 
-      return;
+      return { email: user.email };
     } else {
       throw new NotFoundException('Verification code not found');
     }

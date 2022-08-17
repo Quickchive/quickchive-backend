@@ -205,7 +205,6 @@ export class OauthController {
   async kakaoAuthorize(@Res() res: Response): Promise<void> {
     const { url } = await this.oauthService.kakaoAuthorize();
     return res.redirect(url);
-    // return await this.oauthService.kakaoAuthorize();
   }
 
   @ApiOperation({
@@ -213,7 +212,7 @@ export class OauthController {
     description:
       '카카오 로그인 메서드. (회원가입이 안되어 있으면 회원가입 처리 후 로그인 처리)',
   })
-  @ApiCreatedResponse({
+  @ApiOkResponse({
     description: '로그인 성공 여부와 함께 access, refresh token을 반환한다.',
     type: LoginOutput,
   })
@@ -221,11 +220,10 @@ export class OauthController {
     description: '카카오 로그인 실패 여부를 알려준다.',
     type: LoginOutput,
   })
-  @Post('kakao-login')
-  async kakaoOauth(
-    @Body() loginWithKakaoBody: LoginWithKakaoDto,
-  ): Promise<LoginOutput> {
-    return await this.oauthService.kakaoOauth(loginWithKakaoBody);
+  @Get('kakao-login')
+  async kakaoOauth(@Query('code') code: string): Promise<LoginOutput> {
+    console.log(code);
+    return await this.oauthService.kakaoOauth({ code });
   }
 
   @ApiOperation({

@@ -112,8 +112,8 @@ export class ContentsService {
       });
       await queryRunnerManager.save(newContent);
       userInDb.contents.push(newContent);
-      userInDb.categories.push(category);
-      queryRunnerManager.save(userInDb);
+      categoryName ? userInDb.categories.push(category) : null;
+      await queryRunnerManager.save(userInDb);
 
       await queryRunner.commitTransaction();
 

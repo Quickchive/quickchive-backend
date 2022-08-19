@@ -23,6 +23,7 @@ import {
   AddNestedContentToCollectionBodyDto,
   AddNestedContentToCollectionOutput,
 } from './dtos/nested-content.dto';
+import { getOrCreateCategory } from 'src/utils/getOrCreateCategory';
 
 @Injectable()
 export class CollectionsService {
@@ -39,6 +40,7 @@ export class CollectionsService {
         where: { id: user.id },
         relations: {
           collections: true,
+          categories: true,
         },
       });
       if (!userInDb) {
@@ -76,6 +78,11 @@ export class CollectionsService {
         ...nestedContentList.map((content) => content.id),
       ];
 
+      // Get or create category
+      const category = categoryName
+        ? await getOrCreateCategory(categoryName, queryRunnerManager)
+        : null;
+
       // Create collection
       const newCollection = queryRunnerManager.create(Collection, {
         title,
@@ -83,8 +90,14 @@ export class CollectionsService {
         contents: nestedContentList,
         order,
         user,
+        category,
       });
       await queryRunnerManager.save(newCollection);
+
+      // Add collection to user
+      userInDb.collections.push(newCollection);
+      categoryName ? userInDb.categories.push(category) : null;
+      await queryRunnerManager.save(userInDb);
 
       await queryRunner.commitTransaction();
 

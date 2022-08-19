@@ -23,6 +23,7 @@ import {
 import { User } from './entities/user.entity';
 import { Verification } from './entities/verification.entity';
 import { Cache } from 'cache-manager';
+import { LoadPersonalCollectionsOutput } from './dtos/load-personal-collections.dto';
 
 @Injectable()
 export class UsersService {
@@ -109,7 +110,7 @@ export class UsersService {
       });
       if (categoryId) {
         contents = contents.filter(
-          (content) => content?.category?.id === categoryId,
+          (content) => content?.category.id === categoryId,
         );
       }
 
@@ -136,6 +137,34 @@ export class UsersService {
 
       return {
         favorites,
+      };
+    } catch (e) {
+      throw new HttpException(e.message, e.status);
+    }
+  }
+
+  async loadPersonalCollections(
+    user: User,
+    categoryId: number,
+  ): Promise<LoadPersonalCollectionsOutput> {
+    try {
+      let { collections } = await this.users.findOne({
+        where: { id: user.id },
+        relations: {
+          collections: {
+            category: true,
+            contents: true,
+          },
+        },
+      });
+      if (categoryId) {
+        collections = collections.filter(
+          (collection) => collection?.category.id === categoryId,
+        );
+      }
+
+      return {
+        collections,
       };
     } catch (e) {
       throw new HttpException(e.message, e.status);

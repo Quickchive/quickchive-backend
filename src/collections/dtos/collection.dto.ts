@@ -7,7 +7,7 @@ export class AddCollectionBodyDto extends PickType(Collection, [
   'comment',
 ]) {
   @ApiProperty({
-    description: 'Contents ID List',
+    description: 'Contents Link List',
     type: [String],
     required: false,
   })
@@ -15,7 +15,17 @@ export class AddCollectionBodyDto extends PickType(Collection, [
 }
 export class AddCollectionOutput extends CoreOutput {}
 
-export class UpdateCollectionBodyDto extends AddCollectionBodyDto {}
+export class UpdateCollectionBodyDto extends PickType(Collection, [
+  'title',
+  'comment',
+]) {
+  @ApiProperty({
+    description: 'Collection ID',
+    type: Number,
+    required: true,
+  })
+  id: number;
+}
 export class UpdateCollectionOutput extends CoreOutput {}
 
 export class DeleteCollectionOutput extends CoreOutput {}

@@ -12,24 +12,30 @@ class NestedContentBodyExceptLink extends PartialType(
 ) {}
 class NestedContentBodyWithLinkOnly extends PickType(NestedContent, ['link']) {}
 
-export class NestedAddContentBodyDto extends IntersectionType(
+export class AddNestedContentBodyDto extends IntersectionType(
   NestedContentBodyWithLinkOnly,
   NestedContentBodyExceptLink,
 ) {}
-export class NestedAddContentOutput {
-  @ApiProperty({ description: 'Nested Content ID List' })
+export class AddNestedContentOutput {
+  @ApiProperty({ description: 'Created Nested Content' })
   nestedContent: NestedContent;
 }
 
-class NestedContentBody extends PartialType(NestedAddContentBodyDto) {}
+export class AddNestedContentToCollectionBodyDto extends AddNestedContentBodyDto {
+  @ApiProperty({ description: 'Collection ID' })
+  collectionId: number;
+}
+export class AddNestedContentToCollectionOutput extends CoreOutput {}
+
+class NestedContentBody extends PartialType(AddNestedContentOutput) {}
 class NestedContentId extends PickType(NestedContent, ['id']) {}
 
-export class NestedUpdateContentBodyDto extends IntersectionType(
+export class UpdateNestedContentBodyDto extends IntersectionType(
   NestedContentId,
   NestedContentBody,
 ) {}
-export class NestedUpdateContentOutput extends CoreOutput {}
+export class UpdateNestedContentOutput extends CoreOutput {}
 
-export class NestedDeleteContentOutput extends CoreOutput {}
+export class DeleteNestedContentOutput extends CoreOutput {}
 
 export class toggleFavoriteOutput extends CoreOutput {}

@@ -10,14 +10,18 @@ import { DataSource, EntityManager, In, Not, QueryRunner } from 'typeorm';
 import {
   AddCollectionBodyDto,
   AddCollectionOutput,
+  UpdateCollectionBodyDto,
+  UpdateCollectionOutput,
 } from './dtos/collection.dto';
 import { Collection } from './entities/collection.entity';
 import * as cheerio from 'cheerio';
 import axios from 'axios';
 import { NestedContent } from './entities/nested-content.entity';
 import {
-  NestedAddContentBodyDto,
-  NestedAddContentOutput,
+  AddNestedContentBodyDto,
+  AddNestedContentOutput,
+  AddNestedContentToCollectionBodyDto,
+  AddNestedContentToCollectionOutput,
 } from './dtos/nested-content.dto';
 
 @Injectable()
@@ -93,13 +97,117 @@ export class CollectionsService {
     }
   }
 
+  async updateCollection(
+    user: User,
+    { id, title, comment }: UpdateCollectionBodyDto,
+  ): Promise<UpdateCollectionOutput> {
+    const queryRunner = await this.init();
+    const queryRunnerManager: EntityManager = await queryRunner.manager;
+    try {
+      const userInDb = await queryRunnerManager.findOne(User, {
+        where: { id: user.id },
+        relations: {
+          collections: true,
+        },
+      });
+      if (!userInDb) {
+        throw new NotFoundException('User not found');
+      }
+
+      // Check if content exists
+      const collectionInDb: Collection = userInDb.collections.filter(
+        (collection) => collection.id === id,
+      )[0];
+      if (!collectionInDb) {
+        throw new NotFoundException('Collection not found.');
+      }
+
+      // Update title and comment if they are not empty
+      title ? (collectionInDb.title = title) : null;
+      comment ? (collectionInDb.comment = comment) : null;
+
+      // Update collection to database
+      const updatedCollection = queryRunnerManager.save(Collection, {
+        title,
+        comment,
+        user,
+      });
+      await queryRunnerManager.save(updatedCollection);
+      await queryRunner.commitTransaction();
+
+      return;
+    } catch (e) {
+      await queryRunner.rollbackTransaction();
+
+      console.log(e);
+      throw new HttpException(e.message, e.status);
+    }
+  }
+
+  async addNestedContentToCollection(
+    user: User,
+    {
+      collectionId,
+      link,
+      title,
+      description,
+      comment,
+    }: AddNestedContentToCollectionBodyDto,
+  ): Promise<AddNestedContentToCollectionOutput> {
+    const queryRunner = await this.init();
+    const queryRunnerManager: EntityManager = await queryRunner.manager;
+    try {
+      const userInDb = await queryRunnerManager.findOne(User, {
+        where: { id: user.id },
+        relations: {
+          collections: true,
+        },
+      });
+      if (!userInDb) {
+        throw new NotFoundException('User not found');
+      }
+
+      // Check if content exists
+      const collectionInDb: Collection = userInDb.collections.filter(
+        (collection) => collection.id === collectionId,
+      )[0];
+      if (!collectionInDb) {
+        throw new NotFoundException('Collection not found.');
+      }
+
+      // Create collection order array
+      let nestedContentList: NestedContent[] = collectionInDb.contents;
+
+      // Create new nested content and add to collection order array
+      const { nestedContent } = await this.addNestedContent({
+        link,
+        title,
+        description,
+        comment,
+      });
+      nestedContentList.push(nestedContent);
+      collectionInDb.order.push(nestedContent.id);
+
+      // Update collection to database
+      await queryRunnerManager.save(collectionInDb);
+      await queryRunner.commitTransaction();
+
+      return;
+    } catch (e) {
+      await queryRunner.rollbackTransaction();
+
+      console.log(e);
+      throw new HttpException(e.message, e.status);
+    }
+  }
+
   // Add nested content to the database
   async addNestedContent({
     link,
     title,
     description,
     comment,
-  }: NestedAddContentBodyDto): Promise<NestedAddContentOutput> {
+  }: AddNestedContentBodyDto): Promise<AddNestedContentOutput> {
     const queryRunner = await this.init();
     const queryRunnerManager: EntityManager = await queryRunner.manager;
     try {

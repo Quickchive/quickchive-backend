@@ -1,5 +1,6 @@
 import { ApiProperty } from '@nestjs/swagger';
 import { IsString, Length } from 'class-validator';
+import { Collection } from 'src/collections/entities/collection.entity';
 import { CoreEntity } from 'src/common/entities/core.entity';
 import { Column, Entity, OneToMany } from 'typeorm';
 import { Content } from './content.entity';
@@ -19,4 +20,7 @@ export class Category extends CoreEntity {
 
   @OneToMany((type) => Content, (content) => content.category)
   contents: Content[];
+
+  @OneToMany((type) => Collection, (collection) => collection.category)
+  collections: Collection[];
 }

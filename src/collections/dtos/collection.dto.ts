@@ -31,6 +31,12 @@ export class UpdateCollectionBodyDto extends PickType(Collection, [
     required: true,
   })
   id: number;
+
+  @ApiProperty({
+    description: 'Category Name',
+    required: false,
+  })
+  categoryName?: string;
 }
 export class UpdateCollectionOutput extends CoreOutput {}
 

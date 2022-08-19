@@ -24,6 +24,7 @@ import {
   AddNestedContentToCollectionOutput,
 } from './dtos/nested-content.dto';
 import { getOrCreateCategory } from 'src/utils/getOrCreateCategory';
+import { Category } from 'src/contents/entities/category.entity';
 
 @Injectable()
 export class CollectionsService {
@@ -112,7 +113,7 @@ export class CollectionsService {
 
   async updateCollection(
     user: User,
-    { id, title, comment }: UpdateCollectionBodyDto,
+    { id, title, comment, categoryName }: UpdateCollectionBodyDto,
   ): Promise<UpdateCollectionOutput> {
     const queryRunner = await this.init();
     const queryRunnerManager: EntityManager = await queryRunner.manager;
@@ -120,7 +121,10 @@ export class CollectionsService {
       const userInDb = await queryRunnerManager.findOne(User, {
         where: { id: user.id },
         relations: {
-          collections: true,
+          collections: {
+            category: true,
+          },
+          categories: true,
         },
       });
       if (!userInDb) {
@@ -139,13 +143,32 @@ export class CollectionsService {
       title ? (collectionInDb.title = title) : null;
       comment ? (collectionInDb.comment = comment) : null;
 
+      // Update category if it is not empty
+      let category: Category = null;
+      if (categoryName) {
+        category = await getOrCreateCategory(categoryName, queryRunnerManager);
+        userInDb.categories.push(category);
+
+        // Update user categories
+        if (collectionInDb.category) {
+          const userCurrentCategories = userInDb.categories.filter(
+            (category) => category.name === collectionInDb.category.name,
+          );
+          if (userCurrentCategories.length === 1) {
+            userInDb.categories = userInDb.categories.filter(
+              (category) => category.name !== collectionInDb.category.name,
+            );
+          }
+        }
+
+        await queryRunnerManager.save(userInDb);
+      }
+
       // Update collection to database
-      const updatedCollection = queryRunnerManager.save(Collection, {
-        title,
-        comment,
-        user,
+      await queryRunnerManager.save(Collection, {
+        ...collectionInDb,
+        ...(category && { category }),
       });
-      await queryRunnerManager.save(updatedCollection);
       await queryRunner.commitTransaction();
 
       return;

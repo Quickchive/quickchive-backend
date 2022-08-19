@@ -3,14 +3,13 @@ import { JwtModule } from '@nestjs/jwt';
 import { PassportModule } from '@nestjs/passport';
 import { TypeOrmModule } from '@nestjs/typeorm';
 import { User } from 'src/users/entities/user.entity';
-import { Verification } from 'src/users/entities/verification.entity';
 import { AuthController, OauthController } from './auth.controller';
 import { AuthService, OauthService } from './auth.service';
 import { JwtStrategy } from './jwt/jwt.strategy';
 import * as redisStore from 'cache-manager-redis-store';
 import { GoogleStrategy } from './passport/google/google.strategy';
 
-const accessTokenExpiration = '2m';
+const accessTokenExpiration = '10m';
 export const refreshTokenExpiration = '30d';
 export const refreshTokenExpirationInCache = 60 * 60 * 24 * 30;
 export const verifyEmailExpiration = 60 * 5;

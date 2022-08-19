@@ -60,7 +60,7 @@ export class CollectionsController {
     @AuthUser() user: User,
     @Body() collection: UpdateCollectionBodyDto,
   ): Promise<UpdateCollectionOutput> {
-    return await this.collectionsService.addCollection(user, collection);
+    return await this.collectionsService.updateCollection(user, collection);
   }
 
   @ApiOperation({

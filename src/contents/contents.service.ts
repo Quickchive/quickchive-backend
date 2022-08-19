@@ -8,6 +8,7 @@ import {
 import axios from 'axios';
 import * as cheerio from 'cheerio';
 import { User } from 'src/users/entities/user.entity';
+import { getOrCreateCategory } from 'src/utils/getOrCreateCategory';
 import { DataSource, EntityManager, QueryRunner } from 'typeorm';
 import {
   UpdateCategoryBodyDto,
@@ -379,26 +380,4 @@ export class CategoryService {
 
     return queryRunner;
   }
-}
-
-async function getOrCreateCategory(
-  name: string,
-  queryRunnerManager: EntityManager,
-): Promise<Category> {
-  const categoryName = name.trim().toLowerCase();
-  const categorySlug = categoryName.replace(/ /g, '-');
-  let category = await queryRunnerManager.findOneBy(Category, {
-    slug: categorySlug,
-  });
-
-  if (!category) {
-    category = await queryRunnerManager.save(
-      queryRunnerManager.create(Category, {
-        slug: categorySlug,
-        name: categoryName,
-      }),
-    );
-  }
-
-  return category;
 }

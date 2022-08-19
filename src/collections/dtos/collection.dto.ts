@@ -12,6 +12,12 @@ export class AddCollectionBodyDto extends PickType(Collection, [
     required: false,
   })
   contentLinkList?: string[];
+
+  @ApiProperty({
+    description: 'Category Name',
+    required: false,
+  })
+  categoryName?: string;
 }
 export class AddCollectionOutput extends CoreOutput {}
 

@@ -30,7 +30,7 @@ export class CollectionsService {
 
   async addCollection(
     user: User,
-    { title, comment, contentLinkList }: AddCollectionBodyDto,
+    { title, comment, contentLinkList, categoryName }: AddCollectionBodyDto,
   ): Promise<AddCollectionOutput> {
     const queryRunner = await this.init();
     const queryRunnerManager: EntityManager = await queryRunner.manager;

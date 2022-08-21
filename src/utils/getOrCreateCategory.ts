@@ -1,7 +1,7 @@
 import { Category } from 'src/contents/entities/category.entity';
 import { EntityManager } from 'typeorm';
 
-export async function getOrCreateCategory(
+export default async function getOrCreateCategory(
   name: string,
   queryRunnerManager: EntityManager,
 ): Promise<Category> {

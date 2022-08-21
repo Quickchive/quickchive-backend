@@ -4,7 +4,6 @@ import {
   Injectable,
   NotFoundException,
 } from '@nestjs/common';
-import { Content } from 'src/contents/entities/content.entity';
 import { User } from 'src/users/entities/user.entity';
 import { DataSource, EntityManager, In, Not, QueryRunner } from 'typeorm';
 import {
@@ -23,8 +22,8 @@ import {
   AddNestedContentToCollectionBodyDto,
   AddNestedContentToCollectionOutput,
 } from './dtos/nested-content.dto';
-import { getOrCreateCategory } from 'src/utils/getOrCreateCategory';
 import { Category } from 'src/contents/entities/category.entity';
+import { getOrCreateCategory, init } from 'src/utils';
 
 @Injectable()
 export class CollectionsService {
@@ -34,7 +33,7 @@ export class CollectionsService {
     user: User,
     { title, comment, contentLinkList, categoryName }: AddCollectionBodyDto,
   ): Promise<AddCollectionOutput> {
-    const queryRunner = await this.init();
+    const queryRunner = await init(this.dataSource);
     const queryRunnerManager: EntityManager = await queryRunner.manager;
     try {
       const userInDb = await queryRunnerManager.findOne(User, {
@@ -115,7 +114,7 @@ export class CollectionsService {
     user: User,
     { id, title, comment, categoryName }: UpdateCollectionBodyDto,
   ): Promise<UpdateCollectionOutput> {
-    const queryRunner = await this.init();
+    const queryRunner = await init(this.dataSource);
     const queryRunnerManager: EntityManager = await queryRunner.manager;
     try {
       const userInDb = await queryRunnerManager.findOne(User, {
@@ -190,7 +189,7 @@ export class CollectionsService {
       comment,
     }: AddNestedContentToCollectionBodyDto,
   ): Promise<AddNestedContentToCollectionOutput> {
-    const queryRunner = await this.init();
+    const queryRunner = await init(this.dataSource);
     const queryRunnerManager: EntityManager = await queryRunner.manager;
     try {
       const userInDb = await queryRunnerManager.findOne(User, {
@@ -244,7 +243,7 @@ export class CollectionsService {
     description,
     comment,
   }: AddNestedContentBodyDto): Promise<AddNestedContentOutput> {
-    const queryRunner = await this.init();
+    const queryRunner = await init(this.dataSource);
     const queryRunnerManager: EntityManager = await queryRunner.manager;
     try {
       // get og tag info from link
@@ -295,14 +294,5 @@ export class CollectionsService {
 
       throw new HttpException(e.message, e.status);
     }
-  }
-
-  //initalize the database
-  async init(): Promise<QueryRunner> {
-    const queryRunner = this.dataSource.createQueryRunner();
-    await queryRunner.connect();
-    await queryRunner.startTransaction();
-
-    return queryRunner;
   }
 }

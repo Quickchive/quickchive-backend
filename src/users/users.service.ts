@@ -8,7 +8,6 @@ import {
 } from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
 import { Content } from 'src/contents/entities/content.entity';
-import { MailService } from 'src/mail/mail.service';
 import { Repository } from 'typeorm';
 import { EditProfileInput, EditProfileOutput } from './dtos/edit-profile.dto';
 import { LoadPersonalCategoriesOutput } from './dtos/load-personal-categories.dto';
@@ -21,7 +20,6 @@ import {
   ResetPasswordOutput,
 } from './dtos/reset-password.dto';
 import { User } from './entities/user.entity';
-import { Verification } from './entities/verification.entity';
 import { Cache } from 'cache-manager';
 import { LoadPersonalCollectionsOutput } from './dtos/load-personal-collections.dto';
 
@@ -30,9 +28,6 @@ export class UsersService {
   constructor(
     @InjectRepository(User)
     private readonly users: Repository<User>,
-    @InjectRepository(Verification)
-    private readonly verifications: Repository<Verification>,
-    private readonly mailService: MailService,
     @Inject(CACHE_MANAGER)
     private readonly cacheManager: Cache,
   ) {}

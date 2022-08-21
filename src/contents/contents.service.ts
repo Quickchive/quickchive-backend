@@ -8,7 +8,7 @@ import {
 import axios from 'axios';
 import * as cheerio from 'cheerio';
 import { User } from 'src/users/entities/user.entity';
-import { getOrCreateCategory } from 'src/utils/getOrCreateCategory';
+import { getOrCreateCategory, init } from 'src/utils';
 import { DataSource, EntityManager, QueryRunner } from 'typeorm';
 import {
   UpdateCategoryBodyDto,
@@ -39,7 +39,7 @@ export class ContentsService {
       categoryName,
     }: AddContentBodyDto,
   ): Promise<AddContentOutput> {
-    const queryRunner = await this.init();
+    const queryRunner = await init(this.dataSource);
     const queryRunnerManager: EntityManager = await queryRunner.manager;
     try {
       const userInDb = await queryRunnerManager.findOne(User, {
@@ -129,7 +129,7 @@ export class ContentsService {
     user: User,
     updateContentBody: UpdateContentBodyDto,
   ): Promise<AddContentOutput> {
-    const queryRunner = await this.init();
+    const queryRunner = await init(this.dataSource);
     const queryRunnerManager: EntityManager = await queryRunner.manager;
 
     const { id, link, title, description, comment, deadline, categoryName } =
@@ -210,7 +210,7 @@ export class ContentsService {
     user: User,
     contentId: number,
   ): Promise<toggleFavoriteOutput> {
-    const queryRunner = await this.init();
+    const queryRunner = await init(this.dataSource);
     const queryRunnerManager: EntityManager = await queryRunner.manager;
     try {
       const userInDb = await queryRunnerManager.findOne(User, {
@@ -247,7 +247,7 @@ export class ContentsService {
     user: User,
     contentId: number,
   ): Promise<DeleteContentOutput> {
-    const queryRunner = await this.init();
+    const queryRunner = await init(this.dataSource);
     const queryRunnerManager: EntityManager = await queryRunner.manager;
     try {
       const userInDb = await queryRunnerManager.findOne(User, {
@@ -296,15 +296,6 @@ export class ContentsService {
       throw new HttpException(e.message, e.status);
     }
   }
-
-  //initalize the database
-  async init(): Promise<QueryRunner> {
-    const queryRunner = this.dataSource.createQueryRunner();
-    await queryRunner.connect();
-    await queryRunner.startTransaction();
-
-    return queryRunner;
-  }
 }
 
 @Injectable()
@@ -315,7 +306,7 @@ export class CategoryService {
     user: User,
     { originalName, name }: UpdateCategoryBodyDto,
   ): Promise<UpdateCategoryOutput> {
-    const queryRunner = await this.init();
+    const queryRunner = await init(this.dataSource);
     const queryRunnerManager: EntityManager = await queryRunner.manager;
     try {
       const userInDb = await queryRunnerManager.findOne(User, {
@@ -370,14 +361,5 @@ export class CategoryService {
 
       throw new HttpException(e.message, e.status);
     }
-  }
-
-  //initalize the database
-  async init(): Promise<QueryRunner> {
-    const queryRunner = this.dataSource.createQueryRunner();
-    await queryRunner.connect();
-    await queryRunner.startTransaction();
-
-    return queryRunner;
   }
 }

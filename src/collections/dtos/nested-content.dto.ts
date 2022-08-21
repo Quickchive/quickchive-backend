@@ -8,7 +8,7 @@ import { CoreOutput } from 'src/common/dtos/output.dto';
 import { NestedContent } from '../entities/nested-content.entity';
 
 class NestedContentBodyExceptLink extends PartialType(
-  PickType(NestedContent, ['title', 'description', 'comment']),
+  PickType(NestedContent, ['title', 'description']),
 ) {}
 class NestedContentBodyWithLinkOnly extends PickType(NestedContent, ['link']) {}
 

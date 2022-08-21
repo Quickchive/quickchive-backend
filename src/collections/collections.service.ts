@@ -112,7 +112,13 @@ export class CollectionsService {
 
   async updateCollection(
     user: User,
-    { id, title, comment, categoryName }: UpdateCollectionBodyDto,
+    {
+      collectionId,
+      title,
+      comment,
+      categoryName,
+      contentLinkList,
+    }: UpdateCollectionBodyDto,
   ): Promise<UpdateCollectionOutput> {
     const queryRunner = await init(this.dataSource);
     const queryRunnerManager: EntityManager = await queryRunner.manager;
@@ -122,6 +128,7 @@ export class CollectionsService {
         relations: {
           collections: {
             category: true,
+            contents: true,
           },
           categories: true,
         },
@@ -132,7 +139,7 @@ export class CollectionsService {
 
       // Check if content exists
       const collectionInDb: Collection = userInDb.collections.filter(
-        (collection) => collection.id === id,
+        (collection) => collection.id === collectionId,
       )[0];
       if (!collectionInDb) {
         throw new NotFoundException('Collection not found.');
@@ -163,9 +170,52 @@ export class CollectionsService {
         await queryRunnerManager.save(userInDb);
       }
 
+      // Update nested contents if contentLinkList is not empty
+      const prevOrder: number[] = collectionInDb.order;
+      const newOrder: number[] = [];
+      let nestedContentList: NestedContent[] = collectionInDb.contents;
+      if (contentLinkList) {
+        for (const contentLink of contentLinkList) {
+          const nestedContentInDb = nestedContentList.filter(
+            (nestedContent) => nestedContent.link === contentLink,
+          )[0];
+          if (nestedContentInDb) {
+            newOrder.push(nestedContentInDb.id);
+          } else {
+            const { nestedContent } = await this.addNestedContent({
+              link: contentLink,
+            });
+            nestedContentList.push(nestedContent);
+            newOrder.push(nestedContent.id);
+          }
+        }
+
+        // Remove deleted contents from collection
+        const deletedContents = prevOrder.filter(
+          (contentId) => !newOrder.includes(contentId),
+        );
+
+        for (const contentId of deletedContents) {
+          const contentToDelete = await queryRunnerManager.findOne(
+            NestedContent,
+            {
+              where: { id: contentId },
+            },
+          );
+          nestedContentList = nestedContentList.filter(
+            (nestedContent) => nestedContent.id !== contentId,
+          );
+          await queryRunnerManager.remove(contentToDelete);
+        }
+      }
+
       // Update collection to database
       await queryRunnerManager.save(Collection, {
         ...collectionInDb,
+        ...(contentLinkList && {
+          order: newOrder,
+          contents: nestedContentList,
+        }),
         ...(category && { category }),
       });
       await queryRunner.commitTransaction();
@@ -186,7 +236,6 @@ export class CollectionsService {
       link,
       title,
       description,
-      comment,
     }: AddNestedContentToCollectionBodyDto,
   ): Promise<AddNestedContentToCollectionOutput> {
     const queryRunner = await init(this.dataSource);
@@ -211,14 +260,13 @@ export class CollectionsService {
       }
 
       // Create collection order array
-      let nestedContentList: NestedContent[] = collectionInDb.contents;
+      const nestedContentList: NestedContent[] = collectionInDb.contents;
 
       // Create new nested content and add to collection order array
       const { nestedContent } = await this.addNestedContent({
         link,
         title,
         description,
-        comment,
       });
       nestedContentList.push(nestedContent);
       collectionInDb.order.push(nestedContent.id);
@@ -241,7 +289,6 @@ export class CollectionsService {
     link,
     title,
     description,
-    comment,
   }: AddNestedContentBodyDto): Promise<AddNestedContentOutput> {
     const queryRunner = await init(this.dataSource);
     const queryRunnerManager: EntityManager = await queryRunner.manager;
@@ -282,7 +329,6 @@ export class CollectionsService {
         title,
         coverImg,
         description,
-        comment,
       });
       await queryRunnerManager.save(newNestedContent);
 

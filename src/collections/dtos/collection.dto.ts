@@ -30,13 +30,20 @@ export class UpdateCollectionBodyDto extends PickType(Collection, [
     type: Number,
     required: true,
   })
-  id: number;
+  collectionId: number;
 
   @ApiProperty({
     description: 'Category Name',
     required: false,
   })
   categoryName?: string;
+
+  @ApiProperty({
+    description: 'Contents Link List(링크 순서대로 정렬됨)',
+    type: [String],
+    required: false,
+  })
+  contentLinkList?: string[];
 }
 export class UpdateCollectionOutput extends CoreOutput {}
 

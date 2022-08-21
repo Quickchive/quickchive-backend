@@ -44,9 +44,16 @@ export class CollectionsController {
     return await this.collectionsService.addCollection(user, collection);
   }
 
+  /**
+   * 콜렉션 수정
+   * collection의 title, comment 수정
+   * collection의 nestedcontent 추가
+   * collection 내 nestedcontent 순서 변경
+   * collection 내 nestedcontent 삭제
+   */
   @ApiOperation({
     summary: '콜렉션 수정',
-    description: '콜렉션의 title, comment를 수정하는 메서드',
+    description: `* 콜렉션의 title, comment 수정\n* 콜렉션의 nestedcontent 추가\n* 콜렉션 내 nestedcontent 순서 변경\n * 콜렉션 내 nestedcontent 삭제`,
   })
   @ApiCreatedResponse({
     description: '콜렉션 수정 성공 여부를 반환한다.',
@@ -63,25 +70,5 @@ export class CollectionsController {
     return await this.collectionsService.updateCollection(user, collection);
   }
 
-  @ApiOperation({
-    summary: '콜렉션에 콘텐츠 추가',
-    description: '콜렉션에 단일 콘텐츠를 추가하는 메서드',
-  })
-  @ApiCreatedResponse({
-    description: '콜렉션에 콘텐츠 추가 성공 여부를 반환한다.',
-    type: AddCollectionOutput,
-  })
-  @ApiNotFoundResponse({
-    description: '콜렉션을 찾을 수 없을 때 반환한다.',
-  })
-  @Post('add-content')
-  async addNestedContentToCollection(
-    @AuthUser() user: User,
-    @Body() nestedContent: AddNestedContentToCollectionBodyDto,
-  ): Promise<AddNestedContentToCollectionOutput> {
-    return await this.collectionsService.addNestedContentToCollection(
-      user,
-      nestedContent,
-    );
-  }
+  // 콜렉션 삭제
 }

@@ -1,8 +1,17 @@
-import { Body, Controller, Post, UseGuards } from '@nestjs/common';
+import {
+  Body,
+  Controller,
+  Delete,
+  ParseIntPipe,
+  Post,
+  Query,
+  UseGuards,
+} from '@nestjs/common';
 import {
   ApiBearerAuth,
   ApiCreatedResponse,
   ApiNotFoundResponse,
+  ApiOkResponse,
   ApiOperation,
   ApiTags,
 } from '@nestjs/swagger';
@@ -13,6 +22,7 @@ import { CollectionsService } from './collections.service';
 import {
   AddCollectionBodyDto,
   AddCollectionOutput,
+  DeleteCollectionOutput,
   UpdateCollectionBodyDto,
   UpdateCollectionOutput,
 } from './dtos/collection.dto';
@@ -71,4 +81,22 @@ export class CollectionsController {
   }
 
   // 콜렉션 삭제
+  @ApiOperation({
+    summary: '콜렉션 삭제',
+    description: '콜렉션을 삭제하는 메서드',
+  })
+  @ApiOkResponse({
+    description: '콜렉션 삭제 성공 여부를 반환한다.',
+    type: DeleteCollectionOutput,
+  })
+  @ApiNotFoundResponse({
+    description: '콜렉션 또는 유저가 존재하지 않는다.',
+  })
+  @Delete('delete')
+  async deleteCollection(
+    @AuthUser() user: User,
+    @Query('collectionId', ParseIntPipe) collectionId: number,
+  ): Promise<DeleteCollectionOutput> {
+    return await this.collectionsService.deleteCollection(user, collectionId);
+  }
 }

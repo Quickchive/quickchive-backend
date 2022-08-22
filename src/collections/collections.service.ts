@@ -9,6 +9,7 @@ import { DataSource, EntityManager, In, Not, QueryRunner } from 'typeorm';
 import {
   AddCollectionBodyDto,
   AddCollectionOutput,
+  DeleteCollectionOutput,
   UpdateCollectionBodyDto,
   UpdateCollectionOutput,
 } from './dtos/collection.dto';
@@ -229,60 +230,60 @@ export class CollectionsService {
     }
   }
 
-  async addNestedContentToCollection(
-    user: User,
-    {
-      collectionId,
-      link,
-      title,
-      description,
-    }: AddNestedContentToCollectionBodyDto,
-  ): Promise<AddNestedContentToCollectionOutput> {
-    const queryRunner = await init(this.dataSource);
-    const queryRunnerManager: EntityManager = await queryRunner.manager;
-    try {
-      const userInDb = await queryRunnerManager.findOne(User, {
-        where: { id: user.id },
-        relations: {
-          collections: true,
-        },
-      });
-      if (!userInDb) {
-        throw new NotFoundException('User not found');
-      }
+  // async addNestedContentToCollection(
+  //   user: User,
+  //   {
+  //     collectionId,
+  //     link,
+  //     title,
+  //     description,
+  //   }: AddNestedContentToCollectionBodyDto,
+  // ): Promise<AddNestedContentToCollectionOutput> {
+  //   const queryRunner = await init(this.dataSource);
+  //   const queryRunnerManager: EntityManager = await queryRunner.manager;
+  //   try {
+  //     const userInDb = await queryRunnerManager.findOne(User, {
+  //       where: { id: user.id },
+  //       relations: {
+  //         collections: true,
+  //       },
+  //     });
+  //     if (!userInDb) {
+  //       throw new NotFoundException('User not found');
+  //     }
 
-      // Check if content exists
-      const collectionInDb: Collection = userInDb.collections.filter(
-        (collection) => collection.id === collectionId,
-      )[0];
-      if (!collectionInDb) {
-        throw new NotFoundException('Collection not found.');
-      }
+  //     // Check if content exists
+  //     const collectionInDb: Collection = userInDb.collections.filter(
+  //       (collection) => collection.id === collectionId,
+  //     )[0];
+  //     if (!collectionInDb) {
+  //       throw new NotFoundException('Collection not found.');
+  //     }
 
-      // Create collection order array
-      const nestedContentList: NestedContent[] = collectionInDb.contents;
+  //     // Create collection order array
+  //     const nestedContentList: NestedContent[] = collectionInDb.contents;
 
-      // Create new nested content and add to collection order array
-      const { nestedContent } = await this.addNestedContent({
-        link,
-        title,
-        description,
-      });
-      nestedContentList.push(nestedContent);
-      collectionInDb.order.push(nestedContent.id);
+  //     // Create new nested content and add to collection order array
+  //     const { nestedContent } = await this.addNestedContent({
+  //       link,
+  //       title,
+  //       description,
+  //     });
+  //     nestedContentList.push(nestedContent);
+  //     collectionInDb.order.push(nestedContent.id);
 
-      // Update collection to database
-      await queryRunnerManager.save(collectionInDb);
-      await queryRunner.commitTransaction();
+  //     // Update collection to database
+  //     await queryRunnerManager.save(collectionInDb);
+  //     await queryRunner.commitTransaction();
 
-      return;
-    } catch (e) {
-      await queryRunner.rollbackTransaction();
+  //     return;
+  //   } catch (e) {
+  //     await queryRunner.rollbackTransaction();
 
-      console.log(e);
-      throw new HttpException(e.message, e.status);
-    }
-  }
+  //     console.log(e);
+  //     throw new HttpException(e.message, e.status);
+  //   }
+  // }
 
   // Add nested content to the database
   async addNestedContent({
@@ -338,6 +339,44 @@ export class CollectionsService {
     } catch (e) {
       await queryRunner.rollbackTransaction();
 
+      throw new HttpException(e.message, e.status);
+    }
+  }
+
+  async deleteCollection(
+    user: User,
+    collectionId: number,
+  ): Promise<DeleteCollectionOutput> {
+    const queryRunner = await init(this.dataSource);
+    const queryRunnerManager: EntityManager = await queryRunner.manager;
+    try {
+      const userInDb = await queryRunnerManager.findOne(User, {
+        where: { id: user.id },
+        relations: {
+          collections: true,
+        },
+      });
+      if (!userInDb) {
+        throw new NotFoundException('User not found');
+      }
+
+      // Check if collection exists
+      const collectionInDb: Collection = userInDb.collections.filter(
+        (collection) => collection.id === collectionId,
+      )[0];
+      if (!collectionInDb) {
+        throw new NotFoundException('Collection not found.');
+      }
+
+      // Delete collection from database
+      await queryRunnerManager.remove(collectionInDb);
+      await queryRunner.commitTransaction();
+
+      return;
+    } catch (e) {
+      await queryRunner.rollbackTransaction();
+
+      console.log(e);
       throw new HttpException(e.message, e.status);
     }
   }

@@ -8,7 +8,7 @@ import {
 } from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
 import { Content } from 'src/contents/entities/content.entity';
-import { Repository } from 'typeorm';
+import { DataSource, EntityManager, Repository } from 'typeorm';
 import { EditProfileInput, EditProfileOutput } from './dtos/edit-profile.dto';
 import { LoadPersonalCategoriesOutput } from './dtos/load-personal-categories.dto';
 import {
@@ -22,22 +22,24 @@ import {
 import { User } from './entities/user.entity';
 import { Cache } from 'cache-manager';
 import { LoadPersonalCollectionsOutput } from './dtos/load-personal-collections.dto';
+import { init } from 'src/utils';
 
 @Injectable()
 export class UsersService {
   constructor(
-    @InjectRepository(User)
-    private readonly users: Repository<User>,
-    @Inject(CACHE_MANAGER)
-    private readonly cacheManager: Cache,
+    private readonly dataSource: DataSource,
+    @InjectRepository(User) private readonly users: Repository<User>,
+    @Inject(CACHE_MANAGER) private readonly cacheManager: Cache,
   ) {}
 
   async editProfile(
     userId: number,
     { password, oldPassword, name }: EditProfileInput,
   ): Promise<EditProfileOutput> {
+    const queryRunner = await init(this.dataSource);
+    const queryRunnerManager: EntityManager = await queryRunner.manager;
     try {
-      const user = await this.users.findOne({
+      const user = await queryRunnerManager.findOne(User, {
         where: { id: userId },
         select: { id: true, email: true, name: true, password: true },
       });
@@ -53,7 +55,7 @@ export class UsersService {
         delete user.password;
       }
 
-      await this.users.save(user);
+      await queryRunnerManager.save(user);
 
       return;
     } catch (e) {
@@ -65,11 +67,13 @@ export class UsersService {
     code,
     password,
   }: ResetPasswordInput): Promise<ResetPasswordOutput> {
+    const queryRunner = await init(this.dataSource);
+    const queryRunnerManager: EntityManager = await queryRunner.manager;
     try {
       const userId: number = await this.cacheManager.get(code);
 
       if (userId) {
-        const user = await this.users.findOne({
+        const user = await queryRunnerManager.findOne(User, {
           where: { id: userId },
           select: { id: true, password: true },
         });
@@ -78,7 +82,7 @@ export class UsersService {
         }
         user.password = password;
 
-        await this.users.save(user); // update password
+        await queryRunnerManager.save(user); // update password
         await this.cacheManager.del(code); // delete verification value
 
         return;

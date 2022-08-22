@@ -5,7 +5,7 @@ import {
   NotFoundException,
 } from '@nestjs/common';
 import { User } from 'src/users/entities/user.entity';
-import { DataSource, EntityManager, In, Not, QueryRunner } from 'typeorm';
+import { DataSource, EntityManager } from 'typeorm';
 import {
   AddCollectionBodyDto,
   AddCollectionOutput,
@@ -20,8 +20,6 @@ import { NestedContent } from './entities/nested-content.entity';
 import {
   AddNestedContentBodyDto,
   AddNestedContentOutput,
-  AddNestedContentToCollectionBodyDto,
-  AddNestedContentToCollectionOutput,
 } from './dtos/nested-content.dto';
 import { Category } from 'src/contents/entities/category.entity';
 import { getOrCreateCategory, init } from 'src/utils';

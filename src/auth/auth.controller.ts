@@ -164,6 +164,9 @@ export class AuthController {
   @ApiNotFoundResponse({
     description: '유저가 존재하지 않음을 알려준다.',
   })
+  @ApiUnauthorizedResponse({
+    description: '이메일이 인증되지 않은 경우에 응답한다.',
+  })
   @Get('send-password-reset-email/:email')
   async sendPasswordResetEmail(
     @Param('email') email: string,

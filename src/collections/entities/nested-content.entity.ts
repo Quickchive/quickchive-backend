@@ -29,11 +29,11 @@ export class NestedContent extends CoreEntity {
   @IsString()
   description?: string;
 
-  @ApiProperty({ description: 'User Comment', required: false })
-  @Column({ nullable: true })
-  @IsOptional()
-  @IsString()
-  comment?: string;
+  // @ApiProperty({ description: 'User Comment', required: false })
+  // @Column({ nullable: true })
+  // @IsOptional()
+  // @IsString()
+  // comment?: string;
 
   @ManyToOne((type) => Collection, (collection) => collection.contents, {
     onDelete: 'CASCADE',

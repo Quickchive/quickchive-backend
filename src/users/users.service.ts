@@ -8,7 +8,6 @@ import {
 } from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
 import { Content } from 'src/contents/entities/content.entity';
-import { MailService } from 'src/mail/mail.service';
 import { Repository } from 'typeorm';
 import { EditProfileInput, EditProfileOutput } from './dtos/edit-profile.dto';
 import { LoadPersonalCategoriesOutput } from './dtos/load-personal-categories.dto';
@@ -21,17 +20,14 @@ import {
   ResetPasswordOutput,
 } from './dtos/reset-password.dto';
 import { User } from './entities/user.entity';
-import { Verification } from './entities/verification.entity';
 import { Cache } from 'cache-manager';
+import { LoadPersonalCollectionsOutput } from './dtos/load-personal-collections.dto';
 
 @Injectable()
 export class UsersService {
   constructor(
     @InjectRepository(User)
     private readonly users: Repository<User>,
-    @InjectRepository(Verification)
-    private readonly verifications: Repository<Verification>,
-    private readonly mailService: MailService,
     @Inject(CACHE_MANAGER)
     private readonly cacheManager: Cache,
   ) {}
@@ -109,7 +105,7 @@ export class UsersService {
       });
       if (categoryId) {
         contents = contents.filter(
-          (content) => content?.category?.id === categoryId,
+          (content) => content?.category.id === categoryId,
         );
       }
 
@@ -136,6 +132,34 @@ export class UsersService {
 
       return {
         favorites,
+      };
+    } catch (e) {
+      throw new HttpException(e.message, e.status);
+    }
+  }
+
+  async loadPersonalCollections(
+    user: User,
+    categoryId: number,
+  ): Promise<LoadPersonalCollectionsOutput> {
+    try {
+      let { collections } = await this.users.findOne({
+        where: { id: user.id },
+        relations: {
+          collections: {
+            category: true,
+            contents: true,
+          },
+        },
+      });
+      if (categoryId) {
+        collections = collections.filter(
+          (collection) => collection?.category.id === categoryId,
+        );
+      }
+
+      return {
+        collections,
       };
     } catch (e) {
       throw new HttpException(e.message, e.status);

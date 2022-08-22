@@ -10,6 +10,7 @@ import {
 import {
   ApiBearerAuth,
   ApiCreatedResponse,
+  ApiOkResponse,
   ApiOperation,
   ApiQuery,
   ApiTags,
@@ -18,6 +19,7 @@ import { AuthUser } from 'src/auth/auth-user.decorator';
 import { JwtAuthGuard } from 'src/auth/jwt/jwt.guard';
 import { EditProfileInput, EditProfileOutput } from './dtos/edit-profile.dto';
 import { LoadPersonalCategoriesOutput } from './dtos/load-personal-categories.dto';
+import { LoadPersonalCollectionsOutput } from './dtos/load-personal-collections.dto';
 import {
   LoadFavoritesOutput,
   LoadPersonalContentsOutput,
@@ -66,7 +68,7 @@ export class UsersController {
   }
 
   @ApiOperation({ summary: '프로필 조회', description: '프로필 조회 메서드' })
-  @ApiCreatedResponse({
+  @ApiOkResponse({
     description: '현재 유저의 정보를 반환한다.',
     type: meOutput,
   })
@@ -87,7 +89,7 @@ export class UsersController {
     type: Number,
     required: false,
   })
-  @ApiCreatedResponse({
+  @ApiOkResponse({
     description:
       '아티클 목록을 반환한다. 만약 categoryId가 없을 시 전부를 반환한다.',
     type: LoadPersonalContentsOutput,
@@ -106,7 +108,7 @@ export class UsersController {
     summary: '자신의 즐겨찾기 조회',
     description: '자신의 즐겨찾기를 조회하는 메서드',
   })
-  @ApiCreatedResponse({
+  @ApiOkResponse({
     description: '즐겨찾기 목록을 반환한다.',
     type: LoadFavoritesOutput,
   })
@@ -118,10 +120,35 @@ export class UsersController {
   }
 
   @ApiOperation({
+    summary: '자신의 콜렉션 조회',
+    description: '자신의 콜렉션을 조회하는 메서드',
+  })
+  @ApiQuery({
+    name: 'categoryId',
+    description: '카테고리 아이디(기입하지 않을 시 전체를 불러온다.)',
+    type: Number,
+    required: false,
+  })
+  @ApiOkResponse({
+    description:
+      '콜렉션 목록을 반환한다. 만약 categoryId가 없을 시 전부를 반환한다.',
+    type: LoadPersonalCollectionsOutput,
+  })
+  @ApiBearerAuth('Authorization')
+  @UseGuards(JwtAuthGuard)
+  @Get('load-collections')
+  async loadPersonalCollections(
+    @AuthUser() user: User,
+    @Query('categoryId') categoryId: number,
+  ): Promise<LoadPersonalCollectionsOutput> {
+    return await this.usersService.loadPersonalCollections(user, +categoryId);
+  }
+
+  @ApiOperation({
     summary: '자신의 카테고리 목록 조회',
     description: '자신의 카테고리 목록을 조회하는 메서드',
   })
-  @ApiCreatedResponse({
+  @ApiOkResponse({
     description: '카테고리 목록을 반환한다.',
     type: LoadPersonalCategoriesOutput,
   })

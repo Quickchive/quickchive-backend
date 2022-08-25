@@ -181,7 +181,7 @@ export class AuthService {
     const user = await this.users.findOneBy({ email });
     let newUser: User = null;
     if (user && user.verified === true) {
-      if (user.name === 'unverified') {
+      if (!user.name) {
         throw new ConflictException(
           'User is already verified now please register',
         );
@@ -194,8 +194,7 @@ export class AuthService {
       newUser = await this.users.save(
         this.users.create({
           email,
-          name: 'unverified',
-          password: 'unverified',
+          password: 'unverified0',
         }),
       );
     }

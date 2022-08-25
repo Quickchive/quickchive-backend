@@ -9,7 +9,7 @@ import {
   OneToMany,
 } from 'typeorm';
 import * as bcrypt from 'bcrypt';
-import { IsBoolean, IsEmail, IsEnum, IsString } from 'class-validator';
+import { IsBoolean, IsEmail, IsEnum, IsString, Matches } from 'class-validator';
 import { CoreEntity } from 'src/common/entities/core.entity';
 import { ApiProperty } from '@nestjs/swagger';
 import { Content } from 'src/contents/entities/content.entity';
@@ -37,6 +37,9 @@ export class User extends CoreEntity {
   @ApiProperty({ example: 'passw0rd', description: 'User Password' })
   @Column({ select: false })
   @IsString()
+  @Matches(/^(?=.*\d)[A-Za-z\d@$!%*?&]{8,}$/, {
+    message: 'Password must be at least 8 characters long, contain 1 number',
+  })
   password: string;
 
   @ApiProperty({

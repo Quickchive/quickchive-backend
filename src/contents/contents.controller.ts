@@ -25,6 +25,7 @@ import {
 import {
   AddContentBodyDto,
   AddContentOutput,
+  AddMultipleContentsBodyDto,
   DeleteContentOutput,
   toggleFavoriteOutput,
   UpdateContentBodyDto,
@@ -33,19 +34,19 @@ import {
 
 @Controller('contents')
 @ApiTags('Contents')
+@ApiBearerAuth('Authorization')
+@UseGuards(JwtAuthGuard)
 export class ContentsController {
   constructor(private readonly contentsService: ContentsService) {}
 
   @ApiOperation({
-    summary: '아티클 추가',
-    description: '아티클을 추가하는 메서드',
+    summary: '콘텐츠 추가',
+    description: '콘텐츠을 추가하는 메서드',
   })
   @ApiCreatedResponse({
-    description: '아티클 추가 성공 여부를 반환한다.',
+    description: '콘텐츠 추가 성공 여부를 반환한다.',
     type: AddContentOutput,
   })
-  @ApiBearerAuth('Authorization')
-  @UseGuards(JwtAuthGuard)
   @Post('add')
   async addContent(
     @AuthUser() user: User,
@@ -55,15 +56,29 @@ export class ContentsController {
   }
 
   @ApiOperation({
-    summary: '아티클 정보 수정',
-    description: '아티클을 수정하는 메서드',
+    summary: '다수의 콘텐츠 추가',
+    description: `다수의 콘텐츠를 추가하는 메서드\n단, 각각의 링크는 http 또는 https로 시작해야만 하며, url의 끝에는 반드시 공백이 존재해야한다.`,
   })
   @ApiCreatedResponse({
-    description: '아티클 수정 성공 여부를 반환한다.',
+    description: '콘텐츠 추가 성공 여부를 반환한다.',
+    type: AddContentOutput,
+  })
+  @Post('addMultiple')
+  async addMultipleContents(
+    @AuthUser() user: User,
+    @Body() contentLinks: AddMultipleContentsBodyDto,
+  ): Promise<AddContentOutput> {
+    return await this.contentsService.addMultipleContents(user, contentLinks);
+  }
+
+  @ApiOperation({
+    summary: '콘텐츠 정보 수정',
+    description: '콘텐츠을 수정하는 메서드',
+  })
+  @ApiCreatedResponse({
+    description: '콘텐츠 수정 성공 여부를 반환한다.',
     type: UpdateContentOutput,
   })
-  @ApiBearerAuth('Authorization')
-  @UseGuards(JwtAuthGuard)
   @Post('update')
   async updateContent(
     @AuthUser() user: User,
@@ -80,8 +95,6 @@ export class ContentsController {
     description: '즐겨찾기 등록 및 해제 성공 여부를 반환한다.',
     type: toggleFavoriteOutput,
   })
-  @ApiBearerAuth('Authorization')
-  @UseGuards(JwtAuthGuard)
   @Patch('favorite/:contentId')
   async toggleFavorite(
     @AuthUser() user: User,
@@ -91,15 +104,13 @@ export class ContentsController {
   }
 
   @ApiOperation({
-    summary: '아티클 정보 삭제',
-    description: '아티클을 삭제하는 메서드',
+    summary: '콘텐츠 정보 삭제',
+    description: '콘텐츠을 삭제하는 메서드',
   })
   @ApiCreatedResponse({
-    description: '아티클 삭제 성공 여부를 반환한다.',
+    description: '콘텐츠 삭제 성공 여부를 반환한다.',
     type: DeleteContentOutput,
   })
-  @ApiBearerAuth('Authorization')
-  @UseGuards(JwtAuthGuard)
   @Delete('delete/:contentId')
   async deleteContent(
     @AuthUser() user: User,
@@ -122,8 +133,6 @@ export class CategoryController {
     description: '카테고리 수정 성공 여부를 반환한다.',
     type: UpdateCategoryOutput,
   })
-  @ApiBearerAuth('Authorization')
-  @UseGuards(JwtAuthGuard)
   @Post('update')
   async updateCategory(
     @AuthUser() user: User,

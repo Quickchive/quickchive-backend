@@ -5,11 +5,12 @@ import {
   Injectable,
   NotFoundException,
 } from '@nestjs/common';
+import { InjectRepository } from '@nestjs/typeorm';
 import axios from 'axios';
 import * as cheerio from 'cheerio';
 import { User } from 'src/users/entities/user.entity';
 import { getOrCreateCategory, init } from 'src/utils';
-import { DataSource, EntityManager, QueryRunner } from 'typeorm';
+import { DataSource, EntityManager, QueryRunner, Repository } from 'typeorm';
 import {
   UpdateCategoryBodyDto,
   UpdateCategoryOutput,
@@ -17,6 +18,7 @@ import {
 import {
   AddContentBodyDto,
   AddContentOutput,
+  AddMultipleContentsBodyDto,
   DeleteContentOutput,
   toggleFavoriteOutput,
   UpdateContentBodyDto,
@@ -26,35 +28,41 @@ import { Content } from './entities/content.entity';
 
 @Injectable()
 export class ContentsService {
-  constructor(private readonly dataSource: DataSource) {}
+  constructor(
+    private readonly dataSource: DataSource,
+    @InjectRepository(User)
+    private readonly users: Repository<User>,
+  ) {}
 
   async addContent(
     user: User,
-    {
-      link,
-      title,
-      description,
-      comment,
-      deadline,
-      categoryName,
-    }: AddContentBodyDto,
+    { link, title, comment, deadline, categoryName }: AddContentBodyDto,
   ): Promise<AddContentOutput> {
     const queryRunner = await init(this.dataSource);
     const queryRunnerManager: EntityManager = await queryRunner.manager;
     try {
-      const userInDb = await queryRunnerManager.findOne(User, {
+      const userInDb = await this.users.findOne({
         where: { id: user.id },
         relations: {
           contents: true,
           categories: true,
         },
       });
+
+      // await queryRunnerManager.findOne(User, {
+      //   where: { id: user.id },
+      //   relations: {
+      //     contents: true,
+      //     categories: true,
+      //   },
+      // });
       if (!userInDb) {
         throw new NotFoundException('User not found');
       }
 
       // get og tag info from link
       let coverImg: string = '';
+      let description: string = '';
       await axios
         .get(link)
         .then((res) => {
@@ -65,7 +73,10 @@ export class ContentsService {
             const data = res.data;
             if (typeof data === 'string') {
               const $ = cheerio.load(data);
-              title = $('title').text() !== '' ? $('title').text() : 'Untitled';
+              if (!title) {
+                title =
+                  $('title').text() !== '' ? $('title').text() : 'Untitled';
+              }
               $('meta').each((i, el) => {
                 const meta = $(el);
                 if (meta.attr('property') === 'og:image') {
@@ -81,7 +92,9 @@ export class ContentsService {
         .catch((e) => {
           console.log(e.message);
           // Control unreachable link
-          title = link.split('/').at(-1);
+          if (!title) {
+            title = link.split('/').at(-1);
+          }
         });
 
       // Get or create category
@@ -113,6 +126,7 @@ export class ContentsService {
       await queryRunnerManager.save(newContent);
       userInDb.contents.push(newContent);
       categoryName ? userInDb.categories.push(category) : null;
+      console.log(userInDb);
       await queryRunnerManager.save(userInDb);
 
       await queryRunner.commitTransaction();
@@ -125,15 +139,48 @@ export class ContentsService {
     }
   }
 
+  async addMultipleContents(
+    user: User,
+    { contentLinks }: AddMultipleContentsBodyDto,
+  ): Promise<AddContentOutput> {
+    try {
+      contentLinks.split('http').forEach(async (link) => {
+        if (link.startsWith('s://') || link.startsWith('://')) {
+          console.log(link.split(' ')[0]);
+          console.log(user);
+          await this.addContent(user, { link: 'http' + link.split(' ')[0] });
+          console.log(
+            await this.users.findOne({
+              where: { id: user.id },
+              relations: {
+                contents: true,
+              },
+            }),
+          );
+        }
+      });
+      return;
+    } catch (e) {
+      console.log(e);
+      throw new HttpException(e.message, e.status);
+    }
+  }
+
   async updateContent(
     user: User,
-    updateContentBody: UpdateContentBodyDto,
+    {
+      id,
+      link,
+      title,
+      description,
+      comment,
+      deadline,
+      categoryName,
+    }: UpdateContentBodyDto,
   ): Promise<AddContentOutput> {
     const queryRunner = await init(this.dataSource);
     const queryRunnerManager: EntityManager = await queryRunner.manager;
 
-    const { id, link, title, description, comment, deadline, categoryName } =
-      updateContentBody;
     const newContentObj = { link, title, description, comment, deadline };
     try {
       const userInDb = await queryRunnerManager.findOne(User, {

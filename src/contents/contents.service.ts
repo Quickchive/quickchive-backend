@@ -9,8 +9,8 @@ import { InjectRepository } from '@nestjs/typeorm';
 import axios from 'axios';
 import * as cheerio from 'cheerio';
 import { User } from 'src/users/entities/user.entity';
-import { getOrCreateCategory, init } from 'src/utils';
-import { DataSource, EntityManager, QueryRunner, Repository } from 'typeorm';
+import { getLinkInfo, getOrCreateCategory, init } from 'src/utils';
+import { DataSource, EntityManager, Repository } from 'typeorm';
 import {
   UpdateCategoryBodyDto,
   UpdateCategoryOutput,
@@ -44,58 +44,23 @@ export class ContentsService {
       const userInDb = await this.users.findOne({
         where: { id: user.id },
         relations: {
-          contents: true,
+          contents: {
+            category: true,
+          },
           categories: true,
         },
       });
-
-      // await queryRunnerManager.findOne(User, {
-      //   where: { id: user.id },
-      //   relations: {
-      //     contents: true,
-      //     categories: true,
-      //   },
-      // });
       if (!userInDb) {
         throw new NotFoundException('User not found');
       }
 
       // get og tag info from link
-      let coverImg: string = '';
-      let description: string = '';
-      await axios
-        .get(link)
-        .then((res) => {
-          if (res.status !== 200) {
-            console.log(res.status);
-            throw new BadRequestException('잘못된 링크입니다.');
-          } else {
-            const data = res.data;
-            if (typeof data === 'string') {
-              const $ = cheerio.load(data);
-              if (!title) {
-                title =
-                  $('title').text() !== '' ? $('title').text() : 'Untitled';
-              }
-              $('meta').each((i, el) => {
-                const meta = $(el);
-                if (meta.attr('property') === 'og:image') {
-                  coverImg = meta.attr('content');
-                }
-                if (meta.attr('property') === 'og:description') {
-                  description = meta.attr('content');
-                }
-              });
-            }
-          }
-        })
-        .catch((e) => {
-          console.log(e.message);
-          // Control unreachable link
-          if (!title) {
-            title = link.split('/').at(-1);
-          }
-        });
+      const {
+        title: linkTitle,
+        description,
+        coverImg,
+      } = await getLinkInfo(link);
+      title = title || linkTitle;
 
       // Get or create category
       const category = categoryName
@@ -126,7 +91,6 @@ export class ContentsService {
       await queryRunnerManager.save(newContent);
       userInDb.contents.push(newContent);
       categoryName ? userInDb.categories.push(category) : null;
-      console.log(userInDb);
       await queryRunnerManager.save(userInDb);
 
       await queryRunner.commitTransaction();
@@ -143,22 +107,49 @@ export class ContentsService {
     user: User,
     { contentLinks }: AddMultipleContentsBodyDto,
   ): Promise<AddContentOutput> {
+    const queryRunner = await init(this.dataSource);
+    const queryRunnerManager: EntityManager = await queryRunner.manager;
     try {
+      const userInDb = await queryRunnerManager.findOne(User, {
+        where: { id: user.id },
+        relations: {
+          contents: true,
+          categories: true,
+        },
+      });
+
       contentLinks.split('http').forEach(async (link) => {
         if (link.startsWith('s://') || link.startsWith('://')) {
-          console.log(link.split(' ')[0]);
-          console.log(user);
-          await this.addContent(user, { link: 'http' + link.split(' ')[0] });
-          console.log(
-            await this.users.findOne({
-              where: { id: user.id },
-              relations: {
-                contents: true,
-              },
-            }),
+          const { title, description, coverImg } = await getLinkInfo(
+            'http' + link.split(' ')[0],
           );
+
+          // Check if content already exists in same category
+          if (
+            userInDb.contents.filter(
+              (content) => content.link === link && !content.category,
+            )[0]
+          ) {
+            throw new HttpException(
+              'Content with that link already exists in same category.',
+              409,
+            );
+          }
+
+          const newContent = queryRunnerManager.create(Content, {
+            link,
+            title,
+            coverImg,
+            description,
+          });
+          await queryRunnerManager.save(newContent);
+          userInDb.contents.push(newContent);
+          await queryRunnerManager.save(userInDb);
         }
       });
+
+      await queryRunner.commitTransaction();
+
       return;
     } catch (e) {
       console.log(e);

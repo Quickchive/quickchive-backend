@@ -120,9 +120,8 @@ export class ContentsService {
 
       contentLinks.split('http').forEach(async (link) => {
         if (link.startsWith('s://') || link.startsWith('://')) {
-          const { title, description, coverImg } = await getLinkInfo(
-            'http' + link.split(' ')[0],
-          );
+          link = 'http' + link.split(' ')[0];
+          const { title, description, coverImg } = await getLinkInfo(link);
 
           // Check if content already exists in same category
           if (
@@ -130,9 +129,8 @@ export class ContentsService {
               (content) => content.link === link && !content.category,
             )[0]
           ) {
-            throw new HttpException(
+            throw new ConflictException(
               'Content with that link already exists in same category.',
-              409,
             );
           }
 

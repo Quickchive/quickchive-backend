@@ -10,7 +10,9 @@ import {
 } from '@nestjs/common';
 import {
   ApiBearerAuth,
+  ApiConflictResponse,
   ApiCreatedResponse,
+  ApiOkResponse,
   ApiOperation,
   ApiTags,
 } from '@nestjs/swagger';
@@ -63,6 +65,9 @@ export class ContentsController {
     description: '콘텐츠 추가 성공 여부를 반환한다.',
     type: AddContentOutput,
   })
+  @ApiConflictResponse({
+    description: '같은 카테고리 내에 동일한 링크의 콘텐츠가 존재할 경우',
+  })
   @Post('addMultiple')
   async addMultipleContents(
     @AuthUser() user: User,
@@ -91,7 +96,7 @@ export class ContentsController {
     summary: '즐겨찾기 등록 및 해제',
     description: '즐겨찾기에 등록 및 해제하는 메서드',
   })
-  @ApiCreatedResponse({
+  @ApiOkResponse({
     description: '즐겨찾기 등록 및 해제 성공 여부를 반환한다.',
     type: toggleFavoriteOutput,
   })
@@ -107,7 +112,7 @@ export class ContentsController {
     summary: '콘텐츠 정보 삭제',
     description: '콘텐츠을 삭제하는 메서드',
   })
-  @ApiCreatedResponse({
+  @ApiOkResponse({
     description: '콘텐츠 삭제 성공 여부를 반환한다.',
     type: DeleteContentOutput,
   })

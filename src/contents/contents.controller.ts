@@ -21,6 +21,8 @@ import { JwtAuthGuard } from 'src/auth/jwt/jwt.guard';
 import { User } from 'src/users/entities/user.entity';
 import { CategoryService, ContentsService } from './contents.service';
 import {
+  AddCategoryBodyDto,
+  AddCategoryOutput,
   UpdateCategoryBodyDto,
   UpdateCategoryOutput,
 } from './dtos/category.dto';
@@ -129,6 +131,25 @@ export class ContentsController {
 @ApiTags('Category')
 export class CategoryController {
   constructor(private readonly categoryService: CategoryService) {}
+
+  @ApiOperation({
+    summary: '카테고리 추가',
+    description: '카테고리를 추가하는 메서드',
+  })
+  @ApiCreatedResponse({
+    description: '카테고리 추가 성공 여부를 반환한다.',
+    type: AddCategoryOutput,
+  })
+  @ApiConflictResponse({
+    description: '동일한 이름의 카테고리가 존재할 경우',
+  })
+  @Post('add')
+  async addCategory(
+    @AuthUser() user: User,
+    @Body() { categoryName }: AddCategoryBodyDto,
+  ): Promise<AddCategoryOutput> {
+    return await this.categoryService.addCategory(user, categoryName);
+  }
 
   @ApiOperation({
     summary: '카테고리 수정',

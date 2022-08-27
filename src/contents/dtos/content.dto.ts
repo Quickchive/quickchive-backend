@@ -8,10 +8,10 @@ import { CoreOutput } from 'src/common/dtos/output.dto';
 import { Content } from '../entities/content.entity';
 
 class ContentBodyExceptLink extends PartialType(
-  PickType(Content, ['title', 'description', 'comment', 'deadline']),
+  PickType(Content, ['title', 'comment', 'deadline']),
 ) {
   @ApiProperty({ description: 'Category Name', required: false })
-  categoryName: string;
+  categoryName?: string;
 }
 class ContentBodyWithLinkOnly extends PickType(Content, ['link']) {}
 
@@ -21,11 +21,23 @@ export class AddContentBodyDto extends IntersectionType(
 ) {}
 export class AddContentOutput extends CoreOutput {}
 
+export class AddMultipleContentsBodyDto {
+  @ApiProperty({
+    description: 'Content links',
+    required: true,
+    example: `https://www.naver.com/ https://www.google.com/`,
+  })
+  contentLinks: string;
+}
+
 class ContentBody extends PartialType(AddContentBodyDto) {}
-class ContentId extends PickType(Content, ['id']) {}
+class ContentIdAndDescription extends PickType(Content, [
+  'id',
+  'description',
+]) {}
 
 export class UpdateContentBodyDto extends IntersectionType(
-  ContentId,
+  ContentIdAndDescription,
   ContentBody,
 ) {}
 export class UpdateContentOutput extends CoreOutput {}

@@ -1,17 +1,15 @@
 import {
-  BadRequestException,
   ConflictException,
   HttpException,
   Injectable,
   NotFoundException,
 } from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
-import axios from 'axios';
-import * as cheerio from 'cheerio';
 import { User } from 'src/users/entities/user.entity';
 import { getLinkInfo, getOrCreateCategory, init } from 'src/utils';
 import { DataSource, EntityManager, Repository } from 'typeorm';
 import {
+  AddCategoryOutput,
   UpdateCategoryBodyDto,
   UpdateCategoryOutput,
 } from './dtos/category.dto';
@@ -337,6 +335,43 @@ export class ContentsService {
 @Injectable()
 export class CategoryService {
   constructor(private readonly dataSource: DataSource) {}
+
+  async addCategory(
+    user: User,
+    categoryName: string,
+  ): Promise<AddCategoryOutput> {
+    const queryRunner = await init(this.dataSource);
+    const queryRunnerManager: EntityManager = await queryRunner.manager;
+    try {
+      const userInDb = await queryRunnerManager.findOne(User, {
+        where: { id: user.id },
+        relations: {
+          categories: true,
+        },
+      });
+      if (!userInDb) {
+        throw new NotFoundException('User not found');
+      }
+
+      const category = await getOrCreateCategory(
+        categoryName,
+        queryRunnerManager,
+      );
+      if (userInDb.categories.includes(category)) {
+        throw new ConflictException('Category already exists');
+      }
+      userInDb.categories.push(category);
+      await queryRunnerManager.save(userInDb);
+
+      await queryRunner.commitTransaction();
+
+      return;
+    } catch (e) {
+      await queryRunner.rollbackTransaction();
+
+      throw new HttpException(e.message, e.status);
+    }
+  }
 
   async updateCategory(
     user: User,

@@ -63,7 +63,7 @@ import { NestedContent } from './collections/entities/nested-content.entity';
             password: process.env.DB_PW,
             database: process.env.DB_NAME,
           }),
-      synchronize: true, //process.env.NODE_ENV !== 'prod',
+      synchronize: process.env.NODE_ENV !== 'prod',
       logging:
         process.env.NODE_ENV !== 'prod' && process.env.NODE_ENV !== 'test',
       entities: [User, Content, Category, Collection, NestedContent],

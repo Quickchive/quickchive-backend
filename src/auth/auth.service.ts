@@ -74,7 +74,7 @@ export class AuthService {
         refresh_token: refreshToken,
       };
     } catch (e) {
-      throw new HttpException(e.message, e.status);
+      throw new HttpException(e.message, e.status ? e.status : 500);
     }
   }
 
@@ -99,7 +99,7 @@ export class AuthService {
       }
     } catch (e) {
       console.log(e);
-      throw new HttpException(e.message, e.status);
+      throw new HttpException(e.message, e.status ? e.status : 500);
     }
   }
 
@@ -274,7 +274,7 @@ export class AuthService {
         throw new BadRequestException('Wrong Password');
       }
     } catch (e) {
-      throw new HttpException(e.message, e.status);
+      throw new HttpException(e.message, e.status ? e.status : 500);
     }
   }
 
@@ -481,7 +481,7 @@ export class OauthService {
       }
     } catch (e) {
       console.log(e);
-      throw new HttpException(e.message, e.status);
+      throw new HttpException(e.message, e.status ? e.status : 500);
     }
   }
 
@@ -515,7 +515,7 @@ export class OauthService {
       }
     } catch (e) {
       console.log(e);
-      throw new HttpException(e.message, e.status);
+      throw new HttpException(e.message, e.status ? e.status : 500);
     }
   }
 

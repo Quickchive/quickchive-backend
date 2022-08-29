@@ -365,8 +365,9 @@ export class CategoryService {
       return;
     } catch (e) {
       await queryRunner.rollbackTransaction();
+      console.log(e);
 
-      throw new HttpException(e.message, e.status);
+      throw new HttpException(e.message, e.status ? e.status : 500);
     }
   }
 

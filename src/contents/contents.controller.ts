@@ -129,6 +129,8 @@ export class ContentsController {
 
 @Controller('category')
 @ApiTags('Category')
+@ApiBearerAuth('Authorization')
+@UseGuards(JwtAuthGuard)
 export class CategoryController {
   constructor(private readonly categoryService: CategoryService) {}
 

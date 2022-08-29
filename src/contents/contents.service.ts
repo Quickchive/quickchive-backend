@@ -116,32 +116,29 @@ export class ContentsService {
         },
       });
 
-      contentLinks.split('http').forEach(async (link) => {
-        if (link.startsWith('s://') || link.startsWith('://')) {
-          link = 'http' + link.split(' ')[0];
-          const { title, description, coverImg } = await getLinkInfo(link);
+      contentLinks.forEach(async (link) => {
+        const { title, description, coverImg } = await getLinkInfo(link);
 
-          // Check if content already exists in same category
-          if (
-            userInDb.contents.filter(
-              (content) => content.link === link && !content.category,
-            )[0]
-          ) {
-            throw new ConflictException(
-              'Content with that link already exists in same category.',
-            );
-          }
-
-          const newContent = queryRunnerManager.create(Content, {
-            link,
-            title,
-            coverImg,
-            description,
-          });
-          await queryRunnerManager.save(newContent);
-          userInDb.contents.push(newContent);
-          await queryRunnerManager.save(userInDb);
+        // Check if content already exists in same category
+        if (
+          userInDb.contents.filter(
+            (content) => content.link === link && !content.category,
+          )[0]
+        ) {
+          throw new ConflictException(
+            'Content with that link already exists in same category.',
+          );
         }
+
+        const newContent = queryRunnerManager.create(Content, {
+          link,
+          title,
+          coverImg,
+          description,
+        });
+        await queryRunnerManager.save(newContent);
+        userInDb.contents.push(newContent);
+        await queryRunnerManager.save(userInDb);
       });
 
       await queryRunner.commitTransaction();

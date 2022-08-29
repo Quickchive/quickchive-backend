@@ -25,9 +25,10 @@ export class AddMultipleContentsBodyDto {
   @ApiProperty({
     description: 'Content links',
     required: true,
-    example: `https://www.naver.com/ https://www.google.com/`,
+    example: `["https://www.naver.com/", "https://www.google.com/"]`,
+    isArray: true,
   })
-  contentLinks: string;
+  contentLinks: string[];
 }
 
 class ContentBody extends PartialType(AddContentBodyDto) {}

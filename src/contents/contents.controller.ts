@@ -61,7 +61,7 @@ export class ContentsController {
 
   @ApiOperation({
     summary: '다수의 콘텐츠 추가',
-    description: `다수의 콘텐츠를 추가하는 메서드\n단, 각각의 링크는 http 또는 https로 시작해야만 하며, url의 끝에는 반드시 공백이 존재해야한다.`,
+    description: `다수의 콘텐츠를 추가하는 메서드`,
   })
   @ApiCreatedResponse({
     description: '콘텐츠 추가 성공 여부를 반환한다.',

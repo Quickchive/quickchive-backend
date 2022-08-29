@@ -98,7 +98,7 @@ export class ContentsService {
     } catch (e) {
       await queryRunner.rollbackTransaction();
 
-      throw new HttpException(e.message, e.status);
+      throw new HttpException(e.message, e.status ? e.status : 500);
     }
   }
 
@@ -117,37 +117,39 @@ export class ContentsService {
         },
       });
 
-      contentLinks.forEach(async (link) => {
-        const { title, description, coverImg } = await getLinkInfo(link);
+      if (contentLinks.length > 0) {
+        contentLinks.forEach(async (link) => {
+          const { title, description, coverImg } = await getLinkInfo(link);
 
-        // Check if content already exists in same category
-        if (
-          userInDb.contents.filter(
-            (content) => content.link === link && !content.category,
-          )[0]
-        ) {
-          throw new ConflictException(
-            'Content with that link already exists in same category.',
-          );
-        }
+          // Check if content already exists in same category
+          if (
+            userInDb.contents.filter(
+              (content) => content.link === link && !content.category,
+            )[0]
+          ) {
+            throw new ConflictException(
+              'Content with that link already exists in same category.',
+            );
+          }
 
-        const newContent = queryRunnerManager.create(Content, {
-          link,
-          title,
-          coverImg,
-          description,
+          const newContent = queryRunnerManager.create(Content, {
+            link,
+            title,
+            coverImg,
+            description,
+          });
+          await queryRunnerManager.save(newContent);
+          userInDb.contents.push(newContent);
+          await queryRunnerManager.save(userInDb);
         });
-        await queryRunnerManager.save(newContent);
-        userInDb.contents.push(newContent);
-        await queryRunnerManager.save(userInDb);
-      });
 
-      await queryRunner.commitTransaction();
+        await queryRunner.commitTransaction();
+      }
 
       return;
     } catch (e) {
       console.log(e);
-      throw new HttpException(e.message, e.status);
+      throw new HttpException(e.message, e.status ? e.status : 500);
     }
   }
 
@@ -234,7 +236,7 @@ export class ContentsService {
       await queryRunner.rollbackTransaction();
 
       console.log(e);
-      throw new HttpException(e.message, e.status);
+      throw new HttpException(e.message, e.status ? e.status : 500);
     }
   }
 
@@ -271,7 +273,7 @@ export class ContentsService {
     } catch (e) {
       await queryRunner.rollbackTransaction();
 
-      throw new HttpException(e.message, e.status);
+      throw new HttpException(e.message, e.status ? e.status : 500);
     }
   }
 
@@ -325,7 +327,7 @@ export class ContentsService {
     } catch (e) {
       await queryRunner.rollbackTransaction();
 
-      throw new HttpException(e.message, e.status);
+      throw new HttpException(e.message, e.status ? e.status : 500);
     }
   }
 }
@@ -429,7 +431,7 @@ export class CategoryService {
     } catch (e) {
       await queryRunner.rollbackTransaction();
 
-      throw new HttpException(e.message, e.status);
+      throw new HttpException(e.message, e.status ? e.status : 500);
     }
   }
 
@@ -478,7 +480,7 @@ export class CategoryService {
     } catch (e) {
       await queryRunner.rollbackTransaction();
 
-      throw new HttpException(e.message, e.status);
+      throw new HttpException(e.message, e.status ? e.status : 500);
     }
   }
 }

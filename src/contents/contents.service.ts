@@ -10,6 +10,7 @@ import { getLinkInfo, getOrCreateCategory, init } from 'src/utils';
 import { DataSource, EntityManager, Repository } from 'typeorm';
 import {
   AddCategoryOutput,
+  DeleteCategoryOutput,
   UpdateCategoryBodyDto,
   UpdateCategoryOutput,
 } from './dtos/category.dto';
@@ -420,6 +421,55 @@ export class CategoryService {
       userInDb.categories = userInDb.categories.filter(
         (category) => category.name !== originalName,
       );
+      await queryRunnerManager.save(userInDb);
+
+      await queryRunner.commitTransaction();
+
+      return;
+    } catch (e) {
+      await queryRunner.rollbackTransaction();
+
+      throw new HttpException(e.message, e.status);
+    }
+  }
+
+  async deleteCategory(
+    user: User,
+    categoryId: number,
+  ): Promise<DeleteCategoryOutput> {
+    const queryRunner = await init(this.dataSource);
+    const queryRunnerManager: EntityManager = await queryRunner.manager;
+    try {
+      const userInDb = await queryRunnerManager.findOne(User, {
+        where: { id: user.id },
+        relations: {
+          contents: {
+            category: true,
+          },
+          categories: true,
+        },
+      });
+      if (!userInDb) {
+        throw new NotFoundException('User not found');
+      }
+
+      const category = userInDb.categories.filter(
+        (category) => category.id === categoryId,
+      )[0];
+
+      if (!category) {
+        throw new NotFoundException('Category not found.');
+      }
+
+      userInDb.categories = userInDb.categories.filter(
+        (category) => category.id !== categoryId,
+      );
+      userInDb.contents.forEach((content) => {
+        if (content.category && content.category.id === categoryId) {
+          content.category = null;
+          queryRunnerManager.save(content);
+        }
+      });
       await queryRunnerManager.save(userInDb);
 
       await queryRunner.commitTransaction();

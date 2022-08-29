@@ -145,11 +145,15 @@ export class AuthService {
   async reissueToken({
     refresh_token: refreshToken,
   }: RefreshTokenDto): Promise<RefreshTokenOutput> {
-    // decoding refresh token
-    const decoded = this.jwtService.verify(refreshToken, {
-      secret: process.env.JWT_REFRESH_TOKEN_PRIVATE_KEY,
-    });
-
+    let decoded = null;
+    try {
+      // decoding refresh token
+      decoded = this.jwtService.verify(refreshToken, {
+        secret: process.env.JWT_REFRESH_TOKEN_PRIVATE_KEY,
+      });
+    } catch (e) {
+      throw new UnauthorizedException('Invalid refresh token');
+    }
     const refreshTokenInCache = await this.cacheManager.get(refreshToken);
 
     if (!refreshTokenInCache) {

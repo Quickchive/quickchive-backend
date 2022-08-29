@@ -35,7 +35,14 @@ export class ContentsService {
 
   async addContent(
     user: User,
-    { link, title, comment, deadline, categoryName }: AddContentBodyDto,
+    {
+      link,
+      title,
+      comment,
+      deadline,
+      favorite,
+      categoryName,
+    }: AddContentBodyDto,
   ): Promise<AddContentOutput> {
     const queryRunner = await init(this.dataSource);
     const queryRunnerManager: EntityManager = await queryRunner.manager;
@@ -72,9 +79,8 @@ export class ContentsService {
           (content) => content.link === link && content.category === category,
         )[0]
       ) {
-        throw new HttpException(
+        throw new ConflictException(
           'Content with that link already exists in same category.',
-          409,
         );
       }
 
@@ -86,6 +92,7 @@ export class ContentsService {
         comment,
         deadline,
         category,
+        ...(favorite && { favorite }),
       });
       await queryRunnerManager.save(newContent);
       userInDb.contents.push(newContent);
@@ -162,13 +169,21 @@ export class ContentsService {
       description,
       comment,
       deadline,
+      favorite,
       categoryName,
     }: UpdateContentBodyDto,
   ): Promise<AddContentOutput> {
     const queryRunner = await init(this.dataSource);
     const queryRunnerManager: EntityManager = await queryRunner.manager;
 
-    const newContentObj = { link, title, description, comment, deadline };
+    const newContentObj = {
+      link,
+      title,
+      description,
+      comment,
+      deadline,
+      favorite,
+    };
     try {
       const userInDb = await queryRunnerManager.findOne(User, {
         where: { id: user.id },

@@ -127,6 +127,9 @@ export class AuthController {
   @ApiNotFoundResponse({
     description: '존재하지 않는 refresh token이므로 재발행할 수 없다.',
   })
+  @ApiUnauthorizedResponse({
+    description: 'refresh token이 유효하지 않다.',
+  })
   @Post('reissue')
   async reissueToken(
     @Body() regenerateBody: RefreshTokenDto,

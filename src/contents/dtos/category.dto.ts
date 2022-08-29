@@ -17,3 +17,5 @@ export class UpdateCategoryBodyDto extends PickType(Category, ['name']) {
 }
 
 export class UpdateCategoryOutput extends CoreOutput {}
+
+export class DeleteCategoryOutput extends CoreOutput {}

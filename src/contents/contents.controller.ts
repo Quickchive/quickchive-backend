@@ -12,6 +12,7 @@ import {
   ApiBearerAuth,
   ApiConflictResponse,
   ApiCreatedResponse,
+  ApiNotFoundResponse,
   ApiOkResponse,
   ApiOperation,
   ApiTags,
@@ -23,6 +24,7 @@ import { CategoryService, ContentsService } from './contents.service';
 import {
   AddCategoryBodyDto,
   AddCategoryOutput,
+  DeleteCategoryOutput,
   UpdateCategoryBodyDto,
   UpdateCategoryOutput,
 } from './dtos/category.dto';
@@ -129,6 +131,8 @@ export class ContentsController {
 
 @Controller('category')
 @ApiTags('Category')
+@ApiBearerAuth('Authorization')
+@UseGuards(JwtAuthGuard)
 export class CategoryController {
   constructor(private readonly categoryService: CategoryService) {}
 
@@ -165,5 +169,24 @@ export class CategoryController {
     @Body() content: UpdateCategoryBodyDto,
   ): Promise<UpdateCategoryOutput> {
     return await this.categoryService.updateCategory(user, content);
+  }
+
+  @ApiOperation({
+    summary: '카테고리 삭제',
+    description: '카테고리를 삭제하는 메서드',
+  })
+  @ApiOkResponse({
+    description: '카테고리 삭제 성공 여부를 반환한다.',
+    type: DeleteCategoryOutput,
+  })
+  @ApiNotFoundResponse({
+    description: '존재하지 않는 카테고리를 삭제하려고 할 경우',
+  })
+  @Delete('delete/:categoryId')
+  async deleteCategory(
+    @AuthUser() user: User,
+    @Param('categoryId', new ParseIntPipe()) categoryId: number,
+  ): Promise<DeleteCategoryOutput> {
+    return await this.categoryService.deleteCategory(user, categoryId);
   }
 }

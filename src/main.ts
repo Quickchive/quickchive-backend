@@ -1,12 +1,25 @@
 import { ValidationPipe } from '@nestjs/common';
 import { NestFactory } from '@nestjs/core';
 import { DocumentBuilder, SwaggerModule } from '@nestjs/swagger';
+import * as winston from 'winston';
 import { AppModule } from './app.module';
 import { HttpExceptionFilter } from './common/exceptions/http-exception.filter';
 import { SuccessInterceptor } from './common/interceptors/success.interceptor';
 
+export const logger = winston.createLogger({
+  transports: [
+    new winston.transports.File({
+      filename: 'errors.log',
+      level: 'error',
+    }),
+  ],
+});
+
 async function bootstrap() {
-  const app = await NestFactory.create(AppModule, { cors: true });
+  const app = await NestFactory.create(AppModule, {
+    cors: true,
+    logger: logger,
+  });
   app.useGlobalInterceptors(new SuccessInterceptor());
   app.useGlobalFilters(new HttpExceptionFilter());
   app.useGlobalPipes(new ValidationPipe());

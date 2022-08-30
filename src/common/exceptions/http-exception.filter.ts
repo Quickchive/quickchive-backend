@@ -5,6 +5,7 @@ import {
   HttpException,
 } from '@nestjs/common';
 import { Request, Response } from 'express';
+import { logger } from 'src/main';
 
 @Catch(HttpException)
 export class HttpExceptionFilter implements ExceptionFilter {
@@ -19,6 +20,9 @@ export class HttpExceptionFilter implements ExceptionFilter {
       message: string | string[];
     };
 
+    logger.error(exception);
+
+    console.log(exception);
     typeof error === 'string'
       ? response.status(status).json({
           statusCode: status,

@@ -1,12 +1,28 @@
 import { ValidationPipe } from '@nestjs/common';
 import { NestFactory } from '@nestjs/core';
 import { DocumentBuilder, SwaggerModule } from '@nestjs/swagger';
+import * as winston from 'winston';
+import * as DailyRotateFile from 'winston-daily-rotate-file';
 import { AppModule } from './app.module';
 import { HttpExceptionFilter } from './common/exceptions/http-exception.filter';
 import { SuccessInterceptor } from './common/interceptors/success.interceptor';
 
+export const logger = winston.createLogger({
+  transports: [
+    new DailyRotateFile({
+      filename: 'errors-%DATE%.log',
+      datePattern: 'YYYY-MM-DD',
+      maxSize: '1024',
+      level: 'error',
+    }),
+  ],
+});
+
 async function bootstrap() {
-  const app = await NestFactory.create(AppModule, { cors: true });
+  const app = await NestFactory.create(AppModule, {
+    cors: true,
+    logger: logger,
+  });
   app.useGlobalInterceptors(new SuccessInterceptor());
   app.useGlobalFilters(new HttpExceptionFilter());
   app.useGlobalPipes(new ValidationPipe());

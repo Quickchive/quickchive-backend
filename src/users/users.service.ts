@@ -109,7 +109,7 @@ export class UsersService {
       });
       if (categoryId) {
         contents = contents.filter(
-          (content) => content?.category.id === categoryId,
+          (content) => content?.category?.id === categoryId,
         );
       }
 
@@ -158,7 +158,7 @@ export class UsersService {
       });
       if (categoryId) {
         collections = collections.filter(
-          (collection) => collection?.category.id === categoryId,
+          (collection) => collection?.category?.id === categoryId,
         );
       }
 

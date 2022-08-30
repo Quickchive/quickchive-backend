@@ -6,4 +6,3 @@ Dockerfile
 *.yml
 node_modules
 .github
-*.json

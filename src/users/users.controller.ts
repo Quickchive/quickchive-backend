@@ -125,7 +125,8 @@ export class UsersController {
   })
   @ApiQuery({
     name: 'categoryId',
-    description: '카테고리 아이디(기입하지 않을 시 전체를 불러온다.)',
+    description: `카테고리 아이디 만약 categoryId가 없을 시 전부를 반환한다.
+    (categoryId가 -1인 경우 카테고리가 존재하지 않는 것들만 반환한다.)`,
     type: Number,
     required: false,
   })

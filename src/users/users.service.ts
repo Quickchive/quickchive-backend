@@ -161,9 +161,15 @@ export class UsersService {
         },
       });
       if (categoryId) {
-        collections = collections.filter(
-          (collection) => collection?.category?.id === categoryId,
-        );
+        if (categoryId === -1) {
+          collections = collections.filter(
+            (collection) => !collection.category,
+          );
+        } else {
+          collections = collections.filter(
+            (collection) => collection?.category?.id === categoryId,
+          );
+        }
       }
 
       return {

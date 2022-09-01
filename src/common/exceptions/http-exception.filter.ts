@@ -20,7 +20,7 @@ export class HttpExceptionFilter implements ExceptionFilter {
       message: string | string[];
     };
 
-    logger.error(exception);
+    logger.error({ time: new Date(), ...exception });
 
     console.log(exception);
     typeof error === 'string'

@@ -108,9 +108,13 @@ export class UsersService {
         },
       });
       if (categoryId) {
-        contents = contents.filter(
-          (content) => content?.category?.id === categoryId,
-        );
+        if (categoryId === -1) {
+          contents = contents.filter((content) => !content.category);
+        } else {
+          contents = contents.filter(
+            (content) => content?.category?.id === categoryId,
+          );
+        }
       }
 
       return {
@@ -157,9 +161,15 @@ export class UsersService {
         },
       });
       if (categoryId) {
-        collections = collections.filter(
-          (collection) => collection?.category?.id === categoryId,
-        );
+        if (categoryId === -1) {
+          collections = collections.filter(
+            (collection) => !collection.category,
+          );
+        } else {
+          collections = collections.filter(
+            (collection) => collection?.category?.id === categoryId,
+          );
+        }
       }
 
       return {

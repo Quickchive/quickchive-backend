@@ -26,6 +26,7 @@ async function bootstrap() {
   app.useGlobalInterceptors(new SuccessInterceptor());
   app.useGlobalFilters(new HttpExceptionFilter());
   app.useGlobalPipes(new ValidationPipe());
+  app.getHttpServer().setTimeout(20000);
   app.setGlobalPrefix('api');
 
   const config = new DocumentBuilder()

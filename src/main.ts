@@ -15,6 +15,12 @@ export const logger = winston.createLogger({
       maxSize: '1024',
       level: 'error',
     }),
+    new DailyRotateFile({
+      filename: '%DATE%.log',
+      datePattern: 'YYYY-MM-DD',
+      maxSize: '1024',
+      level: 'info',
+    }),
   ],
 });
 

@@ -224,7 +224,7 @@ export class ContentsService {
         category = await getOrCreateCategory(categoryName, queryRunnerManager);
         if (!userInDb.categories.includes(category)) {
           userInDb.categories.push(category);
-          queryRunnerManager.save(userInDb);
+          await queryRunnerManager.save(userInDb);
         }
 
         // // Update user categories
@@ -302,9 +302,7 @@ export class ContentsService {
       const userInDb = await queryRunnerManager.findOne(User, {
         where: { id: user.id },
         relations: {
-          contents: {
-            category: true,
-          },
+          contents: true,
           categories: true,
         },
       });

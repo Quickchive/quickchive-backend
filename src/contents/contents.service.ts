@@ -213,9 +213,8 @@ export class ContentsService {
           contentInFilter?.category?.name === categoryName,
       )[0];
       if (contentThatSameLinkAndCategory) {
-        throw new HttpException(
+        throw new ConflictException(
           'Content with that link already exists in same category.',
-          409,
         );
       }
 
@@ -223,21 +222,22 @@ export class ContentsService {
       let category: Category = null;
       if (categoryName) {
         category = await getOrCreateCategory(categoryName, queryRunnerManager);
-        userInDb.categories.push(category);
-
-        // Update user categories
-        if (content.category) {
-          const userCurrentCategories = userInDb.categories.filter(
-            (category) => category.name === content.category.name,
-          );
-          if (userCurrentCategories.length === 1) {
-            userInDb.categories = userInDb.categories.filter(
-              (category) => category.name !== content.category.name,
-            );
-          }
+        if (!userInDb.categories.includes(category)) {
+          userInDb.categories.push(category);
+          await queryRunnerManager.save(userInDb);
         }
 
-        queryRunnerManager.save(userInDb);
+        // // Update user categories
+        // if (content.category) {
+        //   const userCurrentCategories = userInDb.categories.filter(
+        //     (category) => category.name === content.category.name,
+        //   );
+        //   if (userCurrentCategories.length === 1) {
+        //     userInDb.categories = userInDb.categories.filter(
+        //       (category) => category.name !== content.category.name,
+        //     );
+        //   }
+        // }
       }
 
       queryRunnerManager.save(Content, [
@@ -302,9 +302,7 @@ export class ContentsService {
       const userInDb = await queryRunnerManager.findOne(User, {
         where: { id: user.id },
         relations: {
-          contents: {
-            category: true,
-          },
+          contents: true,
           categories: true,
         },
       });
@@ -320,18 +318,18 @@ export class ContentsService {
         throw new NotFoundException('Content not found.');
       }
 
-      // Update user categories
-      if (content.category) {
-        const userCurrentCategories = userInDb.categories.filter(
-          (category) => category.name === content.category.name,
-        );
-        if (userCurrentCategories.length === 1) {
-          userInDb.categories = userInDb.categories.filter(
-            (category) => category.name !== content.category.name,
-          );
-        }
-        queryRunnerManager.save(userInDb);
-      }
+      // // Update user categories
+      // if (content.category) {
+      //   const userCurrentCategories = userInDb.categories.filter(
+      //     (category) => category.name === content.category.name,
+      //   );
+      //   if (userCurrentCategories.length === 1) {
+      //     userInDb.categories = userInDb.categories.filter(
+      //       (category) => category.name !== content.category.name,
+      //     );
+      //   }
+      //   queryRunnerManager.save(userInDb);
+      // }
 
       // delete content
       queryRunnerManager.delete(Content, content.id);

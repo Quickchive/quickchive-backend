@@ -152,21 +152,22 @@ export class CollectionsService {
       let category: Category = null;
       if (categoryName) {
         category = await getOrCreateCategory(categoryName, queryRunnerManager);
-        userInDb.categories.push(category);
-
-        // Update user categories
-        if (collectionInDb.category) {
-          const userCurrentCategories = userInDb.categories.filter(
-            (category) => category.name === collectionInDb.category.name,
-          );
-          if (userCurrentCategories.length === 1) {
-            userInDb.categories = userInDb.categories.filter(
-              (category) => category.name !== collectionInDb.category.name,
-            );
-          }
+        if (!userInDb.categories.includes(category)) {
+          userInDb.categories.push(category);
+          await queryRunnerManager.save(userInDb);
         }
 
-        await queryRunnerManager.save(userInDb);
+        // // Update user categories
+        // if (collectionInDb.category) {
+        //   const userCurrentCategories = userInDb.categories.filter(
+        //     (category) => category.name === collectionInDb.category.name,
+        //   );
+        //   if (userCurrentCategories.length === 1) {
+        //     userInDb.categories = userInDb.categories.filter(
+        //       (category) => category.name !== collectionInDb.category.name,
+        //     );
+        //   }
+        // }
       }
 
       // Update nested contents if contentLinkList is not empty

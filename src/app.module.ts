@@ -67,7 +67,7 @@ import { NestedContent } from './collections/entities/nested-content.entity';
       extra: {
         statement_timeout: 10000, // timeout in milliseconds
       },
-      synchronize: process.env.NODE_ENV !== 'prod',
+      synchronize: true, // process.env.NODE_ENV !== 'prod',
       logging:
         process.env.NODE_ENV !== 'prod' && process.env.NODE_ENV !== 'test',
       entities: [User, Content, Category, Collection, NestedContent],

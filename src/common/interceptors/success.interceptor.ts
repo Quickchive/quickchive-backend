@@ -12,12 +12,13 @@ import { logger } from 'src/main';
 @Injectable()
 export class SuccessInterceptor implements NestInterceptor {
   intercept(context: ExecutionContext, next: CallHandler): Observable<any> {
-    const method = context.getHandler().name;
-    const httpMethod = context.switchToHttp().getRequest().method;
-    const url = context.switchToHttp().getRequest().url;
-    const body = context.switchToHttp().getRequest().body;
-
-    logger.info({ time: new Date(), method, httpMethod, url, body });
+    // const method = context.getHandler().name;
+    const { ip, method, url, body } = context.switchToHttp().getRequest();
+    logger.info(
+      `${new Date()} ${method} - ${url} - ${ip
+        .split(':')
+        .at(-1)} - body:${JSON.stringify(body)}`,
+    );
 
     return next.handle().pipe(
       map((returnValue) => {

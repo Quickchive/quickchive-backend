@@ -6,6 +6,7 @@ import * as DailyRotateFile from 'winston-daily-rotate-file';
 import { AppModule } from './app.module';
 import { HttpExceptionFilter } from './common/exceptions/http-exception.filter';
 import { SuccessInterceptor } from './common/interceptors/success.interceptor';
+import { TimeoutInterceptor } from './common/interceptors/timeout.interceptor';
 
 export const logger = winston.createLogger({
   transports: [
@@ -30,9 +31,10 @@ async function bootstrap() {
     logger: logger,
   });
   app.useGlobalInterceptors(new SuccessInterceptor());
+  app.useGlobalInterceptors(new TimeoutInterceptor());
   app.useGlobalFilters(new HttpExceptionFilter());
   app.useGlobalPipes(new ValidationPipe());
-  app.getHttpServer().setTimeout(20000);
+  // app.getHttpServer().setTimeout(6000);
   app.setGlobalPrefix('api');
 
   const config = new DocumentBuilder()

@@ -57,8 +57,13 @@ export class UsersService {
 
       await queryRunnerManager.save(user);
 
+      await queryRunner.commitTransaction();
+      await queryRunner.release();
+
       return;
     } catch (e) {
+      await queryRunner.rollbackTransaction();
+      await queryRunner.release();
       throw new HttpException(e.message, e.status ? e.status : 500);
     }
   }
@@ -68,7 +73,7 @@ export class UsersService {
     password,
   }: ResetPasswordInput): Promise<ResetPasswordOutput> {
     const queryRunner = await init(this.dataSource);
-    const queryRunnerManager: EntityManager = await queryRunner.manager;
+    const queryRunnerManager: EntityManager = queryRunner.manager;
     try {
       const userId: number = await this.cacheManager.get(code);
 
@@ -85,11 +90,16 @@ export class UsersService {
         await queryRunnerManager.save(user); // update password
         await this.cacheManager.del(code); // delete verification value
 
+        await queryRunner.commitTransaction();
+        await queryRunner.release();
+
         return;
       } else {
         throw new NotFoundException('Reset Code not found');
       }
     } catch (e) {
+      await queryRunner.rollbackTransaction();
+      await queryRunner.release();
       throw new HttpException(e.message, e.status ? e.status : 500);
     }
   }

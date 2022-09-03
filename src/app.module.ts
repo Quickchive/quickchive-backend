@@ -63,6 +63,10 @@ import { NestedContent } from './collections/entities/nested-content.entity';
             password: process.env.DB_PW,
             database: process.env.DB_NAME,
           }),
+      maxQueryExecutionTime: 10000, // If query execution time exceed this given max execution time (in milliseconds) then logger will log this query.
+      extra: {
+        statement_timeout: 10000, // timeout in milliseconds
+      },
       synchronize: process.env.NODE_ENV !== 'prod',
       logging:
         process.env.NODE_ENV !== 'prod' && process.env.NODE_ENV !== 'test',

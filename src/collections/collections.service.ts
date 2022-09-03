@@ -97,15 +97,15 @@ export class CollectionsService {
       await queryRunnerManager.save(userInDb);
 
       await queryRunner.commitTransaction();
-      await queryRunner.release();
 
       return;
     } catch (e) {
       await queryRunner.rollbackTransaction();
-      await queryRunner.release();
 
       console.log(e);
       throw new HttpException(e.message, e.status ? e.status : 500);
+    } finally {
+      await queryRunner.release();
     }
   }
 
@@ -208,15 +208,15 @@ export class CollectionsService {
       });
 
       await queryRunner.commitTransaction();
-      await queryRunner.release();
 
       return;
     } catch (e) {
       await queryRunner.rollbackTransaction();
-      await queryRunner.release();
 
       console.log(e);
       throw new HttpException(e.message, e.status ? e.status : 500);
+    } finally {
+      await queryRunner.release();
     }
   }
 
@@ -269,14 +269,14 @@ export class CollectionsService {
       await queryRunnerManager.save(newNestedContent);
 
       await queryRunner.commitTransaction();
-      await queryRunner.release();
 
       return { nestedContent: newNestedContent };
     } catch (e) {
       await queryRunner.rollbackTransaction();
-      await queryRunner.release();
 
       throw new HttpException(e.message, e.status ? e.status : 500);
+    } finally {
+      await queryRunner.release();
     }
   }
 
@@ -309,15 +309,15 @@ export class CollectionsService {
       await queryRunnerManager.remove(collectionInDb);
 
       await queryRunner.commitTransaction();
-      await queryRunner.release();
 
       return;
     } catch (e) {
       await queryRunner.rollbackTransaction();
-      await queryRunner.release();
 
       console.log(e);
       throw new HttpException(e.message, e.status ? e.status : 500);
+    } finally {
+      await queryRunner.release();
     }
   }
 }

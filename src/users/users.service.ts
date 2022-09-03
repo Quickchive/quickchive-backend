@@ -58,13 +58,14 @@ export class UsersService {
       await queryRunnerManager.save(user);
 
       await queryRunner.commitTransaction();
-      await queryRunner.release();
 
       return;
     } catch (e) {
       await queryRunner.rollbackTransaction();
-      await queryRunner.release();
+
       throw new HttpException(e.message, e.status ? e.status : 500);
+    } finally {
+      await queryRunner.release();
     }
   }
 
@@ -91,7 +92,6 @@ export class UsersService {
         await this.cacheManager.del(code); // delete verification value
 
         await queryRunner.commitTransaction();
-        await queryRunner.release();
 
         return;
       } else {
@@ -99,8 +99,10 @@ export class UsersService {
       }
     } catch (e) {
       await queryRunner.rollbackTransaction();
-      await queryRunner.release();
+
       throw new HttpException(e.message, e.status ? e.status : 500);
+    } finally {
+      await queryRunner.release();
     }
   }
 

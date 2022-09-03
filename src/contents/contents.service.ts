@@ -45,7 +45,7 @@ export class ContentsService {
     }: AddContentBodyDto,
   ): Promise<AddContentOutput> {
     const queryRunner = await init(this.dataSource);
-    const queryRunnerManager: EntityManager = await queryRunner.manager;
+    const queryRunnerManager: EntityManager = queryRunner.manager;
     try {
       const userInDb = await this.users.findOne({
         where: { id: user.id },
@@ -106,6 +106,8 @@ export class ContentsService {
       await queryRunner.rollbackTransaction();
 
       throw new HttpException(e.message, e.status ? e.status : 500);
+    } finally {
+      await queryRunner.release();
     }
   }
 
@@ -114,7 +116,7 @@ export class ContentsService {
     { contentLinks }: AddMultipleContentsBodyDto,
   ): Promise<AddContentOutput> {
     const queryRunner = await init(this.dataSource);
-    const queryRunnerManager: EntityManager = await queryRunner.manager;
+    const queryRunnerManager: EntityManager = queryRunner.manager;
     try {
       const userInDb = await queryRunnerManager.findOne(User, {
         where: { id: user.id },
@@ -155,8 +157,12 @@ export class ContentsService {
 
       return;
     } catch (e) {
+      await queryRunner.rollbackTransaction();
       console.log(e);
+
       throw new HttpException(e.message, e.status ? e.status : 500);
+    } finally {
+      await queryRunner.release();
     }
   }
 
@@ -174,7 +180,7 @@ export class ContentsService {
     }: UpdateContentBodyDto,
   ): Promise<AddContentOutput> {
     const queryRunner = await init(this.dataSource);
-    const queryRunnerManager: EntityManager = await queryRunner.manager;
+    const queryRunnerManager: EntityManager = queryRunner.manager;
 
     const newContentObj = {
       link,
@@ -226,18 +232,6 @@ export class ContentsService {
           userInDb.categories.push(category);
           await queryRunnerManager.save(userInDb);
         }
-
-        // // Update user categories
-        // if (content.category) {
-        //   const userCurrentCategories = userInDb.categories.filter(
-        //     (category) => category.name === content.category.name,
-        //   );
-        //   if (userCurrentCategories.length === 1) {
-        //     userInDb.categories = userInDb.categories.filter(
-        //       (category) => category.name !== content.category.name,
-        //     );
-        //   }
-        // }
       }
 
       queryRunnerManager.save(Content, [
@@ -252,6 +246,8 @@ export class ContentsService {
 
       console.log(e);
       throw new HttpException(e.message, e.status ? e.status : 500);
+    } finally {
+      await queryRunner.release();
     }
   }
 
@@ -283,14 +279,14 @@ export class ContentsService {
       content.favorite = !content.favorite;
       await queryRunnerManager.save(content);
       await queryRunner.commitTransaction();
-      await queryRunner.release();
 
       return;
     } catch (e) {
       await queryRunner.rollbackTransaction();
-      await queryRunner.release();
 
       throw new HttpException(e.message, e.status ? e.status : 500);
+    } finally {
+      await queryRunner.release();
     }
   }
 
@@ -324,14 +320,14 @@ export class ContentsService {
       await queryRunnerManager.delete(Content, content.id);
 
       await queryRunner.commitTransaction();
-      await queryRunner.release();
 
       return;
     } catch (e) {
       await queryRunner.rollbackTransaction();
-      await queryRunner.release();
 
       throw new HttpException(e.message, e.status ? e.status : 500);
+    } finally {
+      await queryRunner.release();
     }
   }
 }
@@ -368,15 +364,15 @@ export class CategoryService {
       await queryRunnerManager.save(userInDb);
 
       await queryRunner.commitTransaction();
-      await queryRunner.release();
 
       return;
     } catch (e) {
       await queryRunner.rollbackTransaction();
-      await queryRunner.release();
       console.log(e);
 
       throw new HttpException(e.message, e.status ? e.status : 500);
+    } finally {
+      await queryRunner.release();
     }
   }
 
@@ -432,14 +428,14 @@ export class CategoryService {
       await queryRunnerManager.save(userInDb);
 
       await queryRunner.commitTransaction();
-      await queryRunner.release();
 
       return;
     } catch (e) {
       await queryRunner.rollbackTransaction();
-      await queryRunner.release();
 
       throw new HttpException(e.message, e.status ? e.status : 500);
+    } finally {
+      await queryRunner.release();
     }
   }
 
@@ -483,14 +479,14 @@ export class CategoryService {
       await queryRunnerManager.save(userInDb);
 
       await queryRunner.commitTransaction();
-      await queryRunner.release();
 
       return;
     } catch (e) {
       await queryRunner.rollbackTransaction();
-      await queryRunner.release();
 
       throw new HttpException(e.message, e.status ? e.status : 500);
+    } finally {
+      await queryRunner.release();
     }
   }
 }

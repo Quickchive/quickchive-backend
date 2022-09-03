@@ -45,7 +45,7 @@ export class ContentsService {
     }: AddContentBodyDto,
   ): Promise<AddContentOutput> {
     const queryRunner = await init(this.dataSource);
-    const queryRunnerManager: EntityManager = await queryRunner.manager;
+    const queryRunnerManager: EntityManager = queryRunner.manager;
     try {
       const userInDb = await this.users.findOne({
         where: { id: user.id },
@@ -106,6 +106,8 @@ export class ContentsService {
       await queryRunner.rollbackTransaction();
 
       throw new HttpException(e.message, e.status ? e.status : 500);
+    } finally {
+      await queryRunner.release();
     }
   }
 
@@ -114,7 +116,7 @@ export class ContentsService {
     { contentLinks }: AddMultipleContentsBodyDto,
   ): Promise<AddContentOutput> {
     const queryRunner = await init(this.dataSource);
-    const queryRunnerManager: EntityManager = await queryRunner.manager;
+    const queryRunnerManager: EntityManager = queryRunner.manager;
     try {
       const userInDb = await queryRunnerManager.findOne(User, {
         where: { id: user.id },
@@ -155,8 +157,12 @@ export class ContentsService {
 
       return;
     } catch (e) {
+      await queryRunner.rollbackTransaction();
       console.log(e);
+
       throw new HttpException(e.message, e.status ? e.status : 500);
+    } finally {
+      await queryRunner.release();
     }
   }
 
@@ -174,7 +180,7 @@ export class ContentsService {
     }: UpdateContentBodyDto,
   ): Promise<AddContentOutput> {
     const queryRunner = await init(this.dataSource);
-    const queryRunnerManager: EntityManager = await queryRunner.manager;
+    const queryRunnerManager: EntityManager = queryRunner.manager;
 
     const newContentObj = {
       link,
@@ -226,18 +232,6 @@ export class ContentsService {
           userInDb.categories.push(category);
           await queryRunnerManager.save(userInDb);
         }
-
-        // // Update user categories
-        // if (content.category) {
-        //   const userCurrentCategories = userInDb.categories.filter(
-        //     (category) => category.name === content.category.name,
-        //   );
-        //   if (userCurrentCategories.length === 1) {
-        //     userInDb.categories = userInDb.categories.filter(
-        //       (category) => category.name !== content.category.name,
-        //     );
-        //   }
-        // }
       }
 
       queryRunnerManager.save(Content, [
@@ -252,6 +246,8 @@ export class ContentsService {
 
       console.log(e);
       throw new HttpException(e.message, e.status ? e.status : 500);
+    } finally {
+      await queryRunner.release();
     }
   }
 
@@ -260,7 +256,7 @@ export class ContentsService {
     contentId: number,
   ): Promise<toggleFavoriteOutput> {
     const queryRunner = await init(this.dataSource);
-    const queryRunnerManager: EntityManager = await queryRunner.manager;
+    const queryRunnerManager: EntityManager = queryRunner.manager;
     try {
       const userInDb = await queryRunnerManager.findOne(User, {
         where: { id: user.id },
@@ -289,6 +285,8 @@ export class ContentsService {
       await queryRunner.rollbackTransaction();
 
       throw new HttpException(e.message, e.status ? e.status : 500);
+    } finally {
+      await queryRunner.release();
     }
   }
 
@@ -297,7 +295,7 @@ export class ContentsService {
     contentId: number,
   ): Promise<DeleteContentOutput> {
     const queryRunner = await init(this.dataSource);
-    const queryRunnerManager: EntityManager = await queryRunner.manager;
+    const queryRunnerManager: EntityManager = queryRunner.manager;
     try {
       const userInDb = await queryRunnerManager.findOne(User, {
         where: { id: user.id },
@@ -318,21 +316,8 @@ export class ContentsService {
         throw new NotFoundException('Content not found.');
       }
 
-      // // Update user categories
-      // if (content.category) {
-      //   const userCurrentCategories = userInDb.categories.filter(
-      //     (category) => category.name === content.category.name,
-      //   );
-      //   if (userCurrentCategories.length === 1) {
-      //     userInDb.categories = userInDb.categories.filter(
-      //       (category) => category.name !== content.category.name,
-      //     );
-      //   }
-      //   queryRunnerManager.save(userInDb);
-      // }
-
       // delete content
-      queryRunnerManager.delete(Content, content.id);
+      await queryRunnerManager.delete(Content, content.id);
 
       await queryRunner.commitTransaction();
 
@@ -341,6 +326,8 @@ export class ContentsService {
       await queryRunner.rollbackTransaction();
 
       throw new HttpException(e.message, e.status ? e.status : 500);
+    } finally {
+      await queryRunner.release();
     }
   }
 }
@@ -354,7 +341,7 @@ export class CategoryService {
     categoryName: string,
   ): Promise<AddCategoryOutput> {
     const queryRunner = await init(this.dataSource);
-    const queryRunnerManager: EntityManager = await queryRunner.manager;
+    const queryRunnerManager: EntityManager = queryRunner.manager;
     try {
       const userInDb = await queryRunnerManager.findOne(User, {
         where: { id: user.id },
@@ -384,6 +371,8 @@ export class CategoryService {
       console.log(e);
 
       throw new HttpException(e.message, e.status ? e.status : 500);
+    } finally {
+      await queryRunner.release();
     }
   }
 
@@ -392,7 +381,7 @@ export class CategoryService {
     { originalName, name }: UpdateCategoryBodyDto,
   ): Promise<UpdateCategoryOutput> {
     const queryRunner = await init(this.dataSource);
-    const queryRunnerManager: EntityManager = await queryRunner.manager;
+    const queryRunnerManager: EntityManager = queryRunner.manager;
     try {
       const userInDb = await queryRunnerManager.findOne(User, {
         where: { id: user.id },
@@ -427,10 +416,10 @@ export class CategoryService {
       }
       // Update and delete previous category
       userInDb.categories.push(category);
-      userInDb.contents.forEach((content) => {
+      userInDb.contents.forEach(async (content) => {
         if (content.category && content.category.name === originalName) {
           content.category = category;
-          queryRunnerManager.save(content);
+          await queryRunnerManager.save(content);
         }
       });
       userInDb.categories = userInDb.categories.filter(
@@ -445,6 +434,8 @@ export class CategoryService {
       await queryRunner.rollbackTransaction();
 
       throw new HttpException(e.message, e.status ? e.status : 500);
+    } finally {
+      await queryRunner.release();
     }
   }
 
@@ -453,7 +444,7 @@ export class CategoryService {
     categoryId: number,
   ): Promise<DeleteCategoryOutput> {
     const queryRunner = await init(this.dataSource);
-    const queryRunnerManager: EntityManager = await queryRunner.manager;
+    const queryRunnerManager: EntityManager = queryRunner.manager;
     try {
       const userInDb = await queryRunnerManager.findOne(User, {
         where: { id: user.id },
@@ -479,10 +470,10 @@ export class CategoryService {
       userInDb.categories = userInDb.categories.filter(
         (category) => category.id !== categoryId,
       );
-      userInDb.contents.forEach((content) => {
+      userInDb.contents.forEach(async (content) => {
         if (content.category && content.category.id === categoryId) {
           content.category = null;
-          queryRunnerManager.save(content);
+          await queryRunnerManager.save(content);
         }
       });
       await queryRunnerManager.save(userInDb);
@@ -494,6 +485,8 @@ export class CategoryService {
       await queryRunner.rollbackTransaction();
 
       throw new HttpException(e.message, e.status ? e.status : 500);
+    } finally {
+      await queryRunner.release();
     }
   }
 }

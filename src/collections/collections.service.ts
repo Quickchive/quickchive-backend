@@ -1,5 +1,6 @@
 import {
   BadRequestException,
+  ConflictException,
   HttpException,
   Injectable,
   NotFoundException,
@@ -33,7 +34,7 @@ export class CollectionsService {
     { title, comment, contentLinkList, categoryName }: AddCollectionBodyDto,
   ): Promise<AddCollectionOutput> {
     const queryRunner = await init(this.dataSource);
-    const queryRunnerManager: EntityManager = await queryRunner.manager;
+    const queryRunnerManager: EntityManager = queryRunner.manager;
     try {
       const userInDb = await queryRunnerManager.findOne(User, {
         where: { id: user.id },
@@ -52,16 +53,13 @@ export class CollectionsService {
           (collection) => collection.title === title,
         )[0]
       ) {
-        throw new HttpException(
+        throw new ConflictException(
           'Collection with that title already exists.',
-          409,
         );
       }
 
       // Create collection order array
       let nestedContentList: NestedContent[] = [];
-
-      console.log(contentLinkList);
       // Load contents if contentLinkList is not empty
       if (contentLinkList) {
         for (const contentLink of contentLinkList) {
@@ -106,6 +104,8 @@ export class CollectionsService {
 
       console.log(e);
       throw new HttpException(e.message, e.status ? e.status : 500);
+    } finally {
+      await queryRunner.release();
     }
   }
 
@@ -120,7 +120,7 @@ export class CollectionsService {
     }: UpdateCollectionBodyDto,
   ): Promise<UpdateCollectionOutput> {
     const queryRunner = await init(this.dataSource);
-    const queryRunnerManager: EntityManager = await queryRunner.manager;
+    const queryRunnerManager: EntityManager = queryRunner.manager;
     try {
       const userInDb = await queryRunnerManager.findOne(User, {
         where: { id: user.id },
@@ -156,18 +156,6 @@ export class CollectionsService {
           userInDb.categories.push(category);
           await queryRunnerManager.save(userInDb);
         }
-
-        // // Update user categories
-        // if (collectionInDb.category) {
-        //   const userCurrentCategories = userInDb.categories.filter(
-        //     (category) => category.name === collectionInDb.category.name,
-        //   );
-        //   if (userCurrentCategories.length === 1) {
-        //     userInDb.categories = userInDb.categories.filter(
-        //       (category) => category.name !== collectionInDb.category.name,
-        //     );
-        //   }
-        // }
       }
 
       // Update nested contents if contentLinkList is not empty
@@ -218,6 +206,7 @@ export class CollectionsService {
         }),
         ...(category && { category }),
       });
+
       await queryRunner.commitTransaction();
 
       return;
@@ -226,6 +215,8 @@ export class CollectionsService {
 
       console.log(e);
       throw new HttpException(e.message, e.status ? e.status : 500);
+    } finally {
+      await queryRunner.release();
     }
   }
 
@@ -236,7 +227,7 @@ export class CollectionsService {
     description,
   }: AddNestedContentBodyDto): Promise<AddNestedContentOutput> {
     const queryRunner = await init(this.dataSource);
-    const queryRunnerManager: EntityManager = await queryRunner.manager;
+    const queryRunnerManager: EntityManager = queryRunner.manager;
     try {
       // get og tag info from link
       let coverImg: string = '';
@@ -284,6 +275,8 @@ export class CollectionsService {
       await queryRunner.rollbackTransaction();
 
       throw new HttpException(e.message, e.status ? e.status : 500);
+    } finally {
+      await queryRunner.release();
     }
   }
 
@@ -292,7 +285,7 @@ export class CollectionsService {
     collectionId: number,
   ): Promise<DeleteCollectionOutput> {
     const queryRunner = await init(this.dataSource);
-    const queryRunnerManager: EntityManager = await queryRunner.manager;
+    const queryRunnerManager: EntityManager = queryRunner.manager;
     try {
       const userInDb = await queryRunnerManager.findOne(User, {
         where: { id: user.id },
@@ -314,6 +307,7 @@ export class CollectionsService {
 
       // Delete collection from database
       await queryRunnerManager.remove(collectionInDb);
+
       await queryRunner.commitTransaction();
 
       return;
@@ -322,6 +316,8 @@ export class CollectionsService {
 
       console.log(e);
       throw new HttpException(e.message, e.status ? e.status : 500);
+    } finally {
+      await queryRunner.release();
     }
   }
 }

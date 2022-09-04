@@ -17,6 +17,7 @@ export class LoadFavoritesOutput extends CoreOutput {
     description: '즐겨찾기한 콘텐츠 목록',
     type: [Content],
     required: false,
+    isArray: true,
   })
   favorite_contents?: Content[];
 
@@ -24,6 +25,7 @@ export class LoadFavoritesOutput extends CoreOutput {
     description: '즐겨찾기한 콜렉션 목록',
     type: [Collection],
     required: false,
+    isArray: true,
   })
   favorite_collections?: Collection[];
 }

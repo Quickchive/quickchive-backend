@@ -24,6 +24,7 @@ import {
 } from './dtos/nested-content.dto';
 import { Category } from 'src/contents/entities/category.entity';
 import { getOrCreateCategory, init } from 'src/utils';
+import { toggleFavoriteOutput } from 'src/contents/dtos/content.dto';
 
 @Injectable()
 export class CollectionsService {
@@ -271,6 +272,45 @@ export class CollectionsService {
       await queryRunner.commitTransaction();
 
       return { nestedContent: newNestedContent };
+    } catch (e) {
+      await queryRunner.rollbackTransaction();
+
+      throw new HttpException(e.message, e.status ? e.status : 500);
+    } finally {
+      await queryRunner.release();
+    }
+  }
+
+  async toggleFavorite(
+    user: User,
+    collectionId: number,
+  ): Promise<toggleFavoriteOutput> {
+    const queryRunner = await init(this.dataSource);
+    const queryRunnerManager: EntityManager = queryRunner.manager;
+    try {
+      const userInDb = await queryRunnerManager.findOne(User, {
+        where: { id: user.id },
+        relations: {
+          collections: true,
+        },
+      });
+      if (!userInDb) {
+        throw new NotFoundException('User not found');
+      }
+
+      const collection = userInDb.collections.filter(
+        (collection) => collection.id === collectionId,
+      )[0];
+
+      if (!collection) {
+        throw new NotFoundException('collection not found.');
+      }
+
+      collection.favorite = !collection.favorite;
+      await queryRunnerManager.save(collection);
+      await queryRunner.commitTransaction();
+
+      return;
     } catch (e) {
       await queryRunner.rollbackTransaction();
 

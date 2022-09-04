@@ -37,5 +37,3 @@ export class UpdateNestedContentBodyDto extends IntersectionType(
 export class UpdateNestedContentOutput extends CoreOutput {}
 
 export class DeleteNestedContentOutput extends CoreOutput {}
-
-export class toggleFavoriteOutput extends CoreOutput {}

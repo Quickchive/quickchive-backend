@@ -32,6 +32,7 @@ import {
   AddContentBodyDto,
   AddContentOutput,
   AddMultipleContentsBodyDto,
+  checkReadFlagOutput,
   DeleteContentOutput,
   toggleFavoriteOutput,
   UpdateContentBodyDto,
@@ -110,6 +111,25 @@ export class ContentsController {
     @Param('contentId', new ParseIntPipe()) contentId: number,
   ): Promise<toggleFavoriteOutput> {
     return await this.contentsService.toggleFavorite(user, contentId);
+  }
+
+  @ApiOperation({
+    summary: '읽었음 표시',
+    description: '읽었음 표시를 하는 메서드',
+  })
+  @ApiOkResponse({
+    description: '읽었음 표시 성공 여부를 반환한다.',
+    type: checkReadFlagOutput,
+  })
+  @ApiNotFoundResponse({
+    description: '존재하지 않는 콘텐츠 또는 유저인 경우',
+  })
+  @Patch('read/:contentId')
+  async readContent(
+    @AuthUser() user: User,
+    @Param('contentId', new ParseIntPipe()) contentId: number,
+  ): Promise<checkReadFlagOutput> {
+    return await this.contentsService.readContent(user, contentId);
   }
 
   @ApiOperation({

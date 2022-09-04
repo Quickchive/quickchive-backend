@@ -18,6 +18,7 @@ import {
   AddContentBodyDto,
   AddContentOutput,
   AddMultipleContentsBodyDto,
+  checkReadFlagOutput,
   DeleteContentOutput,
   toggleFavoriteOutput,
   UpdateContentBodyDto,
@@ -287,6 +288,39 @@ export class ContentsService {
       throw new HttpException(e.message, e.status ? e.status : 500);
     } finally {
       await queryRunner.release();
+    }
+  }
+
+  async readContent(
+    user: User,
+    contentId: number,
+  ): Promise<checkReadFlagOutput> {
+    try {
+      const userInDb = await this.users.findOne({
+        where: { id: user.id },
+        relations: {
+          contents: true,
+        },
+      });
+      if (!userInDb) {
+        throw new NotFoundException('User not found');
+      }
+
+      const content = userInDb.contents.filter(
+        (content) => content.id === contentId,
+      )[0];
+
+      if (!content) {
+        throw new NotFoundException('Content not found.');
+      }
+
+      content.readFlag = true;
+
+      await this.users.save(content);
+
+      return;
+    } catch (e) {
+      throw new HttpException(e.message, e.status ? e.status : 500);
     }
   }
 

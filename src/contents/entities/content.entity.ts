@@ -51,6 +51,10 @@ export class Content extends CoreEntity {
   @Column({ default: false })
   favorite: boolean;
 
+  @ApiProperty({ description: 'Flag indicating read' })
+  @Column({ default: false })
+  readFlag: boolean;
+
   @ApiProperty({ description: 'Article Category', required: false })
   @ManyToOne((type) => Category, (category) => category.contents, {
     nullable: true,

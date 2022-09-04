@@ -23,6 +23,7 @@ import { User } from './entities/user.entity';
 import { Cache } from 'cache-manager';
 import { LoadPersonalCollectionsOutput } from './dtos/load-personal-collections.dto';
 import { init } from 'src/utils';
+import { Collection } from 'src/collections/entities/collection.entity';
 
 @Injectable()
 export class UsersService {
@@ -139,19 +140,25 @@ export class UsersService {
 
   async loadFavorites(user: User): Promise<LoadFavoritesOutput> {
     try {
-      const { contents } = await this.users.findOne({
+      const { contents, collections } = await this.users.findOne({
         where: { id: user.id },
         relations: {
           contents: true,
+          collections: true,
         },
       });
 
-      const favorites: Content[] = contents.filter(
+      const favoriteContents: Content[] = contents.filter(
         (content) => content.favorite,
       );
 
+      const favoriteCollections: Collection[] = collections.filter(
+        (collection) => collection.favorite,
+      );
+
       return {
-        favorites,
+        favorite_contents: favoriteContents,
+        favorite_collections: favoriteCollections,
       };
     } catch (e) {
       throw new HttpException(e.message, e.status ? e.status : 500);

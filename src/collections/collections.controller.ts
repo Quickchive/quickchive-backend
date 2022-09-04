@@ -9,6 +9,7 @@ import {
 } from '@nestjs/common';
 import {
   ApiBearerAuth,
+  ApiConflictResponse,
   ApiCreatedResponse,
   ApiNotFoundResponse,
   ApiOkResponse,
@@ -45,6 +46,12 @@ export class CollectionsController {
   @ApiCreatedResponse({
     description: '콜렉션 추가 성공 여부를 반환한다.',
     type: AddCollectionOutput,
+  })
+  @ApiNotFoundResponse({
+    description: '유저를 찾을 수 없을 때 반환한다.',
+  })
+  @ApiConflictResponse({
+    description: '같은 title의 collection이 존재할 때 반환한다.',
   })
   @Post('add')
   async addCollection(

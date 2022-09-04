@@ -2,7 +2,9 @@ import {
   Body,
   Controller,
   Delete,
+  Param,
   ParseIntPipe,
+  Patch,
   Post,
   Query,
   UseGuards,
@@ -18,6 +20,7 @@ import {
 } from '@nestjs/swagger';
 import { AuthUser } from 'src/auth/auth-user.decorator';
 import { JwtAuthGuard } from 'src/auth/jwt/jwt.guard';
+import { toggleFavoriteOutput } from 'src/contents/dtos/content.dto';
 import { User } from 'src/users/entities/user.entity';
 import { CollectionsService } from './collections.service';
 import {
@@ -85,6 +88,25 @@ export class CollectionsController {
     @Body() collection: UpdateCollectionBodyDto,
   ): Promise<UpdateCollectionOutput> {
     return await this.collectionsService.updateCollection(user, collection);
+  }
+
+  @ApiOperation({
+    summary: '즐겨찾기 등록 및 해제',
+    description: '즐겨찾기에 등록 및 해제하는 메서드',
+  })
+  @ApiOkResponse({
+    description: '즐겨찾기 등록 및 해제 성공 여부를 반환한다.',
+    type: toggleFavoriteOutput,
+  })
+  @ApiNotFoundResponse({
+    description: '콜렉션을 찾을 수 없을 때 반환한다.',
+  })
+  @Patch('favorite/:collectionId')
+  async toggleFavorite(
+    @AuthUser() user: User,
+    @Param('collectionId', new ParseIntPipe()) collectionId: number,
+  ): Promise<toggleFavoriteOutput> {
+    return await this.collectionsService.toggleFavorite(user, collectionId);
   }
 
   // 콜렉션 삭제

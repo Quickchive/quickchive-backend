@@ -47,6 +47,10 @@ export class Collection extends CoreEntity {
   @Column('int', { array: true, nullable: true })
   order?: number[];
 
+  @ApiProperty({ description: 'Favorite' })
+  @Column({ default: false })
+  favorite: boolean;
+
   @ManyToOne((type) => User, (user) => user.collections, {
     onDelete: 'CASCADE',
   })

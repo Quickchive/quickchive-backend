@@ -32,6 +32,7 @@ import {
   AddContentBodyDto,
   AddContentOutput,
   AddMultipleContentsBodyDto,
+  checkReadFlagOutput,
   DeleteContentOutput,
   toggleFavoriteOutput,
   UpdateContentBodyDto,
@@ -52,6 +53,9 @@ export class ContentsController {
   @ApiCreatedResponse({
     description: '콘텐츠 추가 성공 여부를 반환한다.',
     type: AddContentOutput,
+  })
+  @ApiConflictResponse({
+    description: '같은 카테고리 내에 동일한 링크의 콘텐츠가 존재할 경우',
   })
   @Post('add')
   async addContent(
@@ -88,6 +92,12 @@ export class ContentsController {
     description: '콘텐츠 수정 성공 여부를 반환한다.',
     type: UpdateContentOutput,
   })
+  @ApiConflictResponse({
+    description: '동일한 링크의 콘텐츠가 같은 카테고리 내에 존재할 경우',
+  })
+  @ApiNotFoundResponse({
+    description: '존재하지 않는 콘텐츠 또는 유저인 경우',
+  })
   @Post('update')
   async updateContent(
     @AuthUser() user: User,
@@ -104,6 +114,9 @@ export class ContentsController {
     description: '즐겨찾기 등록 및 해제 성공 여부를 반환한다.',
     type: toggleFavoriteOutput,
   })
+  @ApiNotFoundResponse({
+    description: '존재하지 않는 콘텐츠 또는 유저인 경우',
+  })
   @Patch('favorite/:contentId')
   async toggleFavorite(
     @AuthUser() user: User,
@@ -113,12 +126,34 @@ export class ContentsController {
   }
 
   @ApiOperation({
+    summary: '읽었음 표시',
+    description: '읽었음 표시를 하는 메서드',
+  })
+  @ApiOkResponse({
+    description: '읽었음 표시 성공 여부를 반환한다.',
+    type: checkReadFlagOutput,
+  })
+  @ApiNotFoundResponse({
+    description: '존재하지 않는 콘텐츠 또는 유저인 경우',
+  })
+  @Patch('read/:contentId')
+  async readContent(
+    @AuthUser() user: User,
+    @Param('contentId', new ParseIntPipe()) contentId: number,
+  ): Promise<checkReadFlagOutput> {
+    return await this.contentsService.readContent(user, contentId);
+  }
+
+  @ApiOperation({
     summary: '콘텐츠 정보 삭제',
     description: '콘텐츠을 삭제하는 메서드',
   })
   @ApiOkResponse({
     description: '콘텐츠 삭제 성공 여부를 반환한다.',
     type: DeleteContentOutput,
+  })
+  @ApiNotFoundResponse({
+    description: '존재하지 않는 콘텐츠 또는 유저인 경우',
   })
   @Delete('delete/:contentId')
   async deleteContent(

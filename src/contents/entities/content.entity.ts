@@ -1,4 +1,10 @@
-import { IsDate, IsOptional, IsString, IsUrl } from 'class-validator';
+import {
+  IsBoolean,
+  IsDate,
+  IsOptional,
+  IsString,
+  IsUrl,
+} from 'class-validator';
 import { CoreEntity } from 'src/common/entities/core.entity';
 import { Column, Entity, ManyToOne, RelationId } from 'typeorm';
 import { User } from 'src/users/entities/user.entity';
@@ -28,13 +34,10 @@ export class Content extends CoreEntity {
 
   @ApiProperty({ description: 'Article Cover Image', required: false })
   @Column({ nullable: true })
-  @IsString()
   coverImg?: string;
 
   @ApiProperty({ description: 'Article Description', required: false })
   @Column({ nullable: true })
-  @IsOptional()
-  @IsString()
   description?: string;
 
   @ApiProperty({ description: 'User Comment', required: false })
@@ -50,15 +53,18 @@ export class Content extends CoreEntity {
   })
   @Column({ nullable: true })
   @IsDate()
+  @IsOptional()
   @Transform(({ value }) => new Date(value))
   deadline?: Date;
 
   @ApiProperty({ description: 'Favorite' })
   @Column({ default: false })
+  @IsBoolean()
   favorite: boolean;
 
   @ApiProperty({ description: 'Flag indicating read' })
   @Column({ default: false })
+  @IsBoolean()
   readFlag: boolean;
 
   @ApiProperty({ description: 'Article Category', required: false })

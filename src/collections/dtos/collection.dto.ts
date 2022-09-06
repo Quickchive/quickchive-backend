@@ -4,6 +4,7 @@ import {
   PartialType,
   PickType,
 } from '@nestjs/swagger';
+import { IsNumber, IsOptional, IsString } from 'class-validator';
 import { CoreOutput } from 'src/common/dtos/output.dto';
 import { Collection } from '../entities/collection.entity';
 
@@ -16,12 +17,16 @@ export class AddCollectionBodyDto extends PickType(Collection, [
     type: [String],
     required: false,
   })
+  @IsString({ each: true })
+  @IsOptional()
   contentLinkList?: string[];
 
   @ApiProperty({
     description: 'Category Name',
     required: false,
   })
+  @IsString()
+  @IsOptional()
   categoryName?: string;
 }
 export class AddCollectionOutput extends CoreOutput {}
@@ -39,6 +44,8 @@ export class UpdateCollectionBodyDto extends IntersectionType(
     description: 'Category Name',
     required: false,
   })
+  @IsString()
+  @IsOptional()
   categoryName?: string;
 
   @ApiProperty({
@@ -46,6 +53,8 @@ export class UpdateCollectionBodyDto extends IntersectionType(
     type: [String],
     required: false,
   })
+  @IsString({ each: true })
+  @IsOptional()
   contentLinkList?: string[];
 
   @ApiProperty({
@@ -53,6 +62,7 @@ export class UpdateCollectionBodyDto extends IntersectionType(
     type: Number,
     required: true,
   })
+  @IsNumber()
   collectionId: number;
 }
 export class UpdateCollectionOutput extends CoreOutput {}

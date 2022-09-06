@@ -4,6 +4,7 @@ import {
   PartialType,
   PickType,
 } from '@nestjs/swagger';
+import { IsNumber } from 'class-validator';
 import { CoreOutput } from 'src/common/dtos/output.dto';
 import { NestedContent } from '../entities/nested-content.entity';
 
@@ -23,6 +24,7 @@ export class AddNestedContentOutput {
 
 export class AddNestedContentToCollectionBodyDto extends AddNestedContentBodyDto {
   @ApiProperty({ description: 'Collection ID' })
+  @IsNumber()
   collectionId: number;
 }
 export class AddNestedContentToCollectionOutput extends CoreOutput {}

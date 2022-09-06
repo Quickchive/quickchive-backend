@@ -4,6 +4,7 @@ import {
   PartialType,
   PickType,
 } from '@nestjs/swagger';
+import { IsOptional, IsString } from 'class-validator';
 import { CoreOutput } from 'src/common/dtos/output.dto';
 import { Content } from '../entities/content.entity';
 
@@ -11,6 +12,8 @@ class ContentBodyExceptLink extends PartialType(
   PickType(Content, ['title', 'comment', 'deadline', 'favorite']),
 ) {
   @ApiProperty({ description: 'Category Name', required: false })
+  @IsString()
+  @IsOptional()
   categoryName?: string;
 }
 class ContentBodyWithLinkOnly extends PickType(Content, ['link']) {}
@@ -28,6 +31,7 @@ export class AddMultipleContentsBodyDto {
     example: `["https://www.naver.com/", "https://www.google.com/"]`,
     isArray: true,
   })
+  @IsString({ each: true })
   contentLinks: string[];
 }
 

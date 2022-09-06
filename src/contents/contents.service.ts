@@ -64,6 +64,7 @@ export class ContentsService {
       // get og tag info from link
       const {
         title: linkTitle,
+        siteName,
         description,
         coverImg,
       } = await getLinkInfo(link);
@@ -88,6 +89,7 @@ export class ContentsService {
       const newContent = queryRunnerManager.create(Content, {
         link,
         title,
+        siteName,
         coverImg,
         description,
         comment,
@@ -129,7 +131,9 @@ export class ContentsService {
 
       if (contentLinks.length > 0) {
         contentLinks.forEach(async (link) => {
-          const { title, description, coverImg } = await getLinkInfo(link);
+          const { title, description, coverImg, siteName } = await getLinkInfo(
+            link,
+          );
 
           // Check if content already exists in same category
           if (
@@ -145,6 +149,7 @@ export class ContentsService {
           const newContent = queryRunnerManager.create(Content, {
             link,
             title,
+            siteName,
             coverImg,
             description,
           });

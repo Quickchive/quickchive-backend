@@ -20,6 +20,12 @@ export class Content extends CoreEntity {
   @IsString()
   title?: string;
 
+  @ApiProperty({ description: 'Article Site Name', required: false })
+  @Column({ nullable: true })
+  @IsOptional()
+  @IsString()
+  siteName?: string;
+
   @ApiProperty({ description: 'Article Cover Image', required: false })
   @Column({ nullable: true })
   @IsString()

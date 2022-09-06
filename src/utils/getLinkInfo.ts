@@ -6,6 +6,7 @@ export default async function getLinkInfo(link: string) {
   let title: string = '';
   let coverImg: string = '';
   let description: string = '';
+  let siteName: string = null;
 
   await axios
     .get(link)
@@ -26,6 +27,9 @@ export default async function getLinkInfo(link: string) {
             if (meta.attr('property') === 'og:description') {
               description = meta.attr('content');
             }
+            if (meta.attr('property') === 'og:site_name') {
+              siteName = meta.attr('content');
+            }
           });
         }
       }
@@ -40,5 +44,6 @@ export default async function getLinkInfo(link: string) {
     title,
     description,
     coverImg,
+    siteName,
   };
 }

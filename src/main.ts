@@ -38,10 +38,10 @@ async function bootstrap() {
   app.setGlobalPrefix('api');
 
   const config = new DocumentBuilder()
-    .setTitle('Bookmark Service Demo')
-    .setDescription('The simple API description')
+    .setTitle('Quickchive')
+    .setDescription('The API description')
     .setVersion('0.1')
-    .addTag('Demo Version')
+    .addTag('Minimally Viable Product Version')
     .addBearerAuth(
       {
         type: 'http',

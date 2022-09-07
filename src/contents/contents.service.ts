@@ -68,7 +68,8 @@ export class ContentsService {
         description,
         coverImg,
       } = await getLinkInfo(link);
-      title = title || linkTitle;
+      console.log(linkTitle);
+      title = title ? title : linkTitle;
 
       // Get or create category
       const category = categoryName

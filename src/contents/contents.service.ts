@@ -68,7 +68,8 @@ export class ContentsService {
         description,
         coverImg,
       } = await getLinkInfo(link);
-      title = title || linkTitle;
+      console.log(linkTitle);
+      title = title ? title : linkTitle;
 
       // Get or create category
       const category = categoryName
@@ -78,7 +79,8 @@ export class ContentsService {
       // Check if content already exists in same category
       if (
         userInDb.contents.filter(
-          (content) => content.link === link && content.category === category,
+          (content) =>
+            content.link === link && content.category?.name === category?.name,
         )[0]
       ) {
         throw new ConflictException(
@@ -95,6 +97,7 @@ export class ContentsService {
         comment,
         deadline,
         category,
+        user,
         ...(favorite && { favorite }),
       });
       await queryRunnerManager.save(newContent);

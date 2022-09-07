@@ -130,7 +130,7 @@ export class ContentsService {
       });
 
       if (contentLinks.length > 0) {
-        contentLinks.forEach(async (link) => {
+        for (const link of contentLinks) {
           const { title, description, coverImg, siteName } = await getLinkInfo(
             link,
           );
@@ -142,7 +142,7 @@ export class ContentsService {
             )[0]
           ) {
             throw new ConflictException(
-              'Content with that link already exists in same category.',
+              `Content with ${link} already exists in same category.`,
             );
           }
 
@@ -155,8 +155,8 @@ export class ContentsService {
           });
           await queryRunnerManager.save(newContent);
           userInDb.contents.push(newContent);
-          await queryRunnerManager.save(userInDb);
-        });
+        }
+        await queryRunnerManager.save(userInDb);
 
         await queryRunner.commitTransaction();
       }

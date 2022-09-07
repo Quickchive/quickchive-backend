@@ -37,7 +37,16 @@ export default async function getLinkInfo(link: string) {
     .catch((e) => {
       console.log(e.message);
       // Control unreachable link
-      title = link.split('/').at(-1);
+      // if(e.message === 'Request failed with status code 403') {
+      // 403 에러가 발생하는 링크는 크롤링이 불가능한 링크이다.
+      // }
+      for (let idx = 1; idx < 3; idx++) {
+        if (link.split('/').at(-idx) !== '') {
+          title = link.split('/').at(-idx);
+          break;
+        }
+      }
+      title = title ? title : 'Untitled';
     });
 
   return {

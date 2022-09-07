@@ -79,7 +79,8 @@ export class ContentsService {
       // Check if content already exists in same category
       if (
         userInDb.contents.filter(
-          (content) => content.link === link && content.category === category,
+          (content) =>
+            content.link === link && content.category?.name === category?.name,
         )[0]
       ) {
         throw new ConflictException(
@@ -96,6 +97,7 @@ export class ContentsService {
         comment,
         deadline,
         category,
+        user,
         ...(favorite && { favorite }),
       });
       await queryRunnerManager.save(newContent);

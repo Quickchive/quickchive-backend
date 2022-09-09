@@ -20,7 +20,7 @@ services:
     networks:
       - shared-network
   api:
-    image: hou27/bookmark_backend:0.1.1
+    image: hou27/quickchive_backend:latest
     networks:
       - shared-network
     env_file:

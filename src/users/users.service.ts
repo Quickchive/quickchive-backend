@@ -143,8 +143,13 @@ export class UsersService {
       const { contents, collections } = await this.users.findOne({
         where: { id: user.id },
         relations: {
-          contents: true,
-          collections: true,
+          contents: {
+            category: true,
+          },
+          collections: {
+            // category: true,
+            contents: true,
+          },
         },
       });
 

@@ -7,23 +7,7 @@ import { AppModule } from './app.module';
 import { HttpExceptionFilter } from './common/exceptions/http-exception.filter';
 import { SuccessInterceptor } from './common/interceptors/success.interceptor';
 import { TimeoutInterceptor } from './common/interceptors/timeout.interceptor';
-
-export const logger = winston.createLogger({
-  transports: [
-    new DailyRotateFile({
-      filename: 'errors-%DATE%.log',
-      datePattern: 'YYYY-MM-DD',
-      maxSize: '1024',
-      level: 'error',
-    }),
-    new DailyRotateFile({
-      filename: '%DATE%.log',
-      datePattern: 'YYYY-MM-DD',
-      maxSize: '1024',
-      level: 'info',
-    }),
-  ],
-});
+import { logger } from './common/logger';
 
 async function bootstrap() {
   const app = await NestFactory.create(AppModule, {

@@ -4,10 +4,9 @@ import {
   ExecutionContext,
   CallHandler,
 } from '@nestjs/common';
-import { ApiProperty } from '@nestjs/swagger';
 import { Observable } from 'rxjs';
 import { map } from 'rxjs/operators';
-import { logger } from 'src/main';
+import { logger } from '../logger';
 
 @Injectable()
 export class SuccessInterceptor implements NestInterceptor {

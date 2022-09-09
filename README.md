@@ -1,8 +1,8 @@
-# Know Zip Backend
+# Quickchive Backend
 
 ## Description
 
-> Know Zip 프로젝트의 Backend Repository입니다.
+> Quickchive 서비스의 Backend Repository입니다.
 
 <br>
 <p align="center">

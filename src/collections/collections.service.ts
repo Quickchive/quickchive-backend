@@ -23,7 +23,7 @@ import {
   AddNestedContentOutput,
 } from './dtos/nested-content.dto';
 import { Category } from 'src/contents/entities/category.entity';
-import { getOrCreateCategory, init } from 'src/utils';
+import { getLinkInfo, getOrCreateCategory, init } from 'src/utils';
 import { toggleFavoriteOutput } from 'src/contents/dtos/content.dto';
 
 @Injectable()
@@ -224,42 +224,12 @@ export class CollectionsService {
   // Add nested content to the database
   async addNestedContent({
     link,
-    title,
-    description,
   }: AddNestedContentBodyDto): Promise<AddNestedContentOutput> {
     const queryRunner = await init(this.dataSource);
     const queryRunnerManager: EntityManager = queryRunner.manager;
     try {
       // get og tag info from link
-      let coverImg: string = '';
-      await axios
-        .get(link)
-        .then((res) => {
-          if (res.status !== 200) {
-            console.log(res.status);
-            throw new BadRequestException('잘못된 링크입니다.');
-          } else {
-            const data = res.data;
-            if (typeof data === 'string') {
-              const $ = cheerio.load(data);
-              title = $('title').text() !== '' ? $('title').text() : 'Untitled';
-              $('meta').each((i, el) => {
-                const meta = $(el);
-                if (meta.attr('property') === 'og:image') {
-                  coverImg = meta.attr('content');
-                }
-                if (meta.attr('property') === 'og:description') {
-                  description = meta.attr('content');
-                }
-              });
-            }
-          }
-        })
-        .catch((e) => {
-          console.log(e.message);
-          // Control unreachable link
-          title = link.split('/').at(-1);
-        });
+      const { title, description, coverImg } = await getLinkInfo(link);
 
       const newNestedContent = queryRunnerManager.create(NestedContent, {
         link,

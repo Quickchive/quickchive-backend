@@ -24,6 +24,6 @@ jobs:
         uses: docker/build-push-action@v3.1.1
         with:
           context: .
-          tags: hou27/bookmark_backend:latest
+          tags: hou27/quickchive_backend:latest
           # build on feature branches, push only on develop branch
           push: ${{ github.ref == 'refs/heads/develop' }}

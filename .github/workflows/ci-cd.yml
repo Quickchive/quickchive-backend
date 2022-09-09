@@ -1,4 +1,4 @@
-name: Docker Image CI
+name: Docker Image CI && Deploy to EC2
 
 on:
   push:
@@ -8,7 +8,7 @@ on:
 
 jobs:
   build:
-    runs-on: ubuntu-latest
+    runs-on: quickchive-server
 
     steps:
       - name: Checkout
@@ -27,3 +27,12 @@ jobs:
           tags: hou27/quickchive_backend:latest
           # build on feature branches, push only on develop branch
           push: ${{ github.ref == 'refs/heads/develop' }}
+
+      - name: executing remote ssh commands using password
+        uses: appleboy/ssh-action@master
+        with:
+          host: ${{ secrets.HOST }}
+          username: ubuntu
+          key: ${{ secrets.KEY_PAIR }}
+          script: |
+            sh /home/ubuntu/actions-runner/deploy.sh

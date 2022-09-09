@@ -8,15 +8,9 @@ import { IsNumber } from 'class-validator';
 import { CoreOutput } from 'src/common/dtos/output.dto';
 import { NestedContent } from '../entities/nested-content.entity';
 
-class NestedContentBodyExceptLink extends PartialType(
-  PickType(NestedContent, ['title', 'description']),
-) {}
-class NestedContentBodyWithLinkOnly extends PickType(NestedContent, ['link']) {}
-
-export class AddNestedContentBodyDto extends IntersectionType(
-  NestedContentBodyWithLinkOnly,
-  NestedContentBodyExceptLink,
-) {}
+export class AddNestedContentBodyDto extends PickType(NestedContent, [
+  'link',
+]) {}
 export class AddNestedContentOutput {
   @ApiProperty({ description: 'Created Nested Content' })
   nestedContent: NestedContent;

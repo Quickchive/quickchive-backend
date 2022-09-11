@@ -88,6 +88,8 @@ import { BatchModule } from './batch/batch.module';
         process.env.MAILGUN_TEMPLATE_NAME_FOR_VERIFY_EMAIL,
       templateNameForResetPassword:
         process.env.MAILGUN_TEMPLATE_NAME_FOR_RESET_PASSWORD,
+      templateNameForNotification:
+        process.env.MAILGUN_TEMPLATE_NAME_FOR_NOTIFICATION,
     }),
     ContentsModule,
     CollectionsModule,

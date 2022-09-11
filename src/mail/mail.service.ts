@@ -64,4 +64,13 @@ export class MailService {
       ],
     );
   }
+
+  sendNotificationEmail(email: string, message) {
+    this.sendEmail(
+      email,
+      'Notification',
+      this.options.templateNameForNotification,
+      [{ key: 'message', value: message }],
+    );
+  }
 }

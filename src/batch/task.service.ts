@@ -16,17 +16,8 @@ export class TaskService {
     private readonly mailService: MailService,
   ) {}
 
-  @Cron('10 * * * * *', {
-    name: 'testjob',
-    timeZone: 'Asia/Seoul',
-  })
-  cronJob() {
-    logger.debug('Cron job is running');
-  }
-
   // 매일 아침 8시에 작업 실행
-  // @Cron('0 0 8 * * *')
-  @Cron('10 * * * * *', {
+  @Cron('0 0 8 * * *', {
     name: "check article's deadline",
     timeZone: 'Asia/Seoul',
   })

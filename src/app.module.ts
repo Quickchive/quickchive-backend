@@ -15,6 +15,8 @@ import * as Joi from 'joi';
 import { CollectionsModule } from './collections/collections.module';
 import { Collection } from './collections/entities/collection.entity';
 import { NestedContent } from './collections/entities/nested-content.entity';
+import { ScheduleModule } from '@nestjs/schedule';
+import { BatchModule } from './batch/batch.module';
 
 @Module({
   imports: [
@@ -86,9 +88,12 @@ import { NestedContent } from './collections/entities/nested-content.entity';
         process.env.MAILGUN_TEMPLATE_NAME_FOR_VERIFY_EMAIL,
       templateNameForResetPassword:
         process.env.MAILGUN_TEMPLATE_NAME_FOR_RESET_PASSWORD,
+      templateNameForNotification:
+        process.env.MAILGUN_TEMPLATE_NAME_FOR_NOTIFICATION,
     }),
     ContentsModule,
     CollectionsModule,
+    BatchModule,
   ],
   controllers: [],
   providers: [],

@@ -3,6 +3,7 @@ export interface MailModuleOptions {
   domain: string;
   templateNameForVerifyEmail: string;
   templateNameForResetPassword: string;
+  templateNameForNotification: string;
 }
 
 export interface EmailVar {

@@ -6,8 +6,24 @@ const logFormat = printf(({ level, label, message }) => {
   return `[${label}] ${level}: ${message}`;
 });
 
+const custom_level = {
+  levels: {
+    error: 0,
+    notice: 1,
+    info: 2,
+    http: 3,
+    verbose: 4,
+    debug: 5,
+    silly: 6,
+  },
+  colors: {
+    notice: 'yellow',
+  },
+};
+
 export const logger = winston.createLogger({
   level: 'debug',
+  levels: custom_level.levels,
   format: combine(colorize(), label({ label: 'Quickchive' }), logFormat),
   transports: [
     new winston.transports.Console(),
@@ -22,6 +38,12 @@ export const logger = winston.createLogger({
       datePattern: 'YYYY-MM-DD',
       maxSize: '1024',
       level: 'info',
+    }),
+    new DailyRotateFile({
+      filename: 'notice-%DATE%.log',
+      datePattern: 'YYYY-MM-DD',
+      maxSize: '1024',
+      level: 'notice',
     }),
   ],
 });

@@ -33,7 +33,10 @@ export class TaskService {
     );
 
     // 만료될 콘텐츠를 찾는다
-    logger.info("Check article's deadline");
+    logger.log({
+      level: 'notice',
+      message: "Check article's deadline",
+    });
     const contents = await this.contents.find({
       where: {
         deadline: utcToday,
@@ -49,6 +52,10 @@ export class TaskService {
         const userEmail = content.user.email;
         const message = `${content.title}의 기한이 오늘까지입니다.`;
         await this.mailService.sendNotificationEmail(userEmail, message);
+        logger.log({
+          level: 'notice',
+          message: `Send notification email to ${userEmail} with message: ${message}`,
+        });
       }
     }
   }

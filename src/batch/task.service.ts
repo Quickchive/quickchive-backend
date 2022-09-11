@@ -1,5 +1,6 @@
 import { Injectable } from '@nestjs/common';
 import { Cron } from '@nestjs/schedule';
+import { logger } from 'src/common/logger';
 
 @Injectable() // Only support SINGLETON scope
 export class TaskService {
@@ -8,6 +9,6 @@ export class TaskService {
     timeZone: 'Asia/Seoul',
   })
   cronJob() {
-    console.log('Cron job is running');
+    logger.debug('Cron job is running');
   }
 }

@@ -15,6 +15,8 @@ import * as Joi from 'joi';
 import { CollectionsModule } from './collections/collections.module';
 import { Collection } from './collections/entities/collection.entity';
 import { NestedContent } from './collections/entities/nested-content.entity';
+import { ScheduleModule } from '@nestjs/schedule';
+import { BatchModule } from './batch/batch.module';
 
 @Module({
   imports: [
@@ -89,6 +91,7 @@ import { NestedContent } from './collections/entities/nested-content.entity';
     }),
     ContentsModule,
     CollectionsModule,
+    BatchModule,
   ],
   controllers: [],
   providers: [],

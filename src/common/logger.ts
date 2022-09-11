@@ -8,7 +8,7 @@ const logFormat = printf(({ level, label, message }) => {
 
 export const logger = winston.createLogger({
   level: 'debug',
-  format: combine(label({ label: 'Quickchive' }), logFormat),
+  format: combine(colorize(), label({ label: 'Quickchive' }), logFormat),
   transports: [
     new winston.transports.Console(),
     new DailyRotateFile({

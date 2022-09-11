@@ -12,13 +12,11 @@ import { logger } from './common/logger';
 async function bootstrap() {
   const app = await NestFactory.create(AppModule, {
     cors: true,
-    logger: logger,
   });
   app.useGlobalInterceptors(new SuccessInterceptor());
   app.useGlobalInterceptors(new TimeoutInterceptor());
   app.useGlobalFilters(new HttpExceptionFilter());
   app.useGlobalPipes(new ValidationPipe());
-  // app.getHttpServer().setTimeout(6000);
   app.setGlobalPrefix('api');
 
   const config = new DocumentBuilder()

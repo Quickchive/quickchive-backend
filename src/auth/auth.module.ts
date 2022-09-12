@@ -9,10 +9,12 @@ import { JwtStrategy } from './jwt/jwt.strategy';
 import * as redisStore from 'cache-manager-redis-store';
 import { GoogleStrategy } from './passport/google/google.strategy';
 import { customJwtService } from './jwt/jwt.service';
+import { ONEMONTH } from './jwt/jwt.payload';
 
 const accessTokenExpiration = '10m';
-export const refreshTokenExpiration = '30d';
+export const refreshTokenExpiration = ONEMONTH;
 export const refreshTokenExpirationInCache = 60 * 60 * 24 * 30;
+export const refreshTokenExpirationInCacheShortVersion = 60 * 60 * 24 * 2;
 export const verifyEmailExpiration = 60 * 5;
 
 @Module({

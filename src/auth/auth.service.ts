@@ -16,6 +16,7 @@ import { Repository } from 'typeorm';
 import {
   refreshTokenExpiration,
   refreshTokenExpirationInCache,
+  refreshTokenExpirationInCacheShortVersion,
   verifyEmailExpiration,
 } from './auth.module';
 import {
@@ -75,7 +76,9 @@ export class AuthService {
       );
       const refreshToken = await this.jwtService.generateRefreshToken(payload);
       await this.cacheManager.set(refreshToken, user.id, {
-        ttl: refreshTokenExpirationInCache,
+        ttl: auto_login
+          ? refreshTokenExpirationInCache
+          : refreshTokenExpirationInCacheShortVersion,
       });
 
       return {
@@ -170,6 +173,7 @@ export class AuthService {
     }
 
     const user = await this.users.findOneBy({ id: decoded.sub });
+    const auto_login: boolean = decoded.period === ONEMONTH;
 
     if (!user) {
       throw new NotFoundException('User not found');
@@ -177,7 +181,7 @@ export class AuthService {
 
     const payload: Payload = this.jwtService.createPayload(
       user.email,
-      decoded.period === ONEMONTH,
+      auto_login,
       user.id,
     );
     const accessToken = this.jwtService.sign(payload);
@@ -185,7 +189,9 @@ export class AuthService {
 
     await this.cacheManager.del(refreshToken);
     await this.cacheManager.set(newRefreshToken, user.id, {
-      ttl: refreshTokenExpirationInCache,
+      ttl: auto_login
+        ? refreshTokenExpirationInCache
+        : refreshTokenExpirationInCacheShortVersion,
     });
 
     return {

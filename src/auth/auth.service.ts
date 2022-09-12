@@ -16,6 +16,7 @@ import { Repository } from 'typeorm';
 import {
   refreshTokenExpiration,
   refreshTokenExpirationInCache,
+  refreshTokenExpirationInCacheShortVersion,
   verifyEmailExpiration,
 } from './auth.module';
 import {
@@ -33,7 +34,7 @@ import { sendPasswordResetEmailOutput } from './dtos/send-password-reset-email.d
 import { RefreshTokenDto, RefreshTokenOutput } from './dtos/token.dto';
 import { ValidateUserDto, ValidateUserOutput } from './dtos/validate-user.dto';
 import { VerifyEmailOutput } from './dtos/verify-email.dto';
-import { Payload } from './jwt/jwt.payload';
+import { ONEMONTH, Payload } from './jwt/jwt.payload';
 import { Cache } from 'cache-manager';
 import { v4 as uuidv4 } from 'uuid';
 import axios from 'axios';
@@ -48,11 +49,12 @@ import {
   LoginWithKakaoDto,
 } from './dtos/kakao.dto';
 import { googleUserInfo } from './dtos/google.dto';
+import { customJwtService } from './jwt/jwt.service';
 
 @Injectable()
 export class AuthService {
   constructor(
-    private readonly jwtService: JwtService,
+    private readonly jwtService: customJwtService,
     @InjectRepository(User)
     private readonly users: Repository<User>,
     private readonly mailService: MailService,
@@ -60,13 +62,23 @@ export class AuthService {
     private readonly cacheManager: Cache,
   ) {}
 
-  async jwtLogin({ email, password }: LoginBodyDto): Promise<LoginOutput> {
+  async jwtLogin({
+    email,
+    password,
+    auto_login,
+  }: LoginBodyDto): Promise<LoginOutput> {
     try {
       const { user } = await this.validateUser({ email, password });
-      const payload: Payload = { email, sub: user.id };
-      const refreshToken = await this.generateRefreshToken(payload);
+      const payload: Payload = this.jwtService.createPayload(
+        email,
+        auto_login,
+        user.id,
+      );
+      const refreshToken = await this.jwtService.generateRefreshToken(payload);
       await this.cacheManager.set(refreshToken, user.id, {
-        ttl: refreshTokenExpirationInCache,
+        ttl: auto_login
+          ? refreshTokenExpirationInCache
+          : refreshTokenExpirationInCacheShortVersion,
       });
 
       return {
@@ -145,7 +157,7 @@ export class AuthService {
   async reissueToken({
     refresh_token: refreshToken,
   }: RefreshTokenDto): Promise<RefreshTokenOutput> {
-    let decoded = null;
+    let decoded: Payload = null;
     try {
       // decoding refresh token
       decoded = this.jwtService.verify(refreshToken, {
@@ -161,18 +173,25 @@ export class AuthService {
     }
 
     const user = await this.users.findOneBy({ id: decoded.sub });
+    const auto_login: boolean = decoded.period === ONEMONTH;
 
     if (!user) {
       throw new NotFoundException('User not found');
     }
 
-    const payload: Payload = { email: user.email, sub: user.id };
+    const payload: Payload = this.jwtService.createPayload(
+      user.email,
+      auto_login,
+      user.id,
+    );
     const accessToken = this.jwtService.sign(payload);
-    const newRefreshToken = await this.generateRefreshToken(payload);
+    const newRefreshToken = await this.jwtService.generateRefreshToken(payload);
 
     await this.cacheManager.del(refreshToken);
     await this.cacheManager.set(newRefreshToken, user.id, {
-      ttl: refreshTokenExpirationInCache,
+      ttl: auto_login
+        ? refreshTokenExpirationInCache
+        : refreshTokenExpirationInCacheShortVersion,
     });
 
     return {
@@ -277,19 +296,12 @@ export class AuthService {
       throw new HttpException(e.message, e.status ? e.status : 500);
     }
   }
-
-  async generateRefreshToken(payload: Payload): Promise<string> {
-    return await this.jwtService.sign(payload, {
-      secret: process.env.JWT_REFRESH_TOKEN_PRIVATE_KEY,
-      expiresIn: refreshTokenExpiration,
-    });
-  }
 }
 
 @Injectable()
 export class OauthService {
   constructor(
-    private readonly jwtService: JwtService,
+    private readonly jwtService: customJwtService,
     @InjectRepository(User)
     private readonly users: Repository<User>,
     @Inject(CACHE_MANAGER)
@@ -412,8 +424,14 @@ export class OauthService {
     try {
       const user: User = await this.users.findOneBy({ email });
       if (user) {
-        const payload: Payload = { email, sub: user.id };
-        const refreshToken = await this.generateRefreshToken(payload);
+        const payload: Payload = this.jwtService.createPayload(
+          user.email,
+          true,
+          user.id,
+        );
+        const refreshToken = await this.jwtService.generateRefreshToken(
+          payload,
+        );
         await this.cacheManager.set(refreshToken, user.id, {
           ttl: refreshTokenExpirationInCache,
         });
@@ -517,12 +535,5 @@ export class OauthService {
       console.log(e);
       throw new HttpException(e.message, e.status ? e.status : 500);
     }
-  }
-
-  async generateRefreshToken(payload: Payload): Promise<string> {
-    return await this.jwtService.sign(payload, {
-      secret: process.env.JWT_REFRESH_TOKEN_PRIVATE_KEY,
-      expiresIn: refreshTokenExpiration,
-    });
   }
 }

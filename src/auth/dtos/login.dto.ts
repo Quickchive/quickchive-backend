@@ -1,9 +1,16 @@
 import { ApiProperty, PickType } from '@nestjs/swagger';
-import { IsOptional, IsString } from 'class-validator';
+import { IsBoolean, IsOptional, IsString } from 'class-validator';
 import { CoreOutput } from 'src/common/dtos/output.dto';
 import { User } from '../../users/entities/user.entity';
 
-export class LoginBodyDto extends PickType(User, ['email', 'password']) {}
+export class LoginBodyDto extends PickType(User, ['email', 'password']) {
+  @ApiProperty({
+    description: '자동 로그인 여부',
+    example: true,
+  })
+  @IsBoolean()
+  auto_login: boolean;
+}
 
 export class LoginOutput extends CoreOutput {
   @ApiProperty({ description: 'access token', required: false })

@@ -19,10 +19,13 @@ export class HttpExceptionFilter implements ExceptionFilter {
       statusCode: number;
       message: string | string[];
     };
+    const { ip, method, url } = request;
+    logger.error(
+      `${new Date()} ${method} - ${url} - ${ip
+        .split(':')
+        .at(-1)} - ${JSON.stringify(exception)}`,
+    );
 
-    logger.error({ time: new Date(), ...exception });
-
-    console.log(exception);
     typeof error === 'string'
       ? response.status(status).json({
           statusCode: status,

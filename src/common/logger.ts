@@ -22,7 +22,7 @@ const custom_level = {
 };
 
 export const logger = winston.createLogger({
-  level: 'debug',
+  level: 'info',
   levels: custom_level.levels,
   format: combine(colorize(), label({ label: 'Quickchive' }), logFormat),
   transports: [
@@ -38,12 +38,6 @@ export const logger = winston.createLogger({
       datePattern: 'YYYY-MM-DD',
       maxSize: '1024',
       level: 'info',
-    }),
-    new DailyRotateFile({
-      filename: 'notice-%DATE%.log',
-      datePattern: 'YYYY-MM-DD',
-      maxSize: '1024',
-      level: 'notice',
     }),
   ],
 });

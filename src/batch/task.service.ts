@@ -45,7 +45,6 @@ export class TaskService {
         user: true,
       },
     });
-    console.log(contents);
     if (contents.length > 0) {
       // 알림
       for (const content of contents) {

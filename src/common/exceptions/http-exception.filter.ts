@@ -21,9 +21,9 @@ export class HttpExceptionFilter implements ExceptionFilter {
     };
     const { ip, method, url } = request;
     logger.error(
-      `${new Date()} ${method} - ${url} - ${ip
-        .split(':')
-        .at(-1)} - ${JSON.stringify(exception)}`,
+      `${method} - ${url} - ${ip.split(':').at(-1)} - ${JSON.stringify(
+        exception,
+      )}`,
     );
 
     typeof error === 'string'

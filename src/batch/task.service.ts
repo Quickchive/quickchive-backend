@@ -35,7 +35,7 @@ export class TaskService {
     // 만료될 콘텐츠를 찾는다
     logger.log({
       level: 'notice',
-      message: "Check article's deadline",
+      message: `${new Date()} Check article's deadline`,
     });
     const contents = await this.contents.find({
       where: {

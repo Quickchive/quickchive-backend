@@ -3,7 +3,7 @@ import * as DailyRotateFile from 'winston-daily-rotate-file';
 
 const { combine, label, printf, colorize } = winston.format;
 const logFormat = printf(({ level, label, message }) => {
-  return `[${label}] ${level}: ${message}`;
+  return `[${label}] ${level}: ${new Date()} ${message}`;
 });
 
 const custom_level = {

@@ -14,9 +14,9 @@ export class SuccessInterceptor implements NestInterceptor {
     // const method = context.getHandler().name;
     const { ip, method, url, body } = context.switchToHttp().getRequest();
     logger.info(
-      `${new Date()} ${method} - ${url} - ${ip
-        .split(':')
-        .at(-1)} - body:${JSON.stringify(body)}`,
+      `${method} - ${url} - ${ip.split(':').at(-1)} - body:${JSON.stringify(
+        body,
+      )}`,
     );
 
     return next.handle().pipe(

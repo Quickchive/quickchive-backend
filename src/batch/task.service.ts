@@ -1,11 +1,10 @@
 import { Injectable } from '@nestjs/common';
 import { Cron } from '@nestjs/schedule';
 import { InjectRepository } from '@nestjs/typeorm';
-import { traceDeprecation } from 'process';
-import { Collection } from 'src/collections/entities/collection.entity';
 import { logger } from 'src/common/logger';
 import { Content } from 'src/contents/entities/content.entity';
 import { MailService } from 'src/mail/mail.service';
+import { getKoreaTime } from 'src/utils';
 import { Between, Repository } from 'typeorm';
 
 @Injectable() // Only support SINGLETON scope
@@ -23,10 +22,7 @@ export class TaskService {
   })
   async checkDeadline() {
     // 만료될 콘텐츠를 찾기 위한 날짜 값 생성
-    const now = new Date(); // 현재 시간
-    const utcNow = now.getTime() + now.getTimezoneOffset() * 60 * 1000; // 현재 시간을 UTC로 변환한 밀리세컨드값
-    const koreaTimeDiff = 9 * 60 * 60 * 1000; // 한국 시간과 UTC와의 차이(9시간의 밀리세컨드)
-    const koreaNow = new Date(utcNow + koreaTimeDiff); // UTC -> 한국 시간
+    const koreaNow = getKoreaTime(); // 한국 시간을 가져옴.
     const year = koreaNow.getFullYear(); // 년
     const month = koreaNow.getMonth(); // 월
     const day = koreaNow.getDate(); // 일

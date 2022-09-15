@@ -23,10 +23,13 @@ export class TaskService {
   })
   async checkDeadline() {
     // 만료될 콘텐츠를 찾기 위한 날짜 값 생성
-    const date = new Date();
-    const year = date.getFullYear(); // 년
-    const month = date.getMonth(); // 월
-    const day = date.getDate(); // 일
+    const now = new Date(); // 현재 시간
+    const utcNow = now.getTime() + now.getTimezoneOffset() * 60 * 1000; // 현재 시간을 UTC로 변환한 밀리세컨드값
+    const koreaTimeDiff = 9 * 60 * 60 * 1000; // 한국 시간과 UTC와의 차이(9시간의 밀리세컨드)
+    const koreaNow = new Date(utcNow + koreaTimeDiff); // UTC -> 한국 시간
+    const year = koreaNow.getFullYear(); // 년
+    const month = koreaNow.getMonth(); // 월
+    const day = koreaNow.getDate(); // 일
 
     const utcToday = new Date(
       new Date(year, month, day, 0, 0, 0, 0).toUTCString(),

@@ -4,7 +4,9 @@ import * as DailyRotateFile from 'winston-daily-rotate-file';
 
 const { combine, label, printf, colorize } = winston.format;
 const logFormat = printf(({ level, label, message }) => {
-  return `[${label}] ${level}: ${getKoreaTime()} ${message}`;
+  return `[${label}] ${level}: ${
+    getKoreaTime().toUTCString().split(' GMT')[0]
+  } GMT+0900 (Korean Standard Time) ${message}`;
 });
 
 const custom_level = {

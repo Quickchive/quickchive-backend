@@ -1,9 +1,10 @@
+import { getKoreaTime } from 'src/utils';
 import * as winston from 'winston';
 import * as DailyRotateFile from 'winston-daily-rotate-file';
 
 const { combine, label, printf, colorize } = winston.format;
 const logFormat = printf(({ level, label, message }) => {
-  return `[${label}] ${level}: ${new Date()} ${message}`;
+  return `[${label}] ${level}: ${getKoreaTime()} ${message}`;
 });
 
 const custom_level = {

@@ -17,7 +17,7 @@ export class MailService {
     emailVars: EmailVar[],
   ) {
     const form = new FormData();
-    form.append('from', `Hou27 from <mail@${this.options.domain}>`);
+    form.append('from', `Quickchive <mail@${this.options.domain}>`);
     form.append('to', to);
     form.append('subject', subject);
     form.append('template', template);

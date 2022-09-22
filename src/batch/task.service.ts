@@ -48,7 +48,7 @@ export class TaskService {
       // 알림
       for (const content of contents) {
         const userEmail = content.user.email;
-        const message = `${content.title}의 기한이 오늘까지입니다.`;
+        const message = `"${content.title}"의 기한이 오늘까지입니다.`;
         await this.mailService.sendNotificationEmail(userEmail, message);
         logger.log({
           level: 'notice',

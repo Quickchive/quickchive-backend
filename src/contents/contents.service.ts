@@ -32,6 +32,8 @@ export class ContentsService {
     private readonly dataSource: DataSource,
     @InjectRepository(User)
     private readonly users: Repository<User>,
+    @InjectRepository(Content)
+    private readonly contents: Repository<Content>,
   ) {}
 
   async addContent(
@@ -324,7 +326,7 @@ export class ContentsService {
 
       content.readFlag = true;
 
-      await this.users.save(content);
+      await this.contents.save(content);
 
       return;
     } catch (e) {

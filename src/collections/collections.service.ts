@@ -117,6 +117,7 @@ export class CollectionsService {
       title,
       comment,
       categoryName,
+      favorite,
       contentLinkList,
     }: UpdateCollectionBodyDto,
   ): Promise<UpdateCollectionOutput> {
@@ -145,9 +146,10 @@ export class CollectionsService {
         throw new NotFoundException('Collection not found.');
       }
 
-      // Update title and comment if they are not empty
+      // Update title, comment and favorite if they are not empty
       title ? (collectionInDb.title = title) : null;
       comment ? (collectionInDb.comment = comment) : null;
+      favorite !== undefined ? (collectionInDb.favorite = favorite) : null;
 
       // Update category if it is not empty
       let category: Category = null;

@@ -34,7 +34,10 @@ export class AddCollectionOutput extends CoreOutput {}
 class UpdateCollectionTitleDto extends PartialType(
   PickType(Collection, ['title']),
 ) {}
-class UpdateCollectionCommentDto extends PickType(Collection, ['comment']) {}
+class UpdateCollectionCommentDto extends PickType(Collection, [
+  'comment',
+  'favorite',
+]) {}
 
 export class UpdateCollectionBodyDto extends IntersectionType(
   UpdateCollectionTitleDto,

@@ -8,7 +8,6 @@ import { User } from 'src/users/entities/user.entity';
 import { Column, Entity, ManyToOne, OneToMany, RelationId } from 'typeorm';
 import { Category } from 'src/contents/entities/category.entity';
 
-@Injectable()
 @Entity()
 export class Collection extends CoreEntity {
   @ApiProperty({ description: 'Collection Title' })

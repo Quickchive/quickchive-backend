@@ -21,7 +21,6 @@ export enum UserRole {
   Admin = 'Admin',
 }
 
-@Injectable()
 @Entity()
 export class User extends CoreEntity {
   @ApiProperty({ example: 'tester', description: 'User Name' })

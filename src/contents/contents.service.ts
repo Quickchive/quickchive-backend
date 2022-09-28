@@ -5,6 +5,7 @@ import {
   NotFoundException,
 } from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
+import { SummaryService } from 'src/summary/summary.service';
 import { User } from 'src/users/entities/user.entity';
 import { getLinkInfo, getOrCreateCategory, init } from 'src/utils';
 import { DataSource, EntityManager, Repository } from 'typeorm';
@@ -20,6 +21,7 @@ import {
   AddMultipleContentsBodyDto,
   checkReadFlagOutput,
   DeleteContentOutput,
+  SummarizeContentOutput,
   toggleFavoriteOutput,
   UpdateContentBodyDto,
 } from './dtos/content.dto';
@@ -34,6 +36,7 @@ export class ContentsService {
     private readonly users: Repository<User>,
     @InjectRepository(Content)
     private readonly contents: Repository<Content>,
+    private readonly summaryService: SummaryService,
   ) {}
 
   async addContent(
@@ -372,6 +375,44 @@ export class ContentsService {
       throw new HttpException(e.message, e.status ? e.status : 500);
     } finally {
       await queryRunner.release();
+    }
+  }
+
+  async summarizeContent(
+    user: User,
+    contentId: number,
+  ): Promise<SummarizeContentOutput> {
+    try {
+      const userInDb = await this.users.findOne({
+        where: { id: user.id },
+        relations: {
+          contents: true,
+        },
+      });
+      if (!userInDb) {
+        throw new NotFoundException('User not found');
+      }
+
+      const content = userInDb.contents.filter(
+        (content) => content.id === contentId,
+      )[0];
+
+      if (!content) {
+        throw new NotFoundException('Content not found.');
+      }
+
+      // 문서 요약을 위한 본문 크롤링
+      let document = '';
+      // document = await getDocument(content.link);
+
+      const { summary } = await this.summaryService.summaryContent({
+        title: content.title,
+        content: document,
+      });
+
+      return { summary };
+    } catch (e) {
+      throw new HttpException(e.message, e.status ? e.status : 500);
     }
   }
 }

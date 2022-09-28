@@ -7,8 +7,10 @@ import {
   UseGuards,
   ParseIntPipe,
   Patch,
+  Get,
 } from '@nestjs/common';
 import {
+  ApiBadRequestResponse,
   ApiBearerAuth,
   ApiConflictResponse,
   ApiCreatedResponse,
@@ -34,6 +36,7 @@ import {
   AddMultipleContentsBodyDto,
   checkReadFlagOutput,
   DeleteContentOutput,
+  SummarizeContentOutput,
   toggleFavoriteOutput,
   UpdateContentBodyDto,
   UpdateContentOutput,
@@ -161,6 +164,28 @@ export class ContentsController {
     @Param('contentId', new ParseIntPipe()) contentId: number,
   ): Promise<DeleteContentOutput> {
     return await this.contentsService.deleteContent(user, contentId);
+  }
+
+  @ApiOperation({
+    summary: '콘텐츠 문서 요약',
+    description: '콘텐츠의 문서를 요약하는 메서드',
+  })
+  @ApiOkResponse({
+    description: '콘텐츠 문서 요약 성공 여부를 반환한다.',
+    type: SummarizeContentOutput,
+  })
+  @ApiNotFoundResponse({
+    description: '존재하지 않는 콘텐츠 또는 유저인 경우',
+  })
+  @ApiBadRequestResponse({
+    description: 'naver 서버에 잘못된 요청을 보냈을 경우',
+  })
+  @Get('summarize/:contentId')
+  async summarizeContent(
+    @AuthUser() user: User,
+    @Param('contentId', new ParseIntPipe()) contentId: number,
+  ): Promise<SummarizeContentOutput> {
+    return await this.contentsService.summarizeContent(user, contentId);
   }
 }
 

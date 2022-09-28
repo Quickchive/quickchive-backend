@@ -52,3 +52,10 @@ export class DeleteContentOutput extends CoreOutput {}
 export class toggleFavoriteOutput extends CoreOutput {}
 
 export class checkReadFlagOutput extends CoreOutput {}
+
+export class SummarizeContentOutput extends CoreOutput {
+  @ApiProperty({ description: '요약된 콘텐츠', required: false })
+  @IsString()
+  @IsOptional()
+  summary?: string;
+}

@@ -41,6 +41,6 @@ export class SummaryService {
     // send request to naver server with axios
     const response = await axios.post(api_url, body, { headers });
     console.log(response);
-    return response.data;
+    return { summary: response.data.summary };
   }
 }

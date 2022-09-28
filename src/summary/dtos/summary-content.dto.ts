@@ -13,7 +13,7 @@ export class SummarizeDocumentInput {
   content: string;
 }
 
-export class SummarizeDocumentOutput extends CoreOutput {
+export class SummarizeDocumentOutput {
   @ApiProperty({ description: '요약된 콘텐츠', required: false })
   @IsString()
   @IsOptional()

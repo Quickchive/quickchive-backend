@@ -17,6 +17,7 @@ import { Collection } from './collections/entities/collection.entity';
 import { NestedContent } from './collections/entities/nested-content.entity';
 import { ScheduleModule } from '@nestjs/schedule';
 import { BatchModule } from './batch/batch.module';
+import { SummaryModule } from './summary/summary.module';
 
 @Module({
   imports: [
@@ -94,6 +95,11 @@ import { BatchModule } from './batch/batch.module';
     ContentsModule,
     CollectionsModule,
     BatchModule,
+    SummaryModule.forRoot({
+      apiClientId: process.env.NAVER_API_CLIENT_ID,
+      apiClientSecret: process.env.NAVER_API_CLIENT_SECRET,
+      clovaSummaryRequestUrl: process.env.NAVER_CLOVA_SUMMARY_REQUEST_URL,
+    }),
   ],
   controllers: [],
   providers: [],

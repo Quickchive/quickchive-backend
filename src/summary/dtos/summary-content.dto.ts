@@ -2,7 +2,7 @@ import { ApiProperty } from '@nestjs/swagger';
 import { IsOptional, IsString } from 'class-validator';
 import { CoreOutput } from 'src/common/dtos/output.dto';
 
-export class SummaryContentInput {
+export class SummarizeDocumentInput {
   @ApiProperty({ description: '콘텐츠 제목', required: false })
   @IsString()
   @IsOptional()
@@ -13,7 +13,7 @@ export class SummaryContentInput {
   content: string;
 }
 
-export class SummaryContentOutput extends CoreOutput {
+export class SummarizeDocumentOutput extends CoreOutput {
   @ApiProperty({ description: '요약된 콘텐츠', required: false })
   @IsString()
   @IsOptional()

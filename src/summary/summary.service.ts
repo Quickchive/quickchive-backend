@@ -1,7 +1,10 @@
 import { Inject, Injectable } from '@nestjs/common';
 import { SummaryModuleOptions } from './summary.interface';
 import axios from 'axios';
-import { SummaryContentInput } from './dtos/summary-content.dto';
+import {
+  SummarizeDocumentInput,
+  SummarizeDocumentOutput,
+} from './dtos/summary-content.dto';
 import { CONFIG_OPTIONS } from 'src/common/common.constants';
 
 @Injectable()
@@ -10,9 +13,11 @@ export class SummaryService {
     @Inject(CONFIG_OPTIONS) private readonly options: SummaryModuleOptions,
   ) {}
 
-  async summaryContent({ title, content }: SummaryContentInput) {
-    const api_url =
-      'https://naveropenapi.apigw.ntruss.com/text-summary/v1/summarize';
+  async summaryContent({
+    title,
+    content,
+  }: SummarizeDocumentInput): Promise<SummarizeDocumentOutput> {
+    const api_url = this.options.clovaSummaryRequestUrl;
 
     const client_id = this.options.apiClientId;
     const client_secret = this.options.apiClientSecret;

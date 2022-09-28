@@ -53,6 +53,17 @@ export class toggleFavoriteOutput extends CoreOutput {}
 
 export class checkReadFlagOutput extends CoreOutput {}
 
+export class SummarizeContentBodyDto {
+  @ApiProperty({ description: '콘텐츠 제목(필수 아님)', required: false })
+  @IsString()
+  @IsOptional()
+  title?: string;
+
+  @ApiProperty({ description: '콘텐츠 내용', required: true })
+  @IsString()
+  content: string;
+}
+
 export class SummarizeContentOutput extends CoreOutput {
   @ApiProperty({ description: '요약된 콘텐츠', required: false })
   @IsString()

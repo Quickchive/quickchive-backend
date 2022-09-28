@@ -21,6 +21,7 @@ import {
   AddMultipleContentsBodyDto,
   checkReadFlagOutput,
   DeleteContentOutput,
+  SummarizeContentBodyDto,
   SummarizeContentOutput,
   toggleFavoriteOutput,
   UpdateContentBodyDto,
@@ -412,6 +413,23 @@ export class ContentsService {
 
       return { summary };
     } catch (e) {
+      throw new HttpException(e.message, e.status ? e.status : 500);
+    }
+  }
+
+  async testSummarizeContent({
+    title,
+    content,
+  }: SummarizeContentBodyDto): Promise<SummarizeContentOutput> {
+    try {
+      const { summary } = await this.summaryService.summaryContent({
+        title,
+        content,
+      });
+
+      return { summary };
+    } catch (e) {
+      // console.log(e);
       throw new HttpException(e.message, e.status ? e.status : 500);
     }
   }

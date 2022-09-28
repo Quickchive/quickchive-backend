@@ -1,8 +1,8 @@
 import { Inject, Injectable } from '@nestjs/common';
 import { SummaryModuleOptions } from './summary.interface';
-import { CONFIG_OPTIONS } from './summary.module';
 import axios from 'axios';
 import { SummaryContentInput } from './dtos/summary-content.dto';
+import { CONFIG_OPTIONS } from 'src/common/common.constants';
 
 @Injectable()
 export class SummaryService {

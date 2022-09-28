@@ -1,8 +1,7 @@
 import { DynamicModule, Global, Module } from '@nestjs/common';
+import { CONFIG_OPTIONS } from 'src/common/common.constants';
 import { SummaryModuleOptions } from './summary.interface';
 import { SummaryService } from './summary.service';
-
-export const CONFIG_OPTIONS = 'CONFIG_OPTIONS';
 
 @Module({})
 @Global()

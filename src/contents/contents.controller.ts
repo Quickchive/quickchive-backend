@@ -179,7 +179,7 @@ export class ContentsController {
     description: '존재하지 않는 콘텐츠 또는 유저인 경우',
   })
   @ApiBadRequestResponse({
-    description: 'naver 서버에 잘못된 요청을 보냈을 경우',
+    description: '잘못된 요청을 보냈을 경우',
   })
   @Get('summarize/:contentId')
   async summarizeContent(

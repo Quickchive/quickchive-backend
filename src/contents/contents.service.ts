@@ -1,13 +1,15 @@
 import {
+  BadRequestException,
   ConflictException,
   HttpException,
   Injectable,
   NotFoundException,
 } from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
+import { logger } from 'src/common/logger';
 import { SummaryService } from 'src/summary/summary.service';
 import { User } from 'src/users/entities/user.entity';
-import { getLinkInfo, getOrCreateCategory, init } from 'src/utils';
+import { getDocument, getLinkInfo, getOrCreateCategory, init } from 'src/utils';
 import { DataSource, EntityManager, Repository } from 'typeorm';
 import {
   AddCategoryOutput,
@@ -394,7 +396,7 @@ export class ContentsService {
         throw new NotFoundException('User not found');
       }
 
-      const content = userInDb.contents.filter(
+      const content: Content = userInDb.contents.filter(
         (content) => content.id === contentId,
       )[0];
 
@@ -403,13 +405,31 @@ export class ContentsService {
       }
 
       // 문서 요약을 위한 본문 크롤링
-      let document = '';
-      // document = await getDocument(content.link);
+      let document: string = await getDocument(content.link);
+      let documentArray: string[] = [];
+      logger.info(`document: ${document}`);
 
-      const { summary } = await this.summaryService.summaryContent({
-        title: content.title,
-        content: document,
-      });
+      // 크롤링 후 처리
+      let summary: string = '';
+      if (!document) {
+        throw new BadRequestException('Document not found.');
+      } else if (document.length > 1900) {
+        for (let i = 0; i < document.length; i += 1900) {
+          documentArray.push(document.slice(i, i + 1900));
+        }
+        for (let i = 0; i < documentArray.length; i++) {
+          const slicedSummary = await this.summaryService.summaryContent({
+            title: content?.title,
+            content: documentArray[i],
+          });
+          summary += slicedSummary.summary;
+        }
+      } else if (document.length <= 1900) {
+        ({ summary } = await this.summaryService.summaryContent({
+          title: content?.title,
+          content: document,
+        }));
+      }
 
       return { summary };
     } catch (e) {

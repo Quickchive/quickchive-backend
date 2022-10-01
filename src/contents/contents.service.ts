@@ -439,13 +439,29 @@ export class ContentsService {
 
   async testSummarizeContent({
     title,
-    content,
+    content: document,
   }: SummarizeContentBodyDto): Promise<SummarizeContentOutput> {
     try {
-      const { summary } = await this.summaryService.summaryContent({
-        title,
-        content,
-      });
+      let summary: string = '';
+      let documentArray: string[] = [];
+
+      if (document.length > 1900) {
+        for (let i = 0; i < document.length; i += 1900) {
+          documentArray.push(document.slice(i, i + 1900));
+        }
+        for (let i = 0; i < documentArray.length; i++) {
+          const slicedSummary = await this.summaryService.summaryContent({
+            title,
+            content: documentArray[i],
+          });
+          summary += slicedSummary.summary;
+        }
+      } else if (document.length <= 1900) {
+        ({ summary } = await this.summaryService.summaryContent({
+          title,
+          content: document,
+        }));
+      }
 
       return { summary };
     } catch (e) {

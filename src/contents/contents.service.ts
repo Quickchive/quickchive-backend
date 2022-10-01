@@ -9,7 +9,7 @@ import { InjectRepository } from '@nestjs/typeorm';
 import { logger } from 'src/common/logger';
 import { SummaryService } from 'src/summary/summary.service';
 import { User } from 'src/users/entities/user.entity';
-import { getDocument, getLinkInfo, getOrCreateCategory, init } from 'src/utils';
+import { getLinkInfo, getOrCreateCategory, init } from 'src/utils';
 import { DataSource, EntityManager, Repository } from 'typeorm';
 import {
   AddCategoryOutput,
@@ -405,24 +405,23 @@ export class ContentsService {
       }
 
       // 문서 요약을 위한 본문 크롤링
-      let document: string = await getDocument(content.link);
-      let documentArray: string[] = [];
-      logger.info(`document: ${document}`);
+      let document: string = await this.summaryService.getDocument(
+        content.link,
+      );
 
       // 크롤링 후 처리
       let summary: string = '';
       if (!document) {
         throw new BadRequestException('Document not found.');
       } else if (document.length > 1900) {
-        for (let i = 0; i < document.length; i += 1900) {
-          documentArray.push(document.slice(i, i + 1900));
-        }
-        for (let i = 0; i < documentArray.length; i++) {
+        let sliceIndex: number = 0;
+        for (let i = 0; i < Math.ceil(document.length / 1900); i++) {
           const slicedSummary = await this.summaryService.summaryContent({
             title: content?.title,
-            content: documentArray[i],
+            content: document.slice(sliceIndex, sliceIndex + 1900),
           });
           summary += slicedSummary.summary;
+          sliceIndex += 1900;
         }
       } else if (document.length <= 1900) {
         ({ summary } = await this.summaryService.summaryContent({
@@ -443,18 +442,16 @@ export class ContentsService {
   }: SummarizeContentBodyDto): Promise<SummarizeContentOutput> {
     try {
       let summary: string = '';
-      let documentArray: string[] = [];
 
       if (document.length > 1900) {
-        for (let i = 0; i < document.length; i += 1900) {
-          documentArray.push(document.slice(i, i + 1900));
-        }
-        for (let i = 0; i < documentArray.length; i++) {
+        let sliceIndex: number = 0;
+        for (let i = 0; i < Math.ceil(document.length / 1900); i++) {
           const slicedSummary = await this.summaryService.summaryContent({
             title,
-            content: documentArray[i],
+            content: document.slice(sliceIndex, sliceIndex + 1900),
           });
           summary += slicedSummary.summary;
+          sliceIndex += 1900;
         }
       } else if (document.length <= 1900) {
         ({ summary } = await this.summaryService.summaryContent({

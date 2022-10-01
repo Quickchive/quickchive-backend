@@ -1,4 +1,9 @@
-import { HttpException, Inject, Injectable } from '@nestjs/common';
+import {
+  BadRequestException,
+  HttpException,
+  Inject,
+  Injectable,
+} from '@nestjs/common';
 import { SummaryModuleOptions } from './summary.interface';
 import axios from 'axios';
 import {
@@ -6,12 +11,40 @@ import {
   SummarizeDocumentOutput,
 } from './dtos/summary-content.dto';
 import { CONFIG_OPTIONS } from 'src/common/common.constants';
+import * as cheerio from 'cheerio';
+import { logger } from 'src/common/logger';
 
 @Injectable()
 export class SummaryService {
   constructor(
     @Inject(CONFIG_OPTIONS) private readonly options: SummaryModuleOptions,
   ) {}
+
+  async getDocument(link: string): Promise<string> {
+    let document: string = '';
+
+    await axios
+      .get(link)
+      .then((res) => {
+        if (res.status !== 200) {
+          console.log(res.status);
+          throw new BadRequestException('잘못된 링크입니다.');
+        } else {
+          const data = res.data;
+          if (typeof data === 'string') {
+            const $ = cheerio.load(data);
+            $('p').each((i, elem) => {
+              document += $(elem).text();
+            });
+          }
+        }
+      })
+      .catch((e) => {
+        logger.error(e.message);
+      });
+
+    return document;
+  }
 
   async summaryContent({
     title,

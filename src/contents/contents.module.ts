@@ -11,7 +11,7 @@ import { CategoryService, ContentsService } from './contents.service';
 import { Content } from './entities/content.entity';
 
 @Module({
-  imports: [TypeOrmModule.forFeature([User, Content]), DataSource],
+  imports: [TypeOrmModule.forFeature([User, Content])],
   controllers: [ContentsController, CategoryController, TestController],
   providers: [ContentsService, CategoryService],
 })

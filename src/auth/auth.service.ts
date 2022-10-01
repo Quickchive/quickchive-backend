@@ -14,7 +14,6 @@ import { MailService } from 'src/mail/mail.service';
 import { User } from 'src/users/entities/user.entity';
 import { Repository } from 'typeorm';
 import {
-  refreshTokenExpiration,
   refreshTokenExpirationInCache,
   refreshTokenExpirationInCacheShortVersion,
   verifyEmailExpiration,

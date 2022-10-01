@@ -406,7 +406,6 @@ export class ContentsService {
 
       // 문서 요약을 위한 본문 크롤링
       let document: string = await getDocument(content.link);
-      let documentArray: string[] = [];
       logger.info(`document: ${document}`);
 
       // 크롤링 후 처리
@@ -415,12 +414,9 @@ export class ContentsService {
         throw new BadRequestException('Document not found.');
       } else if (document.length > 1900) {
         for (let i = 0; i < document.length; i += 1900) {
-          documentArray.push(document.slice(i, i + 1900));
-        }
-        for (let i = 0; i < documentArray.length; i++) {
           const slicedSummary = await this.summaryService.summaryContent({
             title: content?.title,
-            content: documentArray[i],
+            content: document.slice(i, i + 1900),
           });
           summary += slicedSummary.summary;
         }
@@ -443,16 +439,12 @@ export class ContentsService {
   }: SummarizeContentBodyDto): Promise<SummarizeContentOutput> {
     try {
       let summary: string = '';
-      let documentArray: string[] = [];
 
       if (document.length > 1900) {
         for (let i = 0; i < document.length; i += 1900) {
-          documentArray.push(document.slice(i, i + 1900));
-        }
-        for (let i = 0; i < documentArray.length; i++) {
           const slicedSummary = await this.summaryService.summaryContent({
             title,
-            content: documentArray[i],
+            content: document.slice(i, i + 1900),
           });
           summary += slicedSummary.summary;
         }

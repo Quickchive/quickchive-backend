@@ -40,7 +40,12 @@ export class SummaryService {
         }
       })
       .catch((e) => {
-        logger.error(e.message);
+        const errorStatus: number = e.response.status
+          ? e.response.status
+          : e.status
+          ? e.status
+          : 500;
+        throw new HttpException(e.message, errorStatus ? errorStatus : 500);
       });
 
     return document;

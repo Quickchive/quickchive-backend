@@ -176,7 +176,8 @@ export class ContentsController {
     type: SummarizeContentOutput,
   })
   @ApiNotFoundResponse({
-    description: '존재하지 않는 콘텐츠 또는 유저인 경우',
+    description:
+      '존재하지 않는 콘텐츠 또는 유저거나 접근이 불가능한 페이지인 경우',
   })
   @ApiBadRequestResponse({
     description: '잘못된 요청을 보냈을 경우',

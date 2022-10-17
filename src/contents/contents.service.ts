@@ -6,11 +6,10 @@ import {
   NotFoundException,
 } from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
-import { logger } from 'src/common/logger';
+import { CommonService } from 'src/common/common.service';
 import { SummaryService } from 'src/summary/summary.service';
 import { User } from 'src/users/entities/user.entity';
-import { getLinkInfo, getOrCreateCategory, init } from 'src/utils';
-import { DataSource, EntityManager, Repository } from 'typeorm';
+import { EntityManager, Repository } from 'typeorm';
 import {
   AddCategoryOutput,
   DeleteCategoryOutput,
@@ -30,16 +29,21 @@ import {
 } from './dtos/content.dto';
 import { Category } from './entities/category.entity';
 import { Content } from './entities/content.entity';
+import { CategoryRepository } from './repository/category.repository';
+import * as cheerio from 'cheerio';
+import axios from 'axios';
 
 @Injectable()
 export class ContentsService {
   constructor(
-    private readonly dataSource: DataSource,
+    private readonly commonService: CommonService,
     @InjectRepository(User)
     private readonly users: Repository<User>,
     @InjectRepository(Content)
     private readonly contents: Repository<Content>,
     private readonly summaryService: SummaryService,
+    @InjectRepository(Category)
+    private readonly categories: CategoryRepository,
   ) {}
 
   async addContent(
@@ -53,7 +57,7 @@ export class ContentsService {
       categoryName,
     }: AddContentBodyDto,
   ): Promise<AddContentOutput> {
-    const queryRunner = await init(this.dataSource);
+    const queryRunner = await this.commonService.dbInit();
     const queryRunnerManager: EntityManager = queryRunner.manager;
     try {
       const userInDb = await this.users.findOne({
@@ -75,13 +79,13 @@ export class ContentsService {
         siteName,
         description,
         coverImg,
-      } = await getLinkInfo(link);
+      } = await this.getLinkInfo(link);
       console.log(linkTitle);
       title = title ? title : linkTitle;
 
       // Get or create category
       const category = categoryName
-        ? await getOrCreateCategory(categoryName, queryRunnerManager)
+        ? await this.categories.getOrCreate(categoryName, queryRunnerManager)
         : null;
 
       // Check if content already exists in same category
@@ -129,7 +133,7 @@ export class ContentsService {
     user: User,
     { contentLinks }: AddMultipleContentsBodyDto,
   ): Promise<AddContentOutput> {
-    const queryRunner = await init(this.dataSource);
+    const queryRunner = await this.commonService.dbInit();
     const queryRunnerManager: EntityManager = queryRunner.manager;
     try {
       const userInDb = await queryRunnerManager.findOne(User, {
@@ -142,9 +146,8 @@ export class ContentsService {
 
       if (contentLinks.length > 0) {
         for (const link of contentLinks) {
-          const { title, description, coverImg, siteName } = await getLinkInfo(
-            link,
-          );
+          const { title, description, coverImg, siteName } =
+            await this.getLinkInfo(link);
 
           // Check if content already exists in same category
           if (
@@ -196,7 +199,7 @@ export class ContentsService {
       categoryName,
     }: UpdateContentBodyDto,
   ): Promise<AddContentOutput> {
-    const queryRunner = await init(this.dataSource);
+    const queryRunner = await this.commonService.dbInit();
     const queryRunnerManager: EntityManager = queryRunner.manager;
 
     const newContentObj = {
@@ -244,7 +247,10 @@ export class ContentsService {
       // update content
       let category: Category = null;
       if (categoryName) {
-        category = await getOrCreateCategory(categoryName, queryRunnerManager);
+        category = await this.categories.getOrCreate(
+          categoryName,
+          queryRunnerManager,
+        );
         if (!userInDb.categories.includes(category)) {
           userInDb.categories.push(category);
           await queryRunnerManager.save(userInDb);
@@ -272,7 +278,7 @@ export class ContentsService {
     user: User,
     contentId: number,
   ): Promise<toggleFavoriteOutput> {
-    const queryRunner = await init(this.dataSource);
+    const queryRunner = await this.commonService.dbInit();
     const queryRunnerManager: EntityManager = queryRunner.manager;
     try {
       const userInDb = await queryRunnerManager.findOne(User, {
@@ -344,7 +350,7 @@ export class ContentsService {
     user: User,
     contentId: number,
   ): Promise<DeleteContentOutput> {
-    const queryRunner = await init(this.dataSource);
+    const queryRunner = await this.commonService.dbInit();
     const queryRunnerManager: EntityManager = queryRunner.manager;
     try {
       const userInDb = await queryRunnerManager.findOne(User, {
@@ -379,6 +385,61 @@ export class ContentsService {
     } finally {
       await queryRunner.release();
     }
+  }
+
+  async getLinkInfo(link: string) {
+    let title: string = '';
+    let coverImg: string = '';
+    let description: string = '';
+    let siteName: string = null;
+
+    await axios
+      .get(link)
+      .then((res) => {
+        if (res.status !== 200) {
+          console.log(res.status);
+          throw new BadRequestException('잘못된 링크입니다.');
+        } else {
+          const data = res.data;
+          if (typeof data === 'string') {
+            const $ = cheerio.load(data);
+            title = $('title').text() !== '' ? $('title').text() : 'Untitled';
+            $('meta').each((i, el) => {
+              const meta = $(el);
+              if (meta.attr('property') === 'og:image') {
+                coverImg = meta.attr('content');
+              }
+              if (meta.attr('property') === 'og:description') {
+                description = meta.attr('content');
+              }
+              if (meta.attr('property') === 'og:site_name') {
+                siteName = meta.attr('content');
+              }
+            });
+          }
+        }
+      })
+      .catch((e) => {
+        console.log(e.message);
+        // Control unreachable link
+        // if(e.message === 'Request failed with status code 403') {
+        // 403 에러가 발생하는 링크는 크롤링이 불가능한 링크이다.
+        // }
+        for (let idx = 1; idx < 3; idx++) {
+          if (link.split('/').at(-idx) !== '') {
+            title = link.split('/').at(-idx);
+            break;
+          }
+        }
+        title = title ? title : 'Untitled';
+      });
+
+    return {
+      title,
+      description,
+      coverImg,
+      siteName,
+    };
   }
 
   async summarizeContent(
@@ -470,13 +531,17 @@ export class ContentsService {
 
 @Injectable()
 export class CategoryService {
-  constructor(private readonly dataSource: DataSource) {}
+  constructor(
+    private readonly commonService: CommonService,
+    @InjectRepository(Category)
+    private readonly categories: CategoryRepository,
+  ) {}
 
   async addCategory(
     user: User,
     categoryName: string,
   ): Promise<AddCategoryOutput> {
-    const queryRunner = await init(this.dataSource);
+    const queryRunner = await this.commonService.dbInit();
     const queryRunnerManager: EntityManager = queryRunner.manager;
     try {
       const userInDb = await queryRunnerManager.findOne(User, {
@@ -489,7 +554,7 @@ export class CategoryService {
         throw new NotFoundException('User not found');
       }
 
-      const category = await getOrCreateCategory(
+      const category = await this.categories.getOrCreate(
         categoryName,
         queryRunnerManager,
       );
@@ -516,7 +581,7 @@ export class CategoryService {
     user: User,
     { originalName, name }: UpdateCategoryBodyDto,
   ): Promise<UpdateCategoryOutput> {
-    const queryRunner = await init(this.dataSource);
+    const queryRunner = await this.commonService.dbInit();
     const queryRunnerManager: EntityManager = queryRunner.manager;
     try {
       const userInDb = await queryRunnerManager.findOne(User, {
@@ -534,7 +599,10 @@ export class CategoryService {
       }
 
       // Get or create category
-      const category = await getOrCreateCategory(name, queryRunnerManager);
+      const category = await this.categories.getOrCreate(
+        name,
+        queryRunnerManager,
+      );
 
       // Check if user has category
       if (
@@ -579,7 +647,7 @@ export class CategoryService {
     user: User,
     categoryId: number,
   ): Promise<DeleteCategoryOutput> {
-    const queryRunner = await init(this.dataSource);
+    const queryRunner = await this.commonService.dbInit();
     const queryRunnerManager: EntityManager = queryRunner.manager;
     try {
       const userInDb = await queryRunnerManager.findOne(User, {

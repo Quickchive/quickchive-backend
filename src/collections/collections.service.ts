@@ -1,12 +1,11 @@
 import {
-  BadRequestException,
   ConflictException,
   HttpException,
   Injectable,
   NotFoundException,
 } from '@nestjs/common';
 import { User } from 'src/users/entities/user.entity';
-import { DataSource, EntityManager } from 'typeorm';
+import { EntityManager } from 'typeorm';
 import {
   AddCollectionBodyDto,
   AddCollectionOutput,
@@ -15,26 +14,25 @@ import {
   UpdateCollectionOutput,
 } from './dtos/collection.dto';
 import { Collection } from './entities/collection.entity';
-import * as cheerio from 'cheerio';
-import axios from 'axios';
 import { NestedContent } from './entities/nested-content.entity';
 import {
   AddNestedContentBodyDto,
   AddNestedContentOutput,
 } from './dtos/nested-content.dto';
 import { Category } from 'src/contents/entities/category.entity';
-import { getLinkInfo, getOrCreateCategory, init } from 'src/utils';
+import { getLinkInfo, getOrCreateCategory } from 'src/utils';
 import { toggleFavoriteOutput } from 'src/contents/dtos/content.dto';
+import { CommonService } from 'src/common/common.service';
 
 @Injectable()
 export class CollectionsService {
-  constructor(private readonly dataSource: DataSource) {}
+  constructor(private readonly commonService: CommonService) {}
 
   async addCollection(
     user: User,
     { title, comment, contentLinkList, categoryName }: AddCollectionBodyDto,
   ): Promise<AddCollectionOutput> {
-    const queryRunner = await init(this.dataSource);
+    const queryRunner = await this.commonService.dbInit();
     const queryRunnerManager: EntityManager = queryRunner.manager;
     try {
       const userInDb = await queryRunnerManager.findOne(User, {
@@ -121,7 +119,7 @@ export class CollectionsService {
       contentLinkList,
     }: UpdateCollectionBodyDto,
   ): Promise<UpdateCollectionOutput> {
-    const queryRunner = await init(this.dataSource);
+    const queryRunner = await this.commonService.dbInit();
     const queryRunnerManager: EntityManager = queryRunner.manager;
     try {
       const userInDb = await queryRunnerManager.findOne(User, {
@@ -227,7 +225,7 @@ export class CollectionsService {
   async addNestedContent({
     link,
   }: AddNestedContentBodyDto): Promise<AddNestedContentOutput> {
-    const queryRunner = await init(this.dataSource);
+    const queryRunner = await this.commonService.dbInit();
     const queryRunnerManager: EntityManager = queryRunner.manager;
     try {
       // get og tag info from link
@@ -257,7 +255,7 @@ export class CollectionsService {
     user: User,
     collectionId: number,
   ): Promise<toggleFavoriteOutput> {
-    const queryRunner = await init(this.dataSource);
+    const queryRunner = await this.commonService.dbInit();
     const queryRunnerManager: EntityManager = queryRunner.manager;
     try {
       const userInDb = await queryRunnerManager.findOne(User, {
@@ -296,7 +294,7 @@ export class CollectionsService {
     user: User,
     collectionId: number,
   ): Promise<DeleteCollectionOutput> {
-    const queryRunner = await init(this.dataSource);
+    const queryRunner = await this.commonService.dbInit();
     const queryRunnerManager: EntityManager = queryRunner.manager;
     try {
       const userInDb = await queryRunnerManager.findOne(User, {

@@ -6,11 +6,12 @@ import {
   NotFoundException,
 } from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
+import { CommonService } from 'src/common/common.service';
 import { logger } from 'src/common/logger';
 import { SummaryService } from 'src/summary/summary.service';
 import { User } from 'src/users/entities/user.entity';
-import { getLinkInfo, getOrCreateCategory, init } from 'src/utils';
-import { DataSource, EntityManager, Repository } from 'typeorm';
+import { getLinkInfo, getOrCreateCategory } from 'src/utils';
+import { EntityManager, Repository } from 'typeorm';
 import {
   AddCategoryOutput,
   DeleteCategoryOutput,
@@ -34,7 +35,7 @@ import { Content } from './entities/content.entity';
 @Injectable()
 export class ContentsService {
   constructor(
-    private readonly dataSource: DataSource,
+    private readonly commonService: CommonService,
     @InjectRepository(User)
     private readonly users: Repository<User>,
     @InjectRepository(Content)
@@ -53,7 +54,7 @@ export class ContentsService {
       categoryName,
     }: AddContentBodyDto,
   ): Promise<AddContentOutput> {
-    const queryRunner = await init(this.dataSource);
+    const queryRunner = await this.commonService.dbInit();
     const queryRunnerManager: EntityManager = queryRunner.manager;
     try {
       const userInDb = await this.users.findOne({
@@ -129,7 +130,7 @@ export class ContentsService {
     user: User,
     { contentLinks }: AddMultipleContentsBodyDto,
   ): Promise<AddContentOutput> {
-    const queryRunner = await init(this.dataSource);
+    const queryRunner = await this.commonService.dbInit();
     const queryRunnerManager: EntityManager = queryRunner.manager;
     try {
       const userInDb = await queryRunnerManager.findOne(User, {
@@ -196,7 +197,7 @@ export class ContentsService {
       categoryName,
     }: UpdateContentBodyDto,
   ): Promise<AddContentOutput> {
-    const queryRunner = await init(this.dataSource);
+    const queryRunner = await this.commonService.dbInit();
     const queryRunnerManager: EntityManager = queryRunner.manager;
 
     const newContentObj = {
@@ -272,7 +273,7 @@ export class ContentsService {
     user: User,
     contentId: number,
   ): Promise<toggleFavoriteOutput> {
-    const queryRunner = await init(this.dataSource);
+    const queryRunner = await this.commonService.dbInit();
     const queryRunnerManager: EntityManager = queryRunner.manager;
     try {
       const userInDb = await queryRunnerManager.findOne(User, {
@@ -344,7 +345,7 @@ export class ContentsService {
     user: User,
     contentId: number,
   ): Promise<DeleteContentOutput> {
-    const queryRunner = await init(this.dataSource);
+    const queryRunner = await this.commonService.dbInit();
     const queryRunnerManager: EntityManager = queryRunner.manager;
     try {
       const userInDb = await queryRunnerManager.findOne(User, {
@@ -470,13 +471,13 @@ export class ContentsService {
 
 @Injectable()
 export class CategoryService {
-  constructor(private readonly dataSource: DataSource) {}
+  constructor(private readonly commonService: CommonService) {}
 
   async addCategory(
     user: User,
     categoryName: string,
   ): Promise<AddCategoryOutput> {
-    const queryRunner = await init(this.dataSource);
+    const queryRunner = await this.commonService.dbInit();
     const queryRunnerManager: EntityManager = queryRunner.manager;
     try {
       const userInDb = await queryRunnerManager.findOne(User, {
@@ -516,7 +517,7 @@ export class CategoryService {
     user: User,
     { originalName, name }: UpdateCategoryBodyDto,
   ): Promise<UpdateCategoryOutput> {
-    const queryRunner = await init(this.dataSource);
+    const queryRunner = await this.commonService.dbInit();
     const queryRunnerManager: EntityManager = queryRunner.manager;
     try {
       const userInDb = await queryRunnerManager.findOne(User, {
@@ -579,7 +580,7 @@ export class CategoryService {
     user: User,
     categoryId: number,
   ): Promise<DeleteCategoryOutput> {
-    const queryRunner = await init(this.dataSource);
+    const queryRunner = await this.commonService.dbInit();
     const queryRunnerManager: EntityManager = queryRunner.manager;
     try {
       const userInDb = await queryRunnerManager.findOne(User, {

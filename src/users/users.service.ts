@@ -8,7 +8,7 @@ import {
 } from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
 import { Content } from 'src/contents/entities/content.entity';
-import { DataSource, EntityManager, Repository } from 'typeorm';
+import { EntityManager, Repository } from 'typeorm';
 import { EditProfileInput, EditProfileOutput } from './dtos/edit-profile.dto';
 import { LoadPersonalCategoriesOutput } from './dtos/load-personal-categories.dto';
 import {
@@ -22,13 +22,13 @@ import {
 import { User } from './entities/user.entity';
 import { Cache } from 'cache-manager';
 import { LoadPersonalCollectionsOutput } from './dtos/load-personal-collections.dto';
-import { init } from 'src/utils';
 import { Collection } from 'src/collections/entities/collection.entity';
+import { CommonService } from 'src/common/common.service';
 
 @Injectable()
 export class UsersService {
   constructor(
-    private readonly dataSource: DataSource,
+    private readonly commonService: CommonService,
     @InjectRepository(User) private readonly users: Repository<User>,
     @Inject(CACHE_MANAGER) private readonly cacheManager: Cache,
   ) {}
@@ -37,7 +37,7 @@ export class UsersService {
     userId: number,
     { password, oldPassword, name }: EditProfileInput,
   ): Promise<EditProfileOutput> {
-    const queryRunner = await init(this.dataSource);
+    const queryRunner = await this.commonService.dbInit();
     const queryRunnerManager: EntityManager = await queryRunner.manager;
     try {
       const user = await queryRunnerManager.findOne(User, {
@@ -74,7 +74,7 @@ export class UsersService {
     code,
     password,
   }: ResetPasswordInput): Promise<ResetPasswordOutput> {
-    const queryRunner = await init(this.dataSource);
+    const queryRunner = await this.commonService.dbInit();
     const queryRunnerManager: EntityManager = queryRunner.manager;
     try {
       const userId: number = await this.cacheManager.get(code);

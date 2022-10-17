@@ -7,7 +7,6 @@ import {
 } from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
 import { CommonService } from 'src/common/common.service';
-import { logger } from 'src/common/logger';
 import { SummaryService } from 'src/summary/summary.service';
 import { User } from 'src/users/entities/user.entity';
 import { getLinkInfo, getOrCreateCategory } from 'src/utils';

@@ -23,15 +23,16 @@ import { customCategoryRepositoryMethods } from './repository/category.repositor
     ContentsService,
     CategoryService,
     {
-      provide: getRepositoryToken(User),
+      provide: getRepositoryToken(Category),
       inject: [getDataSourceToken()],
       useFactory(dataSource: DataSource) {
-        // Override default repository for User with a custom one
+        // Override default repository for Category with a custom one
         return dataSource
           .getRepository(Category)
           .extend(customCategoryRepositoryMethods);
       },
     },
   ],
+  exports: [ContentsService],
 })
 export class ContentsModule {}

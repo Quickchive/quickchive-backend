@@ -9,7 +9,6 @@ import { InjectRepository } from '@nestjs/typeorm';
 import { CommonService } from 'src/common/common.service';
 import { SummaryService } from 'src/summary/summary.service';
 import { User } from 'src/users/entities/user.entity';
-import { getLinkInfo } from 'src/utils';
 import { EntityManager, Repository } from 'typeorm';
 import {
   AddCategoryOutput,
@@ -31,6 +30,8 @@ import {
 import { Category } from './entities/category.entity';
 import { Content } from './entities/content.entity';
 import { CategoryRepository } from './repository/category.repository';
+import * as cheerio from 'cheerio';
+import axios from 'axios';
 
 @Injectable()
 export class ContentsService {
@@ -78,7 +79,7 @@ export class ContentsService {
         siteName,
         description,
         coverImg,
-      } = await getLinkInfo(link);
+      } = await this.getLinkInfo(link);
       console.log(linkTitle);
       title = title ? title : linkTitle;
 
@@ -145,9 +146,8 @@ export class ContentsService {
 
       if (contentLinks.length > 0) {
         for (const link of contentLinks) {
-          const { title, description, coverImg, siteName } = await getLinkInfo(
-            link,
-          );
+          const { title, description, coverImg, siteName } =
+            await this.getLinkInfo(link);
 
           // Check if content already exists in same category
           if (
@@ -385,6 +385,61 @@ export class ContentsService {
     } finally {
       await queryRunner.release();
     }
+  }
+
+  async getLinkInfo(link: string) {
+    let title: string = '';
+    let coverImg: string = '';
+    let description: string = '';
+    let siteName: string = null;
+
+    await axios
+      .get(link)
+      .then((res) => {
+        if (res.status !== 200) {
+          console.log(res.status);
+          throw new BadRequestException('잘못된 링크입니다.');
+        } else {
+          const data = res.data;
+          if (typeof data === 'string') {
+            const $ = cheerio.load(data);
+            title = $('title').text() !== '' ? $('title').text() : 'Untitled';
+            $('meta').each((i, el) => {
+              const meta = $(el);
+              if (meta.attr('property') === 'og:image') {
+                coverImg = meta.attr('content');
+              }
+              if (meta.attr('property') === 'og:description') {
+                description = meta.attr('content');
+              }
+              if (meta.attr('property') === 'og:site_name') {
+                siteName = meta.attr('content');
+              }
+            });
+          }
+        }
+      })
+      .catch((e) => {
+        console.log(e.message);
+        // Control unreachable link
+        // if(e.message === 'Request failed with status code 403') {
+        // 403 에러가 발생하는 링크는 크롤링이 불가능한 링크이다.
+        // }
+        for (let idx = 1; idx < 3; idx++) {
+          if (link.split('/').at(-idx) !== '') {
+            title = link.split('/').at(-idx);
+            break;
+          }
+        }
+        title = title ? title : 'Untitled';
+      });
+
+    return {
+      title,
+      description,
+      coverImg,
+      siteName,
+    };
   }
 
   async summarizeContent(

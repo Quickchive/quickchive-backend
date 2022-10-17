@@ -20,11 +20,11 @@ import {
   AddNestedContentOutput,
 } from './dtos/nested-content.dto';
 import { Category } from 'src/contents/entities/category.entity';
-import { getLinkInfo } from 'src/utils';
 import { toggleFavoriteOutput } from 'src/contents/dtos/content.dto';
 import { CommonService } from 'src/common/common.service';
 import { InjectRepository } from '@nestjs/typeorm';
 import { CategoryRepository } from 'src/contents/repository/category.repository';
+import { ContentsService } from 'src/contents/contents.service';
 
 @Injectable()
 export class CollectionsService {
@@ -32,6 +32,7 @@ export class CollectionsService {
     private readonly commonService: CommonService,
     @InjectRepository(Category)
     private readonly categories: CategoryRepository,
+    private readonly contentsService: ContentsService,
   ) {}
 
   async addCollection(
@@ -238,7 +239,8 @@ export class CollectionsService {
     const queryRunnerManager: EntityManager = queryRunner.manager;
     try {
       // get og tag info from link
-      const { title, description, coverImg } = await getLinkInfo(link);
+      const { title, description, coverImg } =
+        await this.contentsService.getLinkInfo(link);
 
       const newNestedContent = queryRunnerManager.create(NestedContent, {
         link,

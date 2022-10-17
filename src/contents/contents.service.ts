@@ -9,7 +9,7 @@ import { InjectRepository } from '@nestjs/typeorm';
 import { CommonService } from 'src/common/common.service';
 import { SummaryService } from 'src/summary/summary.service';
 import { User } from 'src/users/entities/user.entity';
-import { getLinkInfo, getOrCreateCategory } from 'src/utils';
+import { getLinkInfo } from 'src/utils';
 import { EntityManager, Repository } from 'typeorm';
 import {
   AddCategoryOutput,
@@ -30,6 +30,7 @@ import {
 } from './dtos/content.dto';
 import { Category } from './entities/category.entity';
 import { Content } from './entities/content.entity';
+import { CategoryRepository } from './repository/category.repository';
 
 @Injectable()
 export class ContentsService {
@@ -40,6 +41,8 @@ export class ContentsService {
     @InjectRepository(Content)
     private readonly contents: Repository<Content>,
     private readonly summaryService: SummaryService,
+    @InjectRepository(Category)
+    private readonly categories: CategoryRepository,
   ) {}
 
   async addContent(
@@ -81,7 +84,7 @@ export class ContentsService {
 
       // Get or create category
       const category = categoryName
-        ? await getOrCreateCategory(categoryName, queryRunnerManager)
+        ? await this.categories.getOrCreate(categoryName, queryRunnerManager)
         : null;
 
       // Check if content already exists in same category
@@ -244,7 +247,10 @@ export class ContentsService {
       // update content
       let category: Category = null;
       if (categoryName) {
-        category = await getOrCreateCategory(categoryName, queryRunnerManager);
+        category = await this.categories.getOrCreate(
+          categoryName,
+          queryRunnerManager,
+        );
         if (!userInDb.categories.includes(category)) {
           userInDb.categories.push(category);
           await queryRunnerManager.save(userInDb);
@@ -470,7 +476,11 @@ export class ContentsService {
 
 @Injectable()
 export class CategoryService {
-  constructor(private readonly commonService: CommonService) {}
+  constructor(
+    private readonly commonService: CommonService,
+    @InjectRepository(Category)
+    private readonly categories: CategoryRepository,
+  ) {}
 
   async addCategory(
     user: User,
@@ -489,7 +499,7 @@ export class CategoryService {
         throw new NotFoundException('User not found');
       }
 
-      const category = await getOrCreateCategory(
+      const category = await this.categories.getOrCreate(
         categoryName,
         queryRunnerManager,
       );
@@ -534,7 +544,10 @@ export class CategoryService {
       }
 
       // Get or create category
-      const category = await getOrCreateCategory(name, queryRunnerManager);
+      const category = await this.categories.getOrCreate(
+        name,
+        queryRunnerManager,
+      );
 
       // Check if user has category
       if (

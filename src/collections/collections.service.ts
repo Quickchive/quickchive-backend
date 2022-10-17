@@ -20,13 +20,19 @@ import {
   AddNestedContentOutput,
 } from './dtos/nested-content.dto';
 import { Category } from 'src/contents/entities/category.entity';
-import { getLinkInfo, getOrCreateCategory } from 'src/utils';
+import { getLinkInfo } from 'src/utils';
 import { toggleFavoriteOutput } from 'src/contents/dtos/content.dto';
 import { CommonService } from 'src/common/common.service';
+import { InjectRepository } from '@nestjs/typeorm';
+import { CategoryRepository } from 'src/contents/repository/category.repository';
 
 @Injectable()
 export class CollectionsService {
-  constructor(private readonly commonService: CommonService) {}
+  constructor(
+    private readonly commonService: CommonService,
+    @InjectRepository(Category)
+    private readonly categories: CategoryRepository,
+  ) {}
 
   async addCollection(
     user: User,
@@ -76,7 +82,7 @@ export class CollectionsService {
 
       // Get or create category
       const category = categoryName
-        ? await getOrCreateCategory(categoryName, queryRunnerManager)
+        ? await this.categories.getOrCreate(categoryName, queryRunnerManager)
         : null;
 
       // Create collection
@@ -152,7 +158,10 @@ export class CollectionsService {
       // Update category if it is not empty
       let category: Category = null;
       if (categoryName) {
-        category = await getOrCreateCategory(categoryName, queryRunnerManager);
+        category = await this.categories.getOrCreate(
+          categoryName,
+          queryRunnerManager,
+        );
         if (!userInDb.categories.includes(category)) {
           userInDb.categories.push(category);
           await queryRunnerManager.save(userInDb);

@@ -6,7 +6,6 @@ import { CommonModule } from './common/common.module';
 import { AuthModule } from './auth/auth.module';
 import { MailModule } from './mail/mail.module';
 import { User } from './users/entities/user.entity';
-import { Verification } from './users/entities/verification.entity';
 import { ContentsModule } from './contents/contents.module';
 import { Content } from './contents/entities/content.entity';
 import { Category } from './contents/entities/category.entity';
@@ -15,7 +14,6 @@ import * as Joi from 'joi';
 import { CollectionsModule } from './collections/collections.module';
 import { Collection } from './collections/entities/collection.entity';
 import { NestedContent } from './collections/entities/nested-content.entity';
-import { ScheduleModule } from '@nestjs/schedule';
 import { BatchModule } from './batch/batch.module';
 import { SummaryModule } from './summary/summary.module';
 
@@ -29,7 +27,6 @@ import { SummaryModule } from './summary/summary.module';
           : process.env.NODE_ENV === 'prod'
           ? '.env.prod'
           : '.env.test',
-      // ignoreEnvFile: process.env.NODE_ENV === 'prod',
       validationSchema: Joi.object({
         NODE_ENV: Joi.string().valid('dev', 'prod', 'test').required(),
         DB_HOST: Joi.string(),
@@ -74,10 +71,6 @@ import { SummaryModule } from './summary/summary.module';
       logging:
         process.env.NODE_ENV !== 'prod' && process.env.NODE_ENV !== 'test',
       entities: [User, Content, Category, Collection, NestedContent],
-      // ssl: {
-      //   require: true,
-      //   rejectUnauthorized: false,
-      // },
     }),
     UsersModule,
     CommonModule,

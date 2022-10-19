@@ -30,6 +30,8 @@ services:
     depends_on:
       - redis
       - postgres
+    environment:
+      TZ: 'Asia/Seoul'
 networks:
   shared-network:
     driver: bridge

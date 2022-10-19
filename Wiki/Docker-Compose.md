@@ -31,7 +31,7 @@ services:
     env_file:
       - .env.prod
     ports:
-      - 4000:4000
+      - 80:4000
     depends_on:
       - redis
       - postgres

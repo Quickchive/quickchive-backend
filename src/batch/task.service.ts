@@ -1,11 +1,10 @@
 import { Injectable } from '@nestjs/common';
 import { Cron } from '@nestjs/schedule';
 import { InjectRepository } from '@nestjs/typeorm';
-import { logger } from 'src/common/logger';
+import { getKoreaTime, logger } from 'src/common/logger';
 import { Content } from 'src/contents/entities/content.entity';
 import { MailService } from 'src/mail/mail.service';
-import { getKoreaTime } from 'src/utils';
-import { Between, Repository } from 'typeorm';
+import { Repository } from 'typeorm';
 
 @Injectable() // Only support SINGLETON scope
 export class TaskService {

@@ -19,6 +19,7 @@ echo "Backup process complete. Path : ${savepath}"
 ```
 
 - crontab 통해 주기적으로 데이터 백업
+  > 지정한 crontab : \* 2 \* \* \* [shell script file 경로]/db_backup.sh
 - host에서 아래 명령어를 통해 ec2로 백업된 데이터를 host에도 저장
 
 ```bash

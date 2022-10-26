@@ -2,56 +2,28 @@
 
 ## Description
 
-> Quickchive 서비스의 Backend Repository입니다.
+> [Quickchive](https://quickchive.swygbro.com/)
 
 <br>
-<p align="center">
-  <a href="http://nestjs.com/" target="blank"><img src="https://nestjs.com/img/logo_text.svg" width="320" alt="Nest Logo" /></a>
-</p>
 
-[circleci-image]: https://img.shields.io/circleci/build/github/nestjs/nest/master?token=abc123def456
-[circleci-url]: https://circleci.com/gh/nestjs/nest
+# v0.1.0
 
-  <p align="center">A progressive <a href="http://nodejs.org" target="_blank">Node.js</a> framework for building efficient and scalable server-side applications.</p>
-    <p align="center">
-<a href="https://www.npmjs.com/~nestjscore" target="_blank"><img src="https://img.shields.io/npm/v/@nestjs/core.svg" alt="NPM Version" /></a>
-<a href="https://www.npmjs.com/~nestjscore" target="_blank"><img src="https://img.shields.io/npm/l/@nestjs/core.svg" alt="Package License" /></a>
+## Added
 
-## Installation
+- 기본적인 유저 관리 기능
+- 구글, 카카오 로그인
+- content 추가, 수정, 삭제 기능
+- content 메모 및 읽을 기한
+- collection 추가, 수정, 삭제 기능
+- etc...
 
-```bash
-$ npm install
-```
+## Changed
 
-## Running the app
+> first release
 
-```bash
-# development
-$ npm run start
+## Removed
 
-# watch mode
-$ npm run start:dev
-
-# production mode
-$ npm run start:prod
-```
-
-## Test
-
-```bash
-# unit tests
-$ npm run test
-
-# e2e tests
-$ npm run test:e2e
-
-# test coverage
-$ npm run test:cov
-```
-
-## Support
-
-Nest is an MIT-licensed open source project. It can grow thanks to the sponsors and support by the amazing backers. If you'd like to join them, please [read more here](https://docs.nestjs.com/support).
+> first release
 
 ## License
 

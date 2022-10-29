@@ -24,9 +24,9 @@ export enum UserRole {
 @Entity()
 export class User extends CoreEntity {
   @ApiProperty({ example: 'tester', description: 'User Name' })
-  @Column({ nullable: true })
+  @Column()
   @IsString()
-  name?: string;
+  name: string;
 
   @ApiProperty({ example: 'ex@g.com', description: 'User Email' })
   @Column({ unique: true })

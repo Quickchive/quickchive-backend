@@ -168,9 +168,13 @@ export class ContentsController {
   async deleteContent(
     @AuthUser() user: User,
     @Param('contentId', new ParseIntPipe()) contentId: number,
-    @TransactionManager() manager: EntityManager,
+    @TransactionManager() queryRunnerManager: EntityManager,
   ): Promise<DeleteContentOutput> {
-    return await this.contentsService.deleteContent(user, contentId);
+    return await this.contentsService.deleteContent(
+      user,
+      contentId,
+      queryRunnerManager,
+    );
   }
 
   @ApiOperation({

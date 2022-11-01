@@ -349,9 +349,10 @@ export class ContentsService {
   async deleteContent(
     user: User,
     contentId: number,
+    queryRunnerManager: EntityManager,
   ): Promise<DeleteContentOutput> {
-    const queryRunner = await this.commonService.dbInit();
-    const queryRunnerManager: EntityManager = queryRunner.manager;
+    // const queryRunner = await this.commonService.dbInit();
+    // const queryRunnerManager: EntityManager = queryRunner.manager;
     try {
       const userInDb = await queryRunnerManager.findOne(User, {
         where: { id: user.id },
@@ -375,16 +376,17 @@ export class ContentsService {
       // delete content
       await queryRunnerManager.delete(Content, content.id);
 
-      await queryRunner.commitTransaction();
+      // await queryRunner.commitTransaction();
 
       return;
     } catch (e) {
-      await queryRunner.rollbackTransaction();
+      // await queryRunner.rollbackTransaction();
 
       throw new HttpException(e.message, e.status ? e.status : 500);
-    } finally {
-      await queryRunner.release();
     }
+    //  finally {
+    //   await queryRunner.release();
+    // }
   }
 
   async getLinkInfo(link: string) {

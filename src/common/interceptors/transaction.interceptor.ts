@@ -23,19 +23,18 @@ export class TransactionInterceptor implements NestInterceptor {
 
     return next.handle().pipe(
       catchError(async (e) => {
+        console.log('check err ', e.message);
         await queryRunner.rollbackTransaction();
         await queryRunner.release();
 
         if (e instanceof HttpException) {
-          throw new HttpException(
-            e.message,
-            e.getStatus() ? e.getStatus() : 500,
-          );
+          throw new HttpException(e.message, e.getStatus());
         } else {
-          throw new InternalServerErrorException();
+          throw new InternalServerErrorException(e.message);
         }
       }),
       tap(async () => {
+        console.log('check commit');
         await queryRunner.commitTransaction();
         await queryRunner.release();
       }),

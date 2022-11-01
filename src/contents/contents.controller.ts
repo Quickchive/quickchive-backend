@@ -8,6 +8,7 @@ import {
   ParseIntPipe,
   Patch,
   Get,
+  UseInterceptors,
 } from '@nestjs/common';
 import {
   ApiBadRequestResponse,
@@ -21,7 +22,10 @@ import {
 } from '@nestjs/swagger';
 import { AuthUser } from 'src/auth/auth-user.decorator';
 import { JwtAuthGuard } from 'src/auth/jwt/jwt.guard';
+import { TransactionInterceptor } from 'src/common/interceptors/transaction.interceptor';
+import { TransactionManager } from 'src/common/transaction.decorator';
 import { User } from 'src/users/entities/user.entity';
+import { EntityManager } from 'typeorm';
 import { CategoryService, ContentsService } from './contents.service';
 import {
   AddCategoryBodyDto,
@@ -160,9 +164,11 @@ export class ContentsController {
     description: '존재하지 않는 콘텐츠 또는 유저인 경우',
   })
   @Delete('delete/:contentId')
+  @UseInterceptors(TransactionInterceptor)
   async deleteContent(
     @AuthUser() user: User,
     @Param('contentId', new ParseIntPipe()) contentId: number,
+    @TransactionManager() manager: EntityManager,
   ): Promise<DeleteContentOutput> {
     return await this.contentsService.deleteContent(user, contentId);
   }

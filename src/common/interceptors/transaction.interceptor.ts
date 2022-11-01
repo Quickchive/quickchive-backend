@@ -1,6 +1,3 @@
-// @Injectable()
-// export class TransactionInterceptor implements NestInterceptor {
-
 import {
   CallHandler,
   ExecutionContext,
@@ -20,7 +17,7 @@ export class TransactionInterceptor implements NestInterceptor {
     next: CallHandler,
   ): Promise<Observable<any>> {
     const req = context.switchToHttp().getRequest();
-    const queryRunner = await this.dbInit();
+    const queryRunner: QueryRunner = await this.dbInit();
 
     req.queryRunnerManager = queryRunner.manager;
 

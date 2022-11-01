@@ -12,6 +12,7 @@ import { DataSource, QueryRunner } from 'typeorm';
 @Injectable()
 export class TransactionInterceptor implements NestInterceptor {
   constructor(private readonly dataSource: DataSource) {}
+
   async intercept(
     context: ExecutionContext,
     next: CallHandler,
@@ -41,7 +42,7 @@ export class TransactionInterceptor implements NestInterceptor {
     );
   }
 
-  async dbInit(): Promise<QueryRunner> {
+  private async dbInit(): Promise<QueryRunner> {
     const queryRunner = this.dataSource.createQueryRunner();
     await queryRunner.connect();
     await queryRunner.startTransaction();

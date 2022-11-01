@@ -488,10 +488,11 @@ export class OauthService {
           password,
         });
         createAccountResult = user;
+        if (createAccountResult) {
+          return await this.oauthLogin(email);
+        }
       } else if (userInDb) {
         return await this.oauthLogin(userInDb.email);
-      } else if (createAccountResult) {
-        return await this.oauthLogin(email);
       } else {
         throw new BadRequestException("Couldn't log in with Kakao");
       }

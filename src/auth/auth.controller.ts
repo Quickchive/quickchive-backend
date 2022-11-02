@@ -222,6 +222,11 @@ export class OauthController {
     description: '로그인 성공 여부와 함께 access, refresh token을 반환한다.',
     type: LoginOutput,
   })
+  @ApiBadRequestResponse({
+    description:
+      '카카오 로그인 요청 시 발생하는 에러를 알려준다.(ex : email 제공에 동의하지 않은 경우)',
+    type: LoginOutput,
+  })
   @ApiUnauthorizedResponse({
     description: '카카오 로그인 실패 여부를 알려준다.',
     type: LoginOutput,

@@ -468,6 +468,9 @@ export class OauthService {
       }
 
       const email = userInfo.kakao_account.email;
+      if (!email) {
+        throw new BadRequestException('Please Agree to share your email');
+      }
 
       // check user exist with email
       const userInDb = await this.users.findOne({

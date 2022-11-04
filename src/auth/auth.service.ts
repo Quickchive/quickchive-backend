@@ -214,6 +214,7 @@ export class AuthService {
     } else {
       newUser = await this.users.save(
         this.users.create({
+          name: 'unverified',
           email,
           password: 'unverified0',
         }),

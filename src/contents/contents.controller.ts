@@ -66,11 +66,17 @@ export class ContentsController {
     description: '같은 카테고리 내에 동일한 링크의 콘텐츠가 존재할 경우',
   })
   @Post('add')
+  @UseInterceptors(TransactionInterceptor)
   async addContent(
     @AuthUser() user: User,
     @Body() content: AddContentBodyDto,
+    @TransactionManager() queryRunnerManager: EntityManager,
   ): Promise<AddContentOutput> {
-    return await this.contentsService.addContent(user, content);
+    return await this.contentsService.addContent(
+      user,
+      content,
+      queryRunnerManager,
+    );
   }
 
   @ApiOperation({
@@ -85,11 +91,17 @@ export class ContentsController {
     description: '같은 카테고리 내에 동일한 링크의 콘텐츠가 존재할 경우',
   })
   @Post('addMultiple')
+  @UseInterceptors(TransactionInterceptor)
   async addMultipleContents(
     @AuthUser() user: User,
     @Body() contentLinks: AddMultipleContentsBodyDto,
+    @TransactionManager() queryRunnerManager: EntityManager,
   ): Promise<AddContentOutput> {
-    return await this.contentsService.addMultipleContents(user, contentLinks);
+    return await this.contentsService.addMultipleContents(
+      user,
+      contentLinks,
+      queryRunnerManager,
+    );
   }
 
   @ApiOperation({
@@ -107,11 +119,17 @@ export class ContentsController {
     description: '존재하지 않는 콘텐츠 또는 유저인 경우',
   })
   @Post('update')
+  @UseInterceptors(TransactionInterceptor)
   async updateContent(
     @AuthUser() user: User,
     @Body() content: UpdateContentBodyDto,
+    @TransactionManager() queryRunnerManager: EntityManager,
   ): Promise<UpdateContentOutput> {
-    return await this.contentsService.updateContent(user, content);
+    return await this.contentsService.updateContent(
+      user,
+      content,
+      queryRunnerManager,
+    );
   }
 
   @ApiOperation({
@@ -126,11 +144,17 @@ export class ContentsController {
     description: '존재하지 않는 콘텐츠 또는 유저인 경우',
   })
   @Patch('favorite/:contentId')
+  @UseInterceptors(TransactionInterceptor)
   async toggleFavorite(
     @AuthUser() user: User,
     @Param('contentId', new ParseIntPipe()) contentId: number,
+    @TransactionManager() queryRunnerManager: EntityManager,
   ): Promise<toggleFavoriteOutput> {
-    return await this.contentsService.toggleFavorite(user, contentId);
+    return await this.contentsService.toggleFavorite(
+      user,
+      contentId,
+      queryRunnerManager,
+    );
   }
 
   @ApiOperation({
@@ -262,11 +286,17 @@ export class CategoryController {
     description: '동일한 이름의 카테고리가 존재할 경우',
   })
   @Post('add')
+  @UseInterceptors(TransactionInterceptor)
   async addCategory(
     @AuthUser() user: User,
     @Body() { categoryName }: AddCategoryBodyDto,
+    @TransactionManager() queryRunnerManager: EntityManager,
   ): Promise<AddCategoryOutput> {
-    return await this.categoryService.addCategory(user, categoryName);
+    return await this.categoryService.addCategory(
+      user,
+      categoryName,
+      queryRunnerManager,
+    );
   }
 
   @ApiOperation({
@@ -278,11 +308,17 @@ export class CategoryController {
     type: UpdateCategoryOutput,
   })
   @Post('update')
+  @UseInterceptors(TransactionInterceptor)
   async updateCategory(
     @AuthUser() user: User,
     @Body() content: UpdateCategoryBodyDto,
+    @TransactionManager() queryRunnerManager: EntityManager,
   ): Promise<UpdateCategoryOutput> {
-    return await this.categoryService.updateCategory(user, content);
+    return await this.categoryService.updateCategory(
+      user,
+      content,
+      queryRunnerManager,
+    );
   }
 
   @ApiOperation({
@@ -297,10 +333,16 @@ export class CategoryController {
     description: '존재하지 않는 카테고리를 삭제하려고 할 경우',
   })
   @Delete('delete/:categoryId')
+  @UseInterceptors(TransactionInterceptor)
   async deleteCategory(
     @AuthUser() user: User,
     @Param('categoryId', new ParseIntPipe()) categoryId: number,
+    @TransactionManager() queryRunnerManager: EntityManager,
   ): Promise<DeleteCategoryOutput> {
-    return await this.categoryService.deleteCategory(user, categoryId);
+    return await this.categoryService.deleteCategory(
+      user,
+      categoryId,
+      queryRunnerManager,
+    );
   }
 }

@@ -6,7 +6,6 @@ import {
   NotFoundException,
 } from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
-import { CommonService } from 'src/common/common.service';
 import { SummaryService } from 'src/summary/summary.service';
 import { User } from 'src/users/entities/user.entity';
 import { EntityManager, Repository } from 'typeorm';
@@ -36,7 +35,6 @@ import axios from 'axios';
 @Injectable()
 export class ContentsService {
   constructor(
-    private readonly commonService: CommonService,
     @InjectRepository(User)
     private readonly users: Repository<User>,
     @InjectRepository(Content)
@@ -56,9 +54,8 @@ export class ContentsService {
       favorite,
       categoryName,
     }: AddContentBodyDto,
+    queryRunnerManager: EntityManager,
   ): Promise<AddContentOutput> {
-    const queryRunner = await this.commonService.dbInit();
-    const queryRunnerManager: EntityManager = queryRunner.manager;
     try {
       const userInDb = await this.users.findOne({
         where: { id: user.id },
@@ -117,24 +114,17 @@ export class ContentsService {
       categoryName ? userInDb.categories.push(category) : null;
       await queryRunnerManager.save(userInDb);
 
-      await queryRunner.commitTransaction();
-
       return;
     } catch (e) {
-      await queryRunner.rollbackTransaction();
-
       throw new HttpException(e.message, e.status ? e.status : 500);
-    } finally {
-      await queryRunner.release();
     }
   }
 
   async addMultipleContents(
     user: User,
     { contentLinks }: AddMultipleContentsBodyDto,
+    queryRunnerManager: EntityManager,
   ): Promise<AddContentOutput> {
-    const queryRunner = await this.commonService.dbInit();
-    const queryRunnerManager: EntityManager = queryRunner.manager;
     try {
       const userInDb = await queryRunnerManager.findOne(User, {
         where: { id: user.id },
@@ -171,18 +161,11 @@ export class ContentsService {
           userInDb.contents.push(newContent);
         }
         await queryRunnerManager.save(userInDb);
-
-        await queryRunner.commitTransaction();
       }
 
       return;
     } catch (e) {
-      await queryRunner.rollbackTransaction();
-      console.log(e);
-
       throw new HttpException(e.message, e.status ? e.status : 500);
-    } finally {
-      await queryRunner.release();
     }
   }
 
@@ -198,10 +181,8 @@ export class ContentsService {
       favorite,
       categoryName,
     }: UpdateContentBodyDto,
+    queryRunnerManager: EntityManager,
   ): Promise<AddContentOutput> {
-    const queryRunner = await this.commonService.dbInit();
-    const queryRunnerManager: EntityManager = queryRunner.manager;
-
     const newContentObj = {
       link,
       title,
@@ -261,25 +242,17 @@ export class ContentsService {
         { id: content.id, ...newContentObj, ...(category && { category }) },
       ]);
 
-      await queryRunner.commitTransaction();
-
       return;
     } catch (e) {
-      await queryRunner.rollbackTransaction();
-
-      console.log(e);
       throw new HttpException(e.message, e.status ? e.status : 500);
-    } finally {
-      await queryRunner.release();
     }
   }
 
   async toggleFavorite(
     user: User,
     contentId: number,
+    queryRunnerManager: EntityManager,
   ): Promise<toggleFavoriteOutput> {
-    const queryRunner = await this.commonService.dbInit();
-    const queryRunnerManager: EntityManager = queryRunner.manager;
     try {
       const userInDb = await queryRunnerManager.findOne(User, {
         where: { id: user.id },
@@ -301,15 +274,10 @@ export class ContentsService {
 
       content.favorite = !content.favorite;
       await queryRunnerManager.save(content);
-      await queryRunner.commitTransaction();
 
       return;
     } catch (e) {
-      await queryRunner.rollbackTransaction();
-
       throw new HttpException(e.message, e.status ? e.status : 500);
-    } finally {
-      await queryRunner.release();
     }
   }
 
@@ -525,7 +493,6 @@ export class ContentsService {
 @Injectable()
 export class CategoryService {
   constructor(
-    private readonly commonService: CommonService,
     @InjectRepository(Category)
     private readonly categories: CategoryRepository,
   ) {}
@@ -533,9 +500,8 @@ export class CategoryService {
   async addCategory(
     user: User,
     categoryName: string,
+    queryRunnerManager: EntityManager,
   ): Promise<AddCategoryOutput> {
-    const queryRunner = await this.commonService.dbInit();
-    const queryRunnerManager: EntityManager = queryRunner.manager;
     try {
       const userInDb = await queryRunnerManager.findOne(User, {
         where: { id: user.id },
@@ -557,25 +523,17 @@ export class CategoryService {
       userInDb.categories.push(category);
       await queryRunnerManager.save(userInDb);
 
-      await queryRunner.commitTransaction();
-
       return;
     } catch (e) {
-      await queryRunner.rollbackTransaction();
-      console.log(e);
-
       throw new HttpException(e.message, e.status ? e.status : 500);
-    } finally {
-      await queryRunner.release();
     }
   }
 
   async updateCategory(
     user: User,
     { originalName, name }: UpdateCategoryBodyDto,
+    queryRunnerManager: EntityManager,
   ): Promise<UpdateCategoryOutput> {
-    const queryRunner = await this.commonService.dbInit();
-    const queryRunnerManager: EntityManager = queryRunner.manager;
     try {
       const userInDb = await queryRunnerManager.findOne(User, {
         where: { id: user.id },
@@ -624,24 +582,17 @@ export class CategoryService {
       );
       await queryRunnerManager.save(userInDb);
 
-      await queryRunner.commitTransaction();
-
       return;
     } catch (e) {
-      await queryRunner.rollbackTransaction();
-
       throw new HttpException(e.message, e.status ? e.status : 500);
-    } finally {
-      await queryRunner.release();
     }
   }
 
   async deleteCategory(
     user: User,
     categoryId: number,
+    queryRunnerManager: EntityManager,
   ): Promise<DeleteCategoryOutput> {
-    const queryRunner = await this.commonService.dbInit();
-    const queryRunnerManager: EntityManager = queryRunner.manager;
     try {
       const userInDb = await queryRunnerManager.findOne(User, {
         where: { id: user.id },
@@ -675,15 +626,9 @@ export class CategoryService {
       });
       await queryRunnerManager.save(userInDb);
 
-      await queryRunner.commitTransaction();
-
       return;
     } catch (e) {
-      await queryRunner.rollbackTransaction();
-
       throw new HttpException(e.message, e.status ? e.status : 500);
-    } finally {
-      await queryRunner.release();
     }
   }
 }

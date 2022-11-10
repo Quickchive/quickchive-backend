@@ -6,6 +6,7 @@ import {
   Post,
   Query,
   UseGuards,
+  UseInterceptors,
 } from '@nestjs/common';
 import {
   ApiBearerAuth,
@@ -17,6 +18,9 @@ import {
 } from '@nestjs/swagger';
 import { AuthUser } from 'src/auth/auth-user.decorator';
 import { JwtAuthGuard } from 'src/auth/jwt/jwt.guard';
+import { TransactionInterceptor } from 'src/common/interceptors/transaction.interceptor';
+import { TransactionManager } from 'src/common/transaction.decorator';
+import { EntityManager } from 'typeorm';
 import { EditProfileInput, EditProfileOutput } from './dtos/edit-profile.dto';
 import { LoadPersonalCategoriesOutput } from './dtos/load-personal-categories.dto';
 import { LoadPersonalCollectionsOutput } from './dtos/load-personal-collections.dto';
@@ -45,11 +49,17 @@ export class UsersController {
   @ApiBearerAuth('Authorization')
   @UseGuards(JwtAuthGuard)
   @Post('edit')
+  @UseInterceptors(TransactionInterceptor)
   async editProfile(
     @AuthUser() user: User,
     @Body() editProfileBody: EditProfileInput,
+    @TransactionManager() queryRunnerManager: EntityManager,
   ): Promise<EditProfileOutput> {
-    return await this.usersService.editProfile(user.id, editProfileBody);
+    return await this.usersService.editProfile(
+      user.id,
+      editProfileBody,
+      queryRunnerManager,
+    );
   }
 
   @ApiOperation({
@@ -61,10 +71,15 @@ export class UsersController {
     type: ResetPasswordOutput,
   })
   @Post('reset-password')
+  @UseInterceptors(TransactionInterceptor)
   async resetPassword(
     @Body() resetPasswordBody: ResetPasswordInput,
+    @TransactionManager() queryRunnerManager: EntityManager,
   ): Promise<ResetPasswordOutput> {
-    return await this.usersService.resetPassword(resetPasswordBody);
+    return await this.usersService.resetPassword(
+      resetPasswordBody,
+      queryRunnerManager,
+    );
   }
 
   @ApiOperation({ summary: '프로필 조회', description: '프로필 조회 메서드' })

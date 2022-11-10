@@ -21,7 +21,6 @@ import {
 } from './dtos/nested-content.dto';
 import { Category } from 'src/contents/entities/category.entity';
 import { toggleFavoriteOutput } from 'src/contents/dtos/content.dto';
-import { CommonService } from 'src/common/common.service';
 import { InjectRepository } from '@nestjs/typeorm';
 import { CategoryRepository } from 'src/contents/repository/category.repository';
 import { ContentsService } from 'src/contents/contents.service';
@@ -29,7 +28,6 @@ import { ContentsService } from 'src/contents/contents.service';
 @Injectable()
 export class CollectionsService {
   constructor(
-    private readonly commonService: CommonService,
     @InjectRepository(Category)
     private readonly categories: CategoryRepository,
     private readonly contentsService: ContentsService,
@@ -38,9 +36,8 @@ export class CollectionsService {
   async addCollection(
     user: User,
     { title, comment, contentLinkList, categoryName }: AddCollectionBodyDto,
+    queryRunnerManager: EntityManager,
   ): Promise<AddCollectionOutput> {
-    const queryRunner = await this.commonService.dbInit();
-    const queryRunnerManager: EntityManager = queryRunner.manager;
     try {
       const userInDb = await queryRunnerManager.findOne(User, {
         where: { id: user.id },
@@ -69,9 +66,12 @@ export class CollectionsService {
       // Load contents if contentLinkList is not empty
       if (contentLinkList) {
         for (const contentLink of contentLinkList) {
-          const { nestedContent } = await this.addNestedContent({
-            link: contentLink,
-          });
+          const { nestedContent } = await this.addNestedContent(
+            {
+              link: contentLink,
+            },
+            queryRunnerManager,
+          );
           nestedContentList.push(nestedContent);
         }
       }
@@ -102,16 +102,9 @@ export class CollectionsService {
       categoryName ? userInDb.categories.push(category) : null;
       await queryRunnerManager.save(userInDb);
 
-      await queryRunner.commitTransaction();
-
       return;
     } catch (e) {
-      await queryRunner.rollbackTransaction();
-
-      console.log(e);
       throw new HttpException(e.message, e.status ? e.status : 500);
-    } finally {
-      await queryRunner.release();
     }
   }
 
@@ -125,9 +118,8 @@ export class CollectionsService {
       favorite,
       contentLinkList,
     }: UpdateCollectionBodyDto,
+    queryRunnerManager: EntityManager,
   ): Promise<UpdateCollectionOutput> {
-    const queryRunner = await this.commonService.dbInit();
-    const queryRunnerManager: EntityManager = queryRunner.manager;
     try {
       const userInDb = await queryRunnerManager.findOne(User, {
         where: { id: user.id },
@@ -181,9 +173,12 @@ export class CollectionsService {
           if (nestedContentInDb) {
             newOrder.push(nestedContentInDb.id);
           } else {
-            const { nestedContent } = await this.addNestedContent({
-              link: contentLink,
-            });
+            const { nestedContent } = await this.addNestedContent(
+              {
+                link: contentLink,
+              },
+              queryRunnerManager,
+            );
             nestedContentList.push(nestedContent);
             newOrder.push(nestedContent.id);
           }
@@ -218,25 +213,17 @@ export class CollectionsService {
         ...(category && { category }),
       });
 
-      await queryRunner.commitTransaction();
-
       return;
     } catch (e) {
-      await queryRunner.rollbackTransaction();
-
-      console.log(e);
       throw new HttpException(e.message, e.status ? e.status : 500);
-    } finally {
-      await queryRunner.release();
     }
   }
 
   // Add nested content to the database
-  async addNestedContent({
-    link,
-  }: AddNestedContentBodyDto): Promise<AddNestedContentOutput> {
-    const queryRunner = await this.commonService.dbInit();
-    const queryRunnerManager: EntityManager = queryRunner.manager;
+  async addNestedContent(
+    { link }: AddNestedContentBodyDto,
+    queryRunnerManager: EntityManager,
+  ): Promise<AddNestedContentOutput> {
     try {
       // get og tag info from link
       const { title, description, coverImg } =
@@ -250,24 +237,17 @@ export class CollectionsService {
       });
       await queryRunnerManager.save(newNestedContent);
 
-      await queryRunner.commitTransaction();
-
       return { nestedContent: newNestedContent };
     } catch (e) {
-      await queryRunner.rollbackTransaction();
-
       throw new HttpException(e.message, e.status ? e.status : 500);
-    } finally {
-      await queryRunner.release();
     }
   }
 
   async toggleFavorite(
     user: User,
     collectionId: number,
+    queryRunnerManager: EntityManager,
   ): Promise<toggleFavoriteOutput> {
-    const queryRunner = await this.commonService.dbInit();
-    const queryRunnerManager: EntityManager = queryRunner.manager;
     try {
       const userInDb = await queryRunnerManager.findOne(User, {
         where: { id: user.id },
@@ -289,24 +269,18 @@ export class CollectionsService {
 
       collection.favorite = !collection.favorite;
       await queryRunnerManager.save(collection);
-      await queryRunner.commitTransaction();
 
       return;
     } catch (e) {
-      await queryRunner.rollbackTransaction();
-
       throw new HttpException(e.message, e.status ? e.status : 500);
-    } finally {
-      await queryRunner.release();
     }
   }
 
   async deleteCollection(
     user: User,
     collectionId: number,
+    queryRunnerManager: EntityManager,
   ): Promise<DeleteCollectionOutput> {
-    const queryRunner = await this.commonService.dbInit();
-    const queryRunnerManager: EntityManager = queryRunner.manager;
     try {
       const userInDb = await queryRunnerManager.findOne(User, {
         where: { id: user.id },
@@ -329,16 +303,9 @@ export class CollectionsService {
       // Delete collection from database
       await queryRunnerManager.remove(collectionInDb);
 
-      await queryRunner.commitTransaction();
-
       return;
     } catch (e) {
-      await queryRunner.rollbackTransaction();
-
-      console.log(e);
       throw new HttpException(e.message, e.status ? e.status : 500);
-    } finally {
-      await queryRunner.release();
     }
   }
 }

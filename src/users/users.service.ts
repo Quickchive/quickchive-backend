@@ -23,12 +23,10 @@ import { User } from './entities/user.entity';
 import { Cache } from 'cache-manager';
 import { LoadPersonalCollectionsOutput } from './dtos/load-personal-collections.dto';
 import { Collection } from 'src/collections/entities/collection.entity';
-import { CommonService } from 'src/common/common.service';
 
 @Injectable()
 export class UsersService {
   constructor(
-    private readonly commonService: CommonService,
     @InjectRepository(User) private readonly users: Repository<User>,
     @Inject(CACHE_MANAGER) private readonly cacheManager: Cache,
   ) {}
@@ -36,9 +34,8 @@ export class UsersService {
   async editProfile(
     userId: number,
     { password, oldPassword, name }: EditProfileInput,
+    queryRunnerManager: EntityManager,
   ): Promise<EditProfileOutput> {
-    const queryRunner = await this.commonService.dbInit();
-    const queryRunnerManager: EntityManager = await queryRunner.manager;
     try {
       const user = await queryRunnerManager.findOne(User, {
         where: { id: userId },
@@ -58,24 +55,16 @@ export class UsersService {
 
       await queryRunnerManager.save(user);
 
-      await queryRunner.commitTransaction();
-
       return;
     } catch (e) {
-      await queryRunner.rollbackTransaction();
-
       throw new HttpException(e.message, e.status ? e.status : 500);
-    } finally {
-      await queryRunner.release();
     }
   }
 
-  async resetPassword({
-    code,
-    password,
-  }: ResetPasswordInput): Promise<ResetPasswordOutput> {
-    const queryRunner = await this.commonService.dbInit();
-    const queryRunnerManager: EntityManager = queryRunner.manager;
+  async resetPassword(
+    { code, password }: ResetPasswordInput,
+    queryRunnerManager: EntityManager,
+  ): Promise<ResetPasswordOutput> {
     try {
       const userId: number = await this.cacheManager.get(code);
 
@@ -92,18 +81,12 @@ export class UsersService {
         await queryRunnerManager.save(user); // update password
         await this.cacheManager.del(code); // delete verification value
 
-        await queryRunner.commitTransaction();
-
         return;
       } else {
         throw new NotFoundException('Reset Code not found');
       }
     } catch (e) {
-      await queryRunner.rollbackTransaction();
-
       throw new HttpException(e.message, e.status ? e.status : 500);
-    } finally {
-      await queryRunner.release();
     }
   }
 

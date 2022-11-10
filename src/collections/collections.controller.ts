@@ -8,6 +8,7 @@ import {
   Post,
   Query,
   UseGuards,
+  UseInterceptors,
 } from '@nestjs/common';
 import {
   ApiBearerAuth,
@@ -20,8 +21,11 @@ import {
 } from '@nestjs/swagger';
 import { AuthUser } from 'src/auth/auth-user.decorator';
 import { JwtAuthGuard } from 'src/auth/jwt/jwt.guard';
+import { TransactionInterceptor } from 'src/common/interceptors/transaction.interceptor';
+import { TransactionManager } from 'src/common/transaction.decorator';
 import { toggleFavoriteOutput } from 'src/contents/dtos/content.dto';
 import { User } from 'src/users/entities/user.entity';
+import { EntityManager } from 'typeorm';
 import { CollectionsService } from './collections.service';
 import {
   AddCollectionBodyDto,
@@ -30,10 +34,6 @@ import {
   UpdateCollectionBodyDto,
   UpdateCollectionOutput,
 } from './dtos/collection.dto';
-import {
-  AddNestedContentToCollectionBodyDto,
-  AddNestedContentToCollectionOutput,
-} from './dtos/nested-content.dto';
 
 @Controller('collections')
 @ApiTags('Collections')
@@ -57,11 +57,17 @@ export class CollectionsController {
     description: '같은 title의 collection이 존재할 때 반환한다.',
   })
   @Post('add')
+  @UseInterceptors(TransactionInterceptor)
   async addCollection(
     @AuthUser() user: User,
     @Body() collection: AddCollectionBodyDto,
+    @TransactionManager() queryRunnerManager: EntityManager,
   ): Promise<AddCollectionOutput> {
-    return await this.collectionsService.addCollection(user, collection);
+    return await this.collectionsService.addCollection(
+      user,
+      collection,
+      queryRunnerManager,
+    );
   }
 
   /**
@@ -83,11 +89,17 @@ export class CollectionsController {
     description: '콜렉션을 찾을 수 없을 때 반환한다.',
   })
   @Post('update')
+  @UseInterceptors(TransactionInterceptor)
   async updateCollection(
     @AuthUser() user: User,
     @Body() collection: UpdateCollectionBodyDto,
+    @TransactionManager() queryRunnerManager: EntityManager,
   ): Promise<UpdateCollectionOutput> {
-    return await this.collectionsService.updateCollection(user, collection);
+    return await this.collectionsService.updateCollection(
+      user,
+      collection,
+      queryRunnerManager,
+    );
   }
 
   @ApiOperation({
@@ -102,11 +114,17 @@ export class CollectionsController {
     description: '콜렉션을 찾을 수 없을 때 반환한다.',
   })
   @Patch('favorite/:collectionId')
+  @UseInterceptors(TransactionInterceptor)
   async toggleFavorite(
     @AuthUser() user: User,
     @Param('collectionId', new ParseIntPipe()) collectionId: number,
+    @TransactionManager() queryRunnerManager: EntityManager,
   ): Promise<toggleFavoriteOutput> {
-    return await this.collectionsService.toggleFavorite(user, collectionId);
+    return await this.collectionsService.toggleFavorite(
+      user,
+      collectionId,
+      queryRunnerManager,
+    );
   }
 
   // 콜렉션 삭제
@@ -122,10 +140,16 @@ export class CollectionsController {
     description: '콜렉션 또는 유저가 존재하지 않는다.',
   })
   @Delete('delete')
+  @UseInterceptors(TransactionInterceptor)
   async deleteCollection(
     @AuthUser() user: User,
     @Query('collectionId', ParseIntPipe) collectionId: number,
+    @TransactionManager() queryRunnerManager: EntityManager,
   ): Promise<DeleteCollectionOutput> {
-    return await this.collectionsService.deleteCollection(user, collectionId);
+    return await this.collectionsService.deleteCollection(
+      user,
+      collectionId,
+      queryRunnerManager,
+    );
   }
 }

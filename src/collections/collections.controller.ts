@@ -6,7 +6,6 @@ import {
   ParseIntPipe,
   Patch,
   Post,
-  Query,
   UseGuards,
   UseInterceptors,
 } from '@nestjs/common';
@@ -139,11 +138,11 @@ export class CollectionsController {
   @ApiNotFoundResponse({
     description: '콜렉션 또는 유저가 존재하지 않는다.',
   })
-  @Delete('delete')
+  @Delete('delete/:collectionId')
   @UseInterceptors(TransactionInterceptor)
   async deleteCollection(
     @AuthUser() user: User,
-    @Query('collectionId', ParseIntPipe) collectionId: number,
+    @Param('collectionId', new ParseIntPipe()) collectionId: number,
     @TransactionManager() queryRunnerManager: EntityManager,
   ): Promise<DeleteCollectionOutput> {
     return await this.collectionsService.deleteCollection(

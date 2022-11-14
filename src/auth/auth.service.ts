@@ -214,6 +214,7 @@ export class AuthService {
     } else {
       newUser = await this.users.save(
         this.users.create({
+          name: 'unverified',
           email,
           password: 'unverified0',
         }),
@@ -468,6 +469,9 @@ export class OauthService {
       }
 
       const email = userInfo.kakao_account.email;
+      if (!email) {
+        throw new BadRequestException('Please Agree to share your email');
+      }
 
       // check user exist with email
       const userInDb = await this.users.findOne({
@@ -488,10 +492,11 @@ export class OauthService {
           password,
         });
         createAccountResult = user;
+        if (createAccountResult) {
+          return await this.oauthLogin(email);
+        }
       } else if (userInDb) {
         return await this.oauthLogin(userInDb.email);
-      } else if (createAccountResult) {
-        return await this.oauthLogin(email);
       } else {
         throw new BadRequestException("Couldn't log in with Kakao");
       }

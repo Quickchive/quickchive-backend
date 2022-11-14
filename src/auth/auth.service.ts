@@ -480,7 +480,6 @@ export class OauthService {
       });
 
       // control user
-      let createAccountResult = null;
       if (!userInDb) {
         const name = userInfo.properties.nickname;
         const password = CryptoJS.SHA256(
@@ -491,8 +490,7 @@ export class OauthService {
           email,
           password,
         });
-        createAccountResult = user;
-        if (createAccountResult) {
+        if (user) {
           return await this.oauthLogin(email);
         }
       } else if (userInDb) {
@@ -516,7 +514,6 @@ export class OauthService {
       });
 
       // control user
-      let createAccountResult = null;
       if (!userInDb) {
         const password = CryptoJS.SHA256(
           email + process.env.GOOGLE_CLIENT_ID,
@@ -526,11 +523,11 @@ export class OauthService {
           email,
           password,
         });
-        createAccountResult = user;
+        if (user) {
+          return await this.oauthLogin(email);
+        }
       } else if (userInDb) {
         return await this.oauthLogin(userInDb.email);
-      } else if (createAccountResult) {
-        return await this.oauthLogin(email);
       } else {
         throw new BadRequestException("Couldn't log in with Google");
       }

@@ -84,7 +84,7 @@ export class AuthService {
         refresh_token: refreshToken,
       };
     } catch (e) {
-      throw new HttpException(e.message, e.status ? e.status : 500);
+      throw e;
     }
   }
 
@@ -108,8 +108,7 @@ export class AuthService {
         throw new NotFoundException('User is not verified');
       }
     } catch (e) {
-      console.log(e);
-      throw new HttpException(e.message, e.status ? e.status : 500);
+      throw e;
     }
   }
 
@@ -292,7 +291,7 @@ export class AuthService {
         throw new BadRequestException('Wrong Password');
       }
     } catch (e) {
-      throw new HttpException(e.message, e.status ? e.status : 500);
+      throw e;
     }
   }
 }
@@ -340,7 +339,7 @@ export class OauthService {
 
       return { access_token };
     } catch (e) {
-      throw new HttpException(e.message, e.status ? e.status : 500);
+      throw e;
     }
   }
 
@@ -365,7 +364,7 @@ export class OauthService {
 
       return { userInfo };
     } catch (e) {
-      throw new HttpException(e.message, e.status ? e.status : 500);
+      throw e;
     }
   }
 
@@ -414,7 +413,7 @@ export class OauthService {
         });
       return { url: responseUrl };
     } catch (e) {
-      throw new HttpException(e.message, e.status ? e.status : 500);
+      throw e;
     }
   }
 
@@ -499,8 +498,7 @@ export class OauthService {
         throw new BadRequestException("Couldn't log in with Kakao");
       }
     } catch (e) {
-      console.log(e);
-      throw new HttpException(e.message, e.status ? e.status : 500);
+      throw e;
     }
   }
 
@@ -532,8 +530,7 @@ export class OauthService {
         throw new BadRequestException("Couldn't log in with Google");
       }
     } catch (e) {
-      console.log(e);
-      throw new HttpException(e.message, e.status ? e.status : 500);
+      throw e;
     }
   }
 }

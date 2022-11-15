@@ -113,4 +113,4 @@ Nest is [MIT licensed](LICENSE).
 | /api/collections/add                          | POST   | 콜렉션 추가           | O                    |
 | /api/collections/update                       | POST   | 콜렉션 수정           | O                    |
 | /api/collections/favorite/\<int:collectionId> | PATCH  | 즐겨찾기 등록 및 해제 | O                    |
-| /api/collections/delete                       | DELETE | 콜렉션 삭제           | O                    |
+| /api/collections/delete/\<int:contentId>      | DELETE | 콜렉션 삭제           | O                    |

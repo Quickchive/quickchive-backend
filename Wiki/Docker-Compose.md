@@ -83,5 +83,5 @@ api server를 이 docker compose 파일로 올린 redis, postgreSQL 서버와 �
 ex)
 
 ```sh
-docker run --name test-api-server -p 3000:4000 --network [docker compose 파일로 생성된 네트워크] --env-file .env.prod hou27/quickchive_backend
+docker run -d --name test-api-server -p 3000:4000 --network [docker compose 파일로 생성된 네트워크] --env-file .env.prod hou27/quickchive_backend
 ```

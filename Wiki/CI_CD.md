@@ -63,7 +63,7 @@ steps:
 
 ```sh
 # !/bin/bash
-docker ps -a | grep quickchive_backend:latest | awk '{print$1}' | xargs -t -I % docker rm -f % && docker image ls | grep quickchive | awk '{print$3}' | xargs -I % docker rmi %
+docker ps -a | grep hou27/quickchive_backend | awk '{print$1}' | xargs -t -I % docker rm -f % && docker image ls | grep hou27/quickchive_backend | awk '{print$3}' | xargs -I % docker rmi %
 docker pull hou27/quickchive_backend
 cd ~ubuntu && docker run -d --name api-server -p 80:4000 --network ubuntu_shared-network --env-file .env.prod hou27/quickchive_backend
 ```
@@ -171,7 +171,7 @@ jobs:
 
 ```sh
 # !/bin/bash
-docker ps -a | grep test_quickchive_backend:latest | awk '{print$1}' | xargs -t -I % docker rm -f % && docker image ls | grep test_quickchive | awk '{print$3}' | xargs -I % docker rmi %
+docker ps -a | grep test-api-server | awk '{print$1}' | xargs -t -I % docker rm -f % && docker image ls | grep test_quickchive | awk '{print$3}' | xargs -I % docker rmi %
 docker pull hou27/test_quickchive_backend
 cd ~ubuntu && docker run -d --name test-api-server -p 3000:4000 --network ubuntu_shared-network --env-file .env.test hou27/test_quickchive_backend
 ```

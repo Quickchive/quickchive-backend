@@ -1,0 +1,42 @@
+name: Docker Image CI && Deploy to EC2 for Test Server
+
+on:
+  push:
+    branches: ['release/**']
+
+jobs:
+  job1:
+    name: Docker Image CI
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v3
+
+      - name: Login to DockerHub
+        uses: docker/login-action@v2.0.0
+        with:
+          username: ${{secrets.DOCKERHUB_USERNAME}}
+          password: ${{secrets.DOCKERHUB_TOKEN}}
+
+      - name: Build and push Docker images
+        uses: docker/build-push-action@v3.1.1
+        with:
+          context: .
+          tags: hou27/test_quickchive_backend:latest
+          # build on feature branches, push only on release/** branch
+          push: ${{ github.ref == 'refs/heads/release/**' }}
+  job2:
+    needs: job1
+    name: Deploy to EC2
+    runs-on: quickchive-server
+
+    steps:
+      - name: executing remote ssh commands using password
+        uses: appleboy/ssh-action@master
+        with:
+          host: ${{ secrets.HOST }}
+          username: ubuntu
+          key: ${{ secrets.KEY_PAIR }}
+          script: |
+            sh /home/ubuntu/actions-runner/deploy_test_server.sh

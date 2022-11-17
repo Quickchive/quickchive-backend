@@ -19,19 +19,6 @@ services:
       - 5432:5432
     networks:
       - shared-network
-  api:
-    image: hou27/quickchive_backend:latest
-    networks:
-      - shared-network
-    env_file:
-      - .env.prod
-    ports:
-      - 80:4000
-    depends_on:
-      - redis
-      - postgres
-    environment:
-      TZ: 'Asia/Seoul'
 networks:
   shared-network:
     driver: bridge

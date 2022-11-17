@@ -24,8 +24,7 @@ jobs:
         with:
           context: .
           tags: hou27/test_quickchive_backend:latest
-          # build on feature branches, push only on release/** branch
-          push: ${{ github.ref == 'refs/heads/release/**' }}
+          push: true
   job2:
     needs: job1
     name: Deploy to EC2

@@ -65,7 +65,7 @@ steps:
 # !/bin/bash
 docker ps -a | grep hou27/quickchive_backend | awk '{print$1}' | xargs -t -I % docker rm -f % && docker image ls | grep hou27/quickchive_backend | awk '{print$3}' | xargs -I % docker rmi %
 docker pull hou27/quickchive_backend
-cd ~ubuntu && docker run -d --name api-server -p 80:4000 --network ubuntu_shared-network --env-file .env.prod hou27/quickchive_backend
+cd ~ubuntu && docker run -d --name api-server -p 80:4000 --network ubuntu_shared-network -e NODE_ENV=prod --env-file .env.prod hou27/quickchive_backend
 ```
 
 - 기존 컨테이너 삭제, 이미지 삭제 후
@@ -173,5 +173,5 @@ jobs:
 # !/bin/bash
 docker ps -a | grep test-api-server | awk '{print$1}' | xargs -t -I % docker rm -f % && docker image ls | grep test_quickchive | awk '{print$3}' | xargs -I % docker rmi %
 docker pull hou27/test_quickchive_backend
-cd ~ubuntu && docker run -d --name test-api-server -p 3000:4000 --network ubuntu_shared-network --env-file .env.test hou27/test_quickchive_backend
+cd ~ubuntu && docker run -d --name test-api-server -p 3000:4000 --network ubuntu_shared-network -e NODE_ENV=test --env-file .env.test hou27/test_quickchive_backend
 ```

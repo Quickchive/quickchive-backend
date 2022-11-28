@@ -10,49 +10,6 @@
 
 > releated with quickchive version 1.0
 
-## 🚀 Added
-
-> MVP
-
-1. User
-
-- 로그인: OAuth(구글로그인, 카카오로그인), 이메일 로그인(자체 로그인 기능)
-- 자동로그인 정책: 한달 동안 접속하지 않아도 로그인 유지 - refresh token 활용(만료 기간 한달)
-- 회원가입(이메일 인증방식)
-  - 회원가입 시 받는 정보: 이메일(메일로 인증필수), 닉네임, 비밀번호(8자 이상 문자, 숫자)
-- 닉네임 수정
-- 비밀번호 재설정
-- 로그아웃
-- 회원 탈퇴
-
-2. Content
-
-- 저장: 콘텐츠 이름, \*URL, 메모, 카테고리, 즐겨찾기, 읽을 기한
-- 삭제
-- 수정: 콘텐츠 이름, 메모, 카테고리, 즐겨찾기, 읽을 기한
-
-3. Collection
-
-- 저장: \*콜렉션 이름, 콜렉션 설명, URL, 카테고리, 즐겨찾기
-- 삭제
-- 수정: 콘텐츠 이름, URL(추가, 삭제, 순서 변경), 카테고리, 읽을 기한
-
-4. 알림
-
-- 읽을 기한 알림: 매일 08:00 KST에 읽을 기한 만료된 콘텐츠에 대한 메일 알림 전송
-
-## 📝 Changed
-
-None
-
-## :no_entry_sign: Removed
-
-None
-
-## License
-
-Nest is [MIT licensed](LICENSE).
-
 # API 구조
 
 ### User API
@@ -116,3 +73,7 @@ Nest is [MIT licensed](LICENSE).
 | /api/collections/update                       | POST   | 콜렉션 수정           | O                    |
 | /api/collections/favorite/\<int:collectionId> | PATCH  | 즐겨찾기 등록 및 해제 | O                    |
 | /api/collections/delete/\<int:contentId>      | DELETE | 콜렉션 삭제           | O                    |
+
+## License
+
+Nest is [MIT licensed](LICENSE).

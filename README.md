@@ -2,9 +2,9 @@
 
 ## Description
 
-> [Quickchive](https://quickchive.swygbro.com/)
+[Quickchive](https://quickchive.swygbro.com/)'s backend repository
 
-<br>
+![deploy](https://github.com/Quickchive/quickchive-backend/actions/workflows/ci-cd-for-test.yml/badge.svg)
 
 # v0.1.0
 

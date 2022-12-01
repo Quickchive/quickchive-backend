@@ -6,10 +6,8 @@ COPY . .
 
 # Timezone setting
 
-## copy host's timezone file to container
-COPY ./asset/zoneinfo/Asia/Seoul /usr/share/zoneinfo/Asia/Seoul
-## set timezone
-RUN ln -snf /usr/share/zoneinfo/Asia/Seoul /etc/localtime
+## install tzdata package for timezone setting
+RUN apk add tzdata && ln -snf /usr/share/zoneinfo/Asia/Seoul /etc/localtime
 
 ## project dependency install
 RUN rm -rf dist && npm install

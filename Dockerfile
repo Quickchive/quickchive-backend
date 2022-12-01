@@ -7,7 +7,7 @@ COPY . .
 # Timezone setting
 
 ## copy host's timezone file to container
-COPY /usr/share/zoneinfo/Asia/Seoul /usr/share/zoneinfo/Asia/Seoul
+COPY ./asset/zoneinfo/Asia/Seoul /usr/share/zoneinfo/Asia/Seoul
 ## set timezone
 RUN ln -snf /usr/share/zoneinfo/Asia/Seoul /etc/localtime
 

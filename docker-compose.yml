@@ -15,6 +15,8 @@ services:
       - .env.prod
     environment:
       POSTGRES_HOST_AUTH_METHOD: 'trust'
+      TZ: 'Asia/Seoul' # Timezone for OS
+      PGTZ: 'Asia/Seoul' # Timezone for postgres
     ports:
       - 5432:5432
     networks:

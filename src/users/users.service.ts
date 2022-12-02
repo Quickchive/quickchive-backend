@@ -109,6 +109,8 @@ export class UsersService {
         );
       }
 
+      console.log(contents);
+
       return {
         contents,
       };

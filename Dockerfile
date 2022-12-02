@@ -15,7 +15,7 @@ COPY --from=builder /app ./
 # Timezone setting
 
 ## install tzdata package for timezone setting
-RUN apk add tzdata && ln -snf /usr/share/zoneinfo/Asia/Seoul /etc/localtime
+# RUN apk add tzdata && ln -snf /usr/share/zoneinfo/Asia/Seoul /etc/localtime
 
 EXPOSE 4000
 CMD npm run start:prod

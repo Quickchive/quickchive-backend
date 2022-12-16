@@ -177,7 +177,7 @@ export class ContentsController {
   }
 
   @ApiOperation({
-    summary: '콘텐츠 정보 삭제',
+    summary: '콘텐츠 삭제',
     description: '콘텐츠을 삭제하는 메서드',
   })
   @ApiOkResponse({

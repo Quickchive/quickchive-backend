@@ -57,7 +57,7 @@ export class UsersService {
 
       return;
     } catch (e) {
-      throw new HttpException(e.message, e.status ? e.status : 500);
+      throw e;
     }
   }
 
@@ -86,7 +86,7 @@ export class UsersService {
         throw new NotFoundException('Reset Code not found');
       }
     } catch (e) {
-      throw new HttpException(e.message, e.status ? e.status : 500);
+      throw e;
     }
   }
 
@@ -109,11 +109,13 @@ export class UsersService {
         );
       }
 
+      console.log(contents);
+
       return {
         contents,
       };
     } catch (e) {
-      throw new HttpException(e.message, e.status ? e.status : 500);
+      throw e;
     }
   }
 
@@ -145,7 +147,7 @@ export class UsersService {
         favorite_collections: favoriteCollections,
       };
     } catch (e) {
-      throw new HttpException(e.message, e.status ? e.status : 500);
+      throw e;
     }
   }
 
@@ -173,7 +175,7 @@ export class UsersService {
         collections,
       };
     } catch (e) {
-      throw new HttpException(e.message, e.status ? e.status : 500);
+      throw e;
     }
   }
 
@@ -192,7 +194,7 @@ export class UsersService {
         categories,
       };
     } catch (e) {
-      throw new HttpException(e.message, e.status ? e.status : 500);
+      throw e;
     }
   }
 }

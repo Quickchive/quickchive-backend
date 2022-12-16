@@ -84,7 +84,7 @@ export class AuthService {
         refresh_token: refreshToken,
       };
     } catch (e) {
-      throw new HttpException(e.message, e.status ? e.status : 500);
+      throw e;
     }
   }
 
@@ -108,8 +108,7 @@ export class AuthService {
         throw new NotFoundException('User is not verified');
       }
     } catch (e) {
-      console.log(e);
-      throw new HttpException(e.message, e.status ? e.status : 500);
+      throw e;
     }
   }
 
@@ -292,7 +291,7 @@ export class AuthService {
         throw new BadRequestException('Wrong Password');
       }
     } catch (e) {
-      throw new HttpException(e.message, e.status ? e.status : 500);
+      throw e;
     }
   }
 }
@@ -340,7 +339,7 @@ export class OauthService {
 
       return { access_token };
     } catch (e) {
-      throw new HttpException(e.message, e.status ? e.status : 500);
+      throw e;
     }
   }
 
@@ -365,7 +364,7 @@ export class OauthService {
 
       return { userInfo };
     } catch (e) {
-      throw new HttpException(e.message, e.status ? e.status : 500);
+      throw e;
     }
   }
 
@@ -414,7 +413,7 @@ export class OauthService {
         });
       return { url: responseUrl };
     } catch (e) {
-      throw new HttpException(e.message, e.status ? e.status : 500);
+      throw e;
     }
   }
 
@@ -480,7 +479,6 @@ export class OauthService {
       });
 
       // control user
-      let createAccountResult = null;
       if (!userInDb) {
         const name = userInfo.properties.nickname;
         const password = CryptoJS.SHA256(
@@ -491,8 +489,7 @@ export class OauthService {
           email,
           password,
         });
-        createAccountResult = user;
-        if (createAccountResult) {
+        if (user) {
           return await this.oauthLogin(email);
         }
       } else if (userInDb) {
@@ -501,8 +498,7 @@ export class OauthService {
         throw new BadRequestException("Couldn't log in with Kakao");
       }
     } catch (e) {
-      console.log(e);
-      throw new HttpException(e.message, e.status ? e.status : 500);
+      throw e;
     }
   }
 
@@ -516,7 +512,6 @@ export class OauthService {
       });
 
       // control user
-      let createAccountResult = null;
       if (!userInDb) {
         const password = CryptoJS.SHA256(
           email + process.env.GOOGLE_CLIENT_ID,
@@ -526,17 +521,16 @@ export class OauthService {
           email,
           password,
         });
-        createAccountResult = user;
+        if (user) {
+          return await this.oauthLogin(email);
+        }
       } else if (userInDb) {
         return await this.oauthLogin(userInDb.email);
-      } else if (createAccountResult) {
-        return await this.oauthLogin(email);
       } else {
         throw new BadRequestException("Couldn't log in with Google");
       }
     } catch (e) {
-      console.log(e);
-      throw new HttpException(e.message, e.status ? e.status : 500);
+      throw e;
     }
   }
 }

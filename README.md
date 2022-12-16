@@ -1,57 +1,110 @@
 # Quickchive Backend
 
+![GitHub release (latest by date)](https://img.shields.io/github/v/release/quickchive/quickchive-backend?style=flat-square)
+![deploy](https://github.com/Quickchive/quickchive-backend/actions/workflows/ci-cd.yml/badge.svg)
+
 ## Description
 
-> Quickchive 서비스의 Backend Repository입니다.
+[Quickchive](https://quickchive.swygbro.com/)  
+[Quickchive Frontend](https://github.com/Quickchive/Quickchive-frontend)
 
-<br>
-<p align="center">
-  <a href="http://nestjs.com/" target="blank"><img src="https://nestjs.com/img/logo_text.svg" width="320" alt="Nest Logo" /></a>
-</p>
+# v0.1.0
 
-[circleci-image]: https://img.shields.io/circleci/build/github/nestjs/nest/master?token=abc123def456
-[circleci-url]: https://circleci.com/gh/nestjs/nest
+> releated with quickchive version 1.0
 
-  <p align="center">A progressive <a href="http://nodejs.org" target="_blank">Node.js</a> framework for building efficient and scalable server-side applications.</p>
-    <p align="center">
-<a href="https://www.npmjs.com/~nestjscore" target="_blank"><img src="https://img.shields.io/npm/v/@nestjs/core.svg" alt="NPM Version" /></a>
-<a href="https://www.npmjs.com/~nestjscore" target="_blank"><img src="https://img.shields.io/npm/l/@nestjs/core.svg" alt="Package License" /></a>
+<br/>
 
-## Installation
+## :open_file_folder: 프로젝트 개요
 
-```bash
-$ npm install
-```
+- 읽어둬야 할 아티클 링크, 참석해야 하는 세미나 링크, 봐둬야 할 영상링크 등 자기개발을 위해 읽어두고 알아야 할 링크를 분류해서 저장할 수 있는 북마크 서비스입니다.
 
-## Running the app
+<br/>
 
-```bash
-# development
-$ npm run start
+## :people_holding_hands: 대상
 
-# watch mode
-$ npm run start:dev
+- 여러가지 이유로 여러 곳에서 다시 볼 목적으로 콘텐츠를 수집하는 사람들
 
-# production mode
-$ npm run start:prod
-```
+<br/>
 
-## Test
+## :cloud: 기획 배경
 
-```bash
-# unit tests
-$ npm run test
+### 마주한 문제
 
-# e2e tests
-$ npm run test:e2e
+1. **저장해둔 북마크를 다시 읽지 않는 사람들**: 까먹거나, 귀찮아서, 여러 플랫폼에 좋아요/저장/스크랩형태로 읽을 거리를 여기저기 널려놨기 때문에 관리가 힘들어 다시 보지 않습니다.
 
-# test coverage
-$ npm run test:cov
-```
+2. **기존 북마크 서비스를 사용하지 않는 사람들**: 기본 메모앱을 사용하거나, 스크린샷 혹은 카카오톡 나에게 보내기를 사용한다. 이로 인해 저장해둔 북마크를 다시 읽지 않는다는 1번 문제가 다시 발생합니다.
 
-## Support
+3. **북마크해뒀던 아티클을 읽을 때 부담되는 사람들**: 읽을 거리가 많아서 부담된거나, 영어라서 부담되는 등의 이유로 읽지 않는 사람들도 있습니다.
 
-Nest is an MIT-licensed open source project. It can grow thanks to the sponsors and support by the amazing backers. If you'd like to join them, please [read more here](https://docs.nestjs.com/support).
+위와 같은 문제들 탓에 항상 읽어야지 하고 다짐만 하고, 저장한 아티클만 쌓여가는 분들을 위해  
+보다 편리하고 빠르게 아티클들을 관리하고 볼 수 있도록 돕고자 기획하게 되었습니다.
+
+<br/>
+<br/>
+
+# :computer: API 구조
+
+### User API
+
+| URL                         | method | Usage                | Authorization Needed |
+| --------------------------- | ------ | -------------------- | -------------------- |
+| /api/users/edit             | POST   | 프로필 수정          | O                    |
+| /api/users/reset-password   | POST   | 비밀번호 재생성      | X                    |
+| /api/users/me               | GET    | 프로필 조회          | O                    |
+| /api/users/load-contents    | GET    | 유저의 콘텐츠 조회   | O                    |
+| /api/users/load-favorites   | GET    | 유저의 즐겨찾기 조회 | O                    |
+| /api/users/load-collections | GET    | 유저의 콜렉션 조회   | O                    |
+| /api/users/load-categories  | GET    | 유저의 카테고리 조회 | O                    |
+
+### Auth API
+
+| URL                                               | method | Usage                            | Authorization Needed |
+| ------------------------------------------------- | ------ | -------------------------------- | -------------------- |
+| /api/auth/register                                | POST   | 회원가입                         | X                    |
+| /api/auth/login                                   | POST   | 이메일 로그인                    | X                    |
+| /api/auth/logout                                  | POST   | 로그아웃                         | O                    |
+| /api/auth/reissue                                 | POST   | 토큰 재발행                      | X                    |
+| /api/auth/send-verify-email/\<str:email\>         | GET    | 유저 인증을 위한 메일 전송       | X                    |
+| /api/auth/send-password-reset-email/\<str:email\> | GET    | 비밀번호 재설정을 위한 메일 전송 | X                    |
+| /api/auth/verify-email                            | GET    | 이메일 인증                      | X                    |
+
+### OAuth API
+
+| URL                     | method | Usage                   | Authorization Needed |
+| ----------------------- | ------ | ----------------------- | -------------------- |
+| /api/oauth/kakao-auth   | GET    | 카카오 계정 로그인 요청 | X                    |
+| /api/oauth/kakao-login  | GET    | 카카오 로그인           | X                    |
+| /api/oauth/google-auth  | GET    | 구글 계정 로그인 요청   | X                    |
+| /api/oauth/google-login | GET    | 구글 로그인             | X                    |
+
+### Content API
+
+| URL                                      | method | Usage                 | Authorization Needed |
+| ---------------------------------------- | ------ | --------------------- | -------------------- |
+| /api/contents/add                        | POST   | 콘텐츠 추가           | O                    |
+| /api/contents/addMultiple                | POST   | 다수의 콘텐츠 추가    | O                    |
+| /api/contents/update                     | POST   | 콘텐츠 정보 수정      | O                    |
+| /api/contents/favorite/\<int:contentId>  | PATCH  | 즐겨찾기 등록 및 해제 | O                    |
+| /api/contents/read/\<int:contentId>      | PATCH  | 읽었음 표시           | O                    |
+| /api/contents/delete/\<int:contentId>    | DELETE | 콘텐츠 삭제           | O                    |
+| /api/contents/summarize/\<int:contentId> | GET    | 콘텐츠 문서 요약      | O                    |
+
+### Category API
+
+| URL                                    | method | Usage         | Authorization Needed |
+| -------------------------------------- | ------ | ------------- | -------------------- |
+| /api/category/add                      | POST   | 카테고리 추가 | O                    |
+| /api/category/update                   | POST   | 카테고리 수정 | O                    |
+| /api/category/delete/\<int:categoryId> | DELETE | 카테고리 삭제 | O                    |
+
+### Collection API
+
+| URL                                           | method | Usage                 | Authorization Needed |
+| --------------------------------------------- | ------ | --------------------- | -------------------- |
+| /api/collections/add                          | POST   | 콜렉션 추가           | O                    |
+| /api/collections/update                       | POST   | 콜렉션 수정           | O                    |
+| /api/collections/favorite/\<int:collectionId> | PATCH  | 즐겨찾기 등록 및 해제 | O                    |
+| /api/collections/delete/\<int:contentId>      | DELETE | 콜렉션 삭제           | O                    |
 
 ## License
 

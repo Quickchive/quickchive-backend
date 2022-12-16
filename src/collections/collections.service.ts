@@ -104,7 +104,7 @@ export class CollectionsService {
 
       return;
     } catch (e) {
-      throw new HttpException(e.message, e.status ? e.status : 500);
+      throw e;
     }
   }
 
@@ -215,7 +215,7 @@ export class CollectionsService {
 
       return;
     } catch (e) {
-      throw new HttpException(e.message, e.status ? e.status : 500);
+      throw e;
     }
   }
 
@@ -239,7 +239,7 @@ export class CollectionsService {
 
       return { nestedContent: newNestedContent };
     } catch (e) {
-      throw new HttpException(e.message, e.status ? e.status : 500);
+      throw e;
     }
   }
 
@@ -272,7 +272,7 @@ export class CollectionsService {
 
       return;
     } catch (e) {
-      throw new HttpException(e.message, e.status ? e.status : 500);
+      throw e;
     }
   }
 
@@ -305,7 +305,7 @@ export class CollectionsService {
 
       return;
     } catch (e) {
-      throw new HttpException(e.message, e.status ? e.status : 500);
+      throw e;
     }
   }
 }

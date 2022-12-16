@@ -45,6 +45,17 @@ import { SummaryModule } from './summary/summary.module';
         MAILGUN_DOMAIN_NAME: Joi.string().required(),
         MAILGUN_TEMPLATE_NAME_FOR_VERIFY_EMAIL: Joi.string().required(),
         MAILGUN_TEMPLATE_NAME_FOR_RESET_PASSWORD: Joi.string().required(),
+        MAILGUN_TEMPLATE_NAME_FOR_NOTIFICATION: Joi.string().required(),
+        KAKAO_REST_API_KEY: Joi.string().required(),
+        KAKAO_REDIRECT_URI_LOGIN: Joi.string().required(),
+        KAKAO_CLIENT_SECRET: Joi.string().required(),
+        KAKAO_JS_KEY: Joi.string().required(),
+        GOOGLE_CLIENT_ID: Joi.string().required(),
+        GOOGLE_SECRET: Joi.string().required(),
+        GOOGLE_REDIRECT_URI: Joi.string().required(),
+        NAVER_API_CLIENT_ID: Joi.string().required(),
+        NAVER_API_CLIENT_SECRET: Joi.string().required(),
+        NAVER_CLOVA_SUMMARY_REQUEST_URL: Joi.string().required(),
       }),
     }),
     TypeOrmModule.forRoot({
@@ -55,6 +66,7 @@ import { SummaryModule } from './summary/summary.module';
             port: +process.env.DB_PORT,
             username: process.env.POSTGRES_USER,
             password: process.env.POSTGRES_PASSWORD,
+            database: process.env.POSTGRES_DB_NAME,
           }
         : {
             host: process.env.DB_HOST,

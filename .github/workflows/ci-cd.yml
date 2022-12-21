@@ -27,7 +27,7 @@ jobs:
           context: .
           tags: hou27/quickchive_backend:latest
           # build on feature branches, push only on develop branch
-          push: ${{ github.ref == 'refs/heads/develop' }}
+          push: true
   job2:
     needs: job1
     name: Deploy to EC2

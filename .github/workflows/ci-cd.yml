@@ -31,7 +31,7 @@ jobs:
   job2:
     needs: job1
     name: Deploy to EC2
-    runs-on: quickchive-server
+    runs-on: quickchive
 
     steps:
       - name: executing remote ssh commands using password

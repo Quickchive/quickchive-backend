@@ -133,30 +133,30 @@ export class UsersController {
     return await this.usersService.loadFavorites(user);
   }
 
-  @ApiOperation({
-    summary: '자신의 콜렉션 조회',
-    description: '자신의 콜렉션을 조회하는 메서드',
-  })
-  @ApiQuery({
-    name: 'categoryId',
-    description: `카테고리 아이디 만약 categoryId가 없을 시 전부를 반환한다.`,
-    type: Number,
-    required: false,
-  })
-  @ApiOkResponse({
-    description:
-      '콜렉션 목록을 반환한다. 만약 categoryId가 없을 시 전부를 반환한다.',
-    type: LoadPersonalCollectionsOutput,
-  })
-  @ApiBearerAuth('Authorization')
-  @UseGuards(JwtAuthGuard)
-  @Get('load-collections')
-  async loadPersonalCollections(
-    @AuthUser() user: User,
-    @Query('categoryId') categoryId: number,
-  ): Promise<LoadPersonalCollectionsOutput> {
-    return await this.usersService.loadPersonalCollections(user, +categoryId);
-  }
+  // @ApiOperation({
+  //   summary: '자신의 콜렉션 조회',
+  //   description: '자신의 콜렉션을 조회하는 메서드',
+  // })
+  // @ApiQuery({
+  //   name: 'categoryId',
+  //   description: `카테고리 아이디 만약 categoryId가 없을 시 전부를 반환한다.`,
+  //   type: Number,
+  //   required: false,
+  // })
+  // @ApiOkResponse({
+  //   description:
+  //     '콜렉션 목록을 반환한다. 만약 categoryId가 없을 시 전부를 반환한다.',
+  //   type: LoadPersonalCollectionsOutput,
+  // })
+  // @ApiBearerAuth('Authorization')
+  // @UseGuards(JwtAuthGuard)
+  // @Get('load-collections')
+  // async loadPersonalCollections(
+  //   @AuthUser() user: User,
+  //   @Query('categoryId') categoryId: number,
+  // ): Promise<LoadPersonalCollectionsOutput> {
+  //   return await this.usersService.loadPersonalCollections(user, +categoryId);
+  // }
 
   @ApiOperation({
     summary: '자신의 카테고리 목록 조회',

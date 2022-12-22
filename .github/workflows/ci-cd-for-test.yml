@@ -1,10 +1,8 @@
-name: Docker Image CI && Deploy to EC2
+name: Docker Image CI && Deploy to EC2 for Test Server
 
 on:
   push:
-    branches: ['master']
-  # pull_request:
-  #   branches: ['develop']
+    branches: ['release/**']
 
 jobs:
   job1:
@@ -25,8 +23,7 @@ jobs:
         uses: docker/build-push-action@v3.1.1
         with:
           context: .
-          tags: hou27/quickchive_backend:latest
-          # build on feature branches, push only on develop branch
+          tags: hou27/test_quickchive_backend:latest
           push: true
   job2:
     needs: job1
@@ -41,4 +38,4 @@ jobs:
           username: ubuntu
           key: ${{ secrets.KEY_PAIR }}
           script: |
-            sh /home/ubuntu/actions-runner/deploy.sh
+            sh /home/ubuntu/actions-runner/deploy_test_server.sh

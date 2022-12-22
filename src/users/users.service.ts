@@ -57,7 +57,7 @@ export class UsersService {
 
       return;
     } catch (e) {
-      throw new HttpException(e.message, e.status ? e.status : 500);
+      throw e;
     }
   }
 
@@ -86,7 +86,7 @@ export class UsersService {
         throw new NotFoundException('Reset Code not found');
       }
     } catch (e) {
-      throw new HttpException(e.message, e.status ? e.status : 500);
+      throw e;
     }
   }
 
@@ -109,26 +109,28 @@ export class UsersService {
         );
       }
 
+      console.log(contents);
+
       return {
         contents,
       };
     } catch (e) {
-      throw new HttpException(e.message, e.status ? e.status : 500);
+      throw e;
     }
   }
 
   async loadFavorites(user: User): Promise<LoadFavoritesOutput> {
     try {
-      const { contents, collections } = await this.users.findOne({
+      const { contents /*collections*/ } = await this.users.findOne({
         where: { id: user.id },
         relations: {
           contents: {
             category: true,
           },
-          collections: {
-            // category: true,
-            contents: true,
-          },
+          // collections: {
+          //   // category: true,
+          //   contents: true,
+          // },
         },
       });
 
@@ -136,16 +138,16 @@ export class UsersService {
         (content) => content.favorite,
       );
 
-      const favoriteCollections: Collection[] = collections.filter(
-        (collection) => collection.favorite,
-      );
+      // const favoriteCollections: Collection[] = collections.filter(
+      //   (collection) => collection.favorite,
+      // );
 
       return {
         favorite_contents: favoriteContents,
-        favorite_collections: favoriteCollections,
+        // favorite_collections: favoriteCollections,
       };
     } catch (e) {
-      throw new HttpException(e.message, e.status ? e.status : 500);
+      throw e;
     }
   }
 
@@ -173,7 +175,7 @@ export class UsersService {
         collections,
       };
     } catch (e) {
-      throw new HttpException(e.message, e.status ? e.status : 500);
+      throw e;
     }
   }
 
@@ -192,7 +194,7 @@ export class UsersService {
         categories,
       };
     } catch (e) {
-      throw new HttpException(e.message, e.status ? e.status : 500);
+      throw e;
     }
   }
 }

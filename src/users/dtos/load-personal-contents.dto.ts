@@ -21,11 +21,11 @@ export class LoadFavoritesOutput extends CoreOutput {
   })
   favorite_contents?: Content[];
 
-  @ApiProperty({
-    description: '즐겨찾기한 콜렉션 목록',
-    type: [Collection],
-    required: false,
-    isArray: true,
-  })
-  favorite_collections?: Collection[];
+  // @ApiProperty({
+  //   description: '즐겨찾기한 콜렉션 목록',
+  //   type: [Collection],
+  //   required: false,
+  //   isArray: true,
+  // })
+  // favorite_collections?: Collection[];
 }

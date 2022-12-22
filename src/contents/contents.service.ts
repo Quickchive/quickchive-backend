@@ -77,7 +77,6 @@ export class ContentsService {
         description,
         coverImg,
       } = await this.getLinkInfo(link);
-      console.log(linkTitle);
       title = title ? title : linkTitle;
 
       // Get or create category
@@ -116,7 +115,7 @@ export class ContentsService {
 
       return;
     } catch (e) {
-      throw new HttpException(e.message, e.status ? e.status : 500);
+      throw e;
     }
   }
 
@@ -165,7 +164,7 @@ export class ContentsService {
 
       return;
     } catch (e) {
-      throw new HttpException(e.message, e.status ? e.status : 500);
+      throw e;
     }
   }
 
@@ -244,7 +243,7 @@ export class ContentsService {
 
       return;
     } catch (e) {
-      throw new HttpException(e.message, e.status ? e.status : 500);
+      throw e;
     }
   }
 
@@ -277,7 +276,7 @@ export class ContentsService {
 
       return;
     } catch (e) {
-      throw new HttpException(e.message, e.status ? e.status : 500);
+      throw e;
     }
   }
 
@@ -310,7 +309,7 @@ export class ContentsService {
 
       return;
     } catch (e) {
-      throw new HttpException(e.message, e.status ? e.status : 500);
+      throw e;
     }
   }
 
@@ -344,7 +343,7 @@ export class ContentsService {
 
       return;
     } catch (e) {
-      throw new HttpException(e.message, e.status ? e.status : 500);
+      throw e;
     }
   }
 
@@ -454,7 +453,7 @@ export class ContentsService {
 
       return { summary };
     } catch (e) {
-      throw new HttpException(e.message, e.status ? e.status : 500);
+      throw e;
     }
   }
 
@@ -484,8 +483,7 @@ export class ContentsService {
 
       return { summary };
     } catch (e) {
-      // console.log(e);
-      throw new HttpException(e.message, e.status ? e.status : 500);
+      throw e;
     }
   }
 }
@@ -525,7 +523,7 @@ export class CategoryService {
 
       return;
     } catch (e) {
-      throw new HttpException(e.message, e.status ? e.status : 500);
+      throw e;
     }
   }
 
@@ -584,7 +582,7 @@ export class CategoryService {
 
       return;
     } catch (e) {
-      throw new HttpException(e.message, e.status ? e.status : 500);
+      throw e;
     }
   }
 
@@ -628,7 +626,7 @@ export class CategoryService {
 
       return;
     } catch (e) {
-      throw new HttpException(e.message, e.status ? e.status : 500);
+      throw e;
     }
   }
 }

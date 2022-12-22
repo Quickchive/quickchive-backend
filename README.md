@@ -46,15 +46,14 @@
 
 ### User API
 
-| URL                         | method | Usage                | Authorization Needed |
-| --------------------------- | ------ | -------------------- | -------------------- |
-| /api/users/edit             | POST   | 프로필 수정          | O                    |
-| /api/users/reset-password   | POST   | 비밀번호 재생성      | X                    |
-| /api/users/me               | GET    | 프로필 조회          | O                    |
-| /api/users/load-contents    | GET    | 유저의 콘텐츠 조회   | O                    |
-| /api/users/load-favorites   | GET    | 유저의 즐겨찾기 조회 | O                    |
-| /api/users/load-collections | GET    | 유저의 콜렉션 조회   | O                    |
-| /api/users/load-categories  | GET    | 유저의 카테고리 조회 | O                    |
+| URL                        | method | Usage                | Authorization Needed |
+| -------------------------- | ------ | -------------------- | -------------------- |
+| /api/users/edit            | POST   | 프로필 수정          | O                    |
+| /api/users/reset-password  | POST   | 비밀번호 재생성      | X                    |
+| /api/users/me              | GET    | 프로필 조회          | O                    |
+| /api/users/load-contents   | GET    | 유저의 콘텐츠 조회   | O                    |
+| /api/users/load-favorites  | GET    | 유저의 즐겨찾기 조회 | O                    |
+| /api/users/load-categories | GET    | 유저의 카테고리 조회 | O                    |
 
 ### Auth API
 
@@ -96,15 +95,6 @@
 | /api/category/add                      | POST   | 카테고리 추가 | O                    |
 | /api/category/update                   | POST   | 카테고리 수정 | O                    |
 | /api/category/delete/\<int:categoryId> | DELETE | 카테고리 삭제 | O                    |
-
-### Collection API
-
-| URL                                           | method | Usage                 | Authorization Needed |
-| --------------------------------------------- | ------ | --------------------- | -------------------- |
-| /api/collections/add                          | POST   | 콜렉션 추가           | O                    |
-| /api/collections/update                       | POST   | 콜렉션 수정           | O                    |
-| /api/collections/favorite/\<int:collectionId> | PATCH  | 즐겨찾기 등록 및 해제 | O                    |
-| /api/collections/delete/\<int:contentId>      | DELETE | 콜렉션 삭제           | O                    |
 
 ## License
 

@@ -121,16 +121,16 @@ export class UsersService {
 
   async loadFavorites(user: User): Promise<LoadFavoritesOutput> {
     try {
-      const { contents, collections } = await this.users.findOne({
+      const { contents /*collections*/ } = await this.users.findOne({
         where: { id: user.id },
         relations: {
           contents: {
             category: true,
           },
-          collections: {
-            // category: true,
-            contents: true,
-          },
+          // collections: {
+          //   // category: true,
+          //   contents: true,
+          // },
         },
       });
 
@@ -138,13 +138,13 @@ export class UsersService {
         (content) => content.favorite,
       );
 
-      const favoriteCollections: Collection[] = collections.filter(
-        (collection) => collection.favorite,
-      );
+      // const favoriteCollections: Collection[] = collections.filter(
+      //   (collection) => collection.favorite,
+      // );
 
       return {
         favorite_contents: favoriteContents,
-        favorite_collections: favoriteCollections,
+        // favorite_collections: favoriteCollections,
       };
     } catch (e) {
       throw e;

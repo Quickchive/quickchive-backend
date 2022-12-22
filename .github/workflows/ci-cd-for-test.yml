@@ -2,7 +2,7 @@ name: Docker Image CI && Deploy to EC2 for Test Server
 
 on:
   push:
-    branches: ['release/**']
+    branches: ['release/**', develop]
 
 jobs:
   job1:

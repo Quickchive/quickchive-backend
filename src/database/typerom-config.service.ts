@@ -33,7 +33,7 @@ export class TypeOrmConfigService implements TypeOrmOptionsFactory {
       extra: {
         statement_timeout: 10000, // timeout in milliseconds
       },
-      synchronize: this.configService.get('NODE_ENV') !== 'prod',
+      synchronize: false,
       logging:
         this.configService.get('NODE_ENV') !== 'prod' &&
         this.configService.get('NODE_ENV') !== 'test',

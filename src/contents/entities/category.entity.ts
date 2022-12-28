@@ -23,4 +23,7 @@ export class Category extends CoreEntity {
 
   @OneToMany((type) => Collection, (collection) => collection.category)
   collections: Collection[];
+
+  @Column({ nullable: true })
+  parentId?: number;
 }

@@ -39,10 +39,6 @@ export class TypeOrmConfigService implements TypeOrmOptionsFactory {
         this.configService.get('NODE_ENV') !== 'test',
       entities: [User, Content, Category, Collection, NestedContent],
       migrations: [__dirname + '/migrations/**/*{.ts,.js}'],
-      cli: {
-        entitiesDir: 'src',
-        migrationsDir: 'src/database/migrations',
-      },
     } as TypeOrmModuleOptions;
   }
 }

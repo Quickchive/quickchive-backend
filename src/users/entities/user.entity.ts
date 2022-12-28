@@ -1,4 +1,4 @@
-import { Injectable, InternalServerErrorException } from '@nestjs/common';
+import { InternalServerErrorException } from '@nestjs/common';
 import {
   BeforeInsert,
   BeforeUpdate,
@@ -10,11 +10,11 @@ import {
 } from 'typeorm';
 import * as bcrypt from 'bcrypt';
 import { IsBoolean, IsEmail, IsEnum, IsString, Matches } from 'class-validator';
-import { CoreEntity } from 'src/common/entities/core.entity';
 import { ApiProperty } from '@nestjs/swagger';
-import { Content } from 'src/contents/entities/content.entity';
-import { Category } from 'src/contents/entities/category.entity';
-import { Collection } from 'src/collections/entities/collection.entity';
+import { Content } from '../../contents/entities/content.entity';
+import { Category } from '../../contents/entities/category.entity';
+import { Collection } from '../../collections/entities/collection.entity';
+import { CoreEntity } from '../../common/entities/core.entity';
 
 export enum UserRole {
   Client = 'Client',

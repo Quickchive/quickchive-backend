@@ -1,7 +1,8 @@
 import { ApiProperty } from '@nestjs/swagger';
-import { CoreEntity } from 'src/common/entities/core.entity';
 import { Column, Entity, JoinColumn, OneToOne, BeforeInsert } from 'typeorm';
 import { User } from './user.entity';
+// import { CoreEntity } from 'src/common/entities/core.entity';
+import { CoreEntity } from '../../common/entities/core.entity';
 import { v4 as uuidv4 } from 'uuid';
 
 @Entity()

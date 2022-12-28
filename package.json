@@ -19,10 +19,10 @@
     "test:cov": "jest --coverage",
     "test:debug": "node --inspect-brk -r tsconfig-paths/register -r ts-node/register node_modules/.bin/jest --runInBand",
     "test:e2e": "jest --config ./test/jest-e2e.json",
-    "typeorm": "ts-node -r tsconfig-paths/register ./node_modules/typeorm/cli.js",
-    "migration:generate": "npm run typeorm -- --dataSource=src/database/data-source.ts migration:generate -n",
-    "migration:create": "npm run typeorm migration:create -n",
-    "migration:run": "npm run typeorm migration:run"
+    "typeorm": "typeorm-ts-node-commonjs -d src/database/ormconfig.ts",
+    "migration:generate": "npm run typeorm -- migration:generate",
+    "migration:create": "npm run typeorm -- migration:create",
+    "migration:run": "npm run typeorm -- migration:run"
   },
   "dependencies": {
     "@nestjs/common": "^9.0.3",
@@ -84,9 +84,6 @@
     "typescript": "^4.7.4"
   },
   "jest": {
-    "moduleNameMapper": {
-      "^src/(.*)$": "<rootDir>/$1"
-    },
     "moduleFileExtensions": [
       "js",
       "json",

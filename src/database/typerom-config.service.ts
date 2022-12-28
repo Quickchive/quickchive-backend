@@ -9,9 +9,7 @@ import { User } from '../users/entities/user.entity';
 
 @Injectable()
 export class TypeOrmConfigService implements TypeOrmOptionsFactory {
-  constructor(private configService: ConfigService) {
-    console.log(__dirname);
-  }
+  constructor(private configService: ConfigService) {}
 
   createTypeOrmOptions(): TypeOrmModuleOptions {
     return {
@@ -40,7 +38,11 @@ export class TypeOrmConfigService implements TypeOrmOptionsFactory {
         this.configService.get('NODE_ENV') !== 'prod' &&
         this.configService.get('NODE_ENV') !== 'test',
       entities: [User, Content, Category, Collection, NestedContent],
-      migrations: [__dirname + '/database/migrations/**/*{.ts,.js}'],
+      migrations: [__dirname + '/migrations/**/*{.ts,.js}'],
+      cli: {
+        entitiesDir: 'src',
+        migrationsDir: 'src/database/migrations',
+      },
     } as TypeOrmModuleOptions;
   }
 }

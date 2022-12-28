@@ -22,7 +22,7 @@
     "typeorm": "typeorm-ts-node-commonjs",
     "migration:generate": "npm run typeorm -- -d src/database/ormconfig.ts migration:generate",
     "migration:create": "npm run typeorm -- migration:create",
-    "migration:run": "npm run typeorm -- migration:run"
+    "migration:run": "npm run typeorm -- -d src/database/ormconfig.ts migration:run"
   },
   "dependencies": {
     "@nestjs/common": "^9.0.3",

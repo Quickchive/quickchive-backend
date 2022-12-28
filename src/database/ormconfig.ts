@@ -24,7 +24,7 @@ export const AppDataSource = new DataSource({
   extra: {
     statement_timeout: 10000, // timeout in milliseconds
   },
-  synchronize: process.env.NODE_ENV !== 'prod',
+  synchronize: false,
   logging: process.env.NODE_ENV !== 'prod' && process.env.NODE_ENV !== 'test',
   entities: [__dirname + '/../**/*.entity{.ts,.js}'],
   migrations: [__dirname + '/migrations/**/*{.ts,.js}'],

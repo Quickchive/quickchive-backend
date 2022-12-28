@@ -25,7 +25,7 @@ export class SuccessInterceptor implements NestInterceptor {
           .switchToHttp()
           .getResponse().statusCode;
         return {
-          statusCode: statusCode,
+          statusCode,
           ...returnValue,
         };
       }),

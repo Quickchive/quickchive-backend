@@ -1,13 +1,5 @@
 import { InternalServerErrorException } from '@nestjs/common';
-import {
-  BeforeInsert,
-  BeforeUpdate,
-  Column,
-  Entity,
-  JoinTable,
-  ManyToMany,
-  OneToMany,
-} from 'typeorm';
+import { BeforeInsert, BeforeUpdate, Column, Entity, OneToMany } from 'typeorm';
 import * as bcrypt from 'bcrypt';
 import { IsBoolean, IsEmail, IsEnum, IsString, Matches } from 'class-validator';
 import { ApiProperty } from '@nestjs/swagger';
@@ -70,10 +62,9 @@ export class User extends CoreEntity {
     type: [Category],
     required: false,
   })
-  @ManyToMany((type) => Category, {
+  @OneToMany((type) => Category, (category) => category.user, {
     nullable: true,
   })
-  @JoinTable()
   categories?: Category[];
 
   @ApiProperty({

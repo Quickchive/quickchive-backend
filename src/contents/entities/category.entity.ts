@@ -1,9 +1,10 @@
 import { ApiProperty } from '@nestjs/swagger';
 import { IsString, Length } from 'class-validator';
-import { Column, Entity, OneToMany } from 'typeorm';
+import { Column, Entity, ManyToOne, OneToMany } from 'typeorm';
 import { Content } from './content.entity';
 import { CoreEntity } from '../../common/entities/core.entity';
 import { Collection } from '../../collections/entities/collection.entity';
+import { User } from '../../users/entities/user.entity';
 
 @Entity()
 export class Category extends CoreEntity {
@@ -26,4 +27,9 @@ export class Category extends CoreEntity {
 
   @Column({ nullable: true })
   parentId?: number;
+
+  @ManyToOne((type) => User, (user) => user.categories, {
+    onDelete: 'CASCADE',
+  })
+  user: User;
 }

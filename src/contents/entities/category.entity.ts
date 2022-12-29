@@ -9,13 +9,11 @@ import { User } from '../../users/entities/user.entity';
 @Entity()
 export class Category extends CoreEntity {
   @ApiProperty({ description: 'Category Name' })
-  @Column({ unique: true })
   @IsString()
   @Length(2)
   name: string;
 
   @ApiProperty({ description: 'Category Slug' })
-  @Column({ unique: true })
   @IsString()
   slug: string;
 

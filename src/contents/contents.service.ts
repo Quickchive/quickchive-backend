@@ -10,6 +10,7 @@ import { SummaryService } from 'src/summary/summary.service';
 import { User } from 'src/users/entities/user.entity';
 import { EntityManager, Repository } from 'typeorm';
 import {
+  AddCategoryBodyDto,
   AddCategoryOutput,
   DeleteCategoryOutput,
   UpdateCategoryBodyDto,
@@ -543,7 +544,7 @@ export class CategoryService {
 
   async addCategory(
     user: User,
-    name: string,
+    { categoryName: name, parentId }: AddCategoryBodyDto,
     queryRunnerManager: EntityManager,
   ): Promise<AddCategoryOutput> {
     try {
@@ -567,19 +568,29 @@ export class CategoryService {
       const { categoryName, categorySlug } =
         this.categories.generateNameAndSlug(name);
 
-      // check if category exists in user's categories
+      // check if category exists in user's categories(check if category name is duplicated in same level too)
       const category = userInDb.categories.find(
-        (category) => category.slug === categorySlug,
+        (category) =>
+          category.slug === categorySlug && category.parentId === parentId,
       );
 
       // if category doesn't exist, create it
       if (category) {
         throw new ConflictException('Category already exists');
       } else {
+        // if parent category exists, get its id
+        let parentCategory: Category;
+        if (parentId) {
+          parentCategory = await queryRunnerManager.findOne(Category, {
+            where: { id: parentId },
+          });
+        }
+
         const category = await queryRunnerManager.save(
           queryRunnerManager.create(Category, {
             slug: categorySlug,
             name: categoryName,
+            parentId: parentCategory ? parentCategory.id : null,
             user: userInDb,
           }),
         );

@@ -289,12 +289,12 @@ export class CategoryController {
   @UseInterceptors(TransactionInterceptor)
   async addCategory(
     @AuthUser() user: User,
-    @Body() { categoryName }: AddCategoryBodyDto,
+    @Body() addCategoryBody: AddCategoryBodyDto,
     @TransactionManager() queryRunnerManager: EntityManager,
   ): Promise<AddCategoryOutput> {
     return await this.categoryService.addCategory(
       user,
-      categoryName,
+      addCategoryBody,
       queryRunnerManager,
     );
   }

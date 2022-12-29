@@ -103,7 +103,6 @@ export class ContentsService {
       });
       await queryRunnerManager.save(newContent);
       userInDb.contents.push(newContent);
-      // categoryName ? userInDb.categories.push(category) : null;
       await queryRunnerManager.save(userInDb);
 
       return;

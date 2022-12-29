@@ -81,54 +81,13 @@ export class ContentsService {
       } = await this.getLinkInfo(link);
       title = title ? title : linkTitle;
 
-      // generate category name and slug
-      const { categoryName: refinedCategoryName, categorySlug } =
-        this.categories.generateNameAndSlug(categoryName);
-
-      // check if category exists in user's categories
-      const category: Category = userInDb.categories.find(
-        (category) =>
-          category.slug === categorySlug && category.parentId === parentId,
+      const category = await this.getOrCreate(
+        link,
+        categoryName,
+        parentId,
+        userInDb,
+        queryRunnerManager,
       );
-
-      // if category doesn't exist, create it
-      if (!category) {
-        // if parent category exists, get parent category
-        const parentCategory: Category = parentId
-          ? await queryRunnerManager.findOne(Category, {
-              where: { id: parentId },
-            })
-          : null;
-        // if parent category doesn't exist, throw error
-        if (!parentCategory && parentId) {
-          throw new NotFoundException('Parent category not found');
-        }
-
-        const category = await queryRunnerManager.save(
-          queryRunnerManager.create(Category, {
-            slug: categorySlug,
-            name: refinedCategoryName,
-            parentId: parentCategory ? parentCategory.id : null,
-            user: userInDb,
-          }),
-        );
-
-        userInDb.categories.push(category);
-        await queryRunnerManager.save(userInDb);
-      }
-
-      // TODO : 대 카테고리를 기준으로 중복 체크해야함.
-      const contentThatSameLinkAndCategory = userInDb.contents.find(
-        (contentInFilter) =>
-          contentInFilter.link === link &&
-          contentInFilter?.category?.slug === categorySlug &&
-          contentInFilter?.category?.parentId === parentId,
-      );
-      if (contentThatSameLinkAndCategory) {
-        throw new ConflictException(
-          'Content with that link already exists in same category.',
-        );
-      }
 
       const newContent = queryRunnerManager.create(Content, {
         link,
@@ -144,7 +103,7 @@ export class ContentsService {
       });
       await queryRunnerManager.save(newContent);
       userInDb.contents.push(newContent);
-      categoryName ? userInDb.categories.push(category) : null;
+      // categoryName ? userInDb.categories.push(category) : null;
       await queryRunnerManager.save(userInDb);
 
       return;
@@ -246,53 +205,13 @@ export class ContentsService {
         throw new NotFoundException('Content not found.');
       }
 
-      // generate category name and slug
-      const { categoryName: refinedCategoryName, categorySlug } =
-        this.categories.generateNameAndSlug(categoryName);
-
-      // check if category exists in user's categories
-      // TODO : 대 카테고리를 기준으로 중복 체크해야함.
-      let category: Category = userInDb.categories.find(
-        (category) => category.slug === categorySlug,
+      const category = await this.getOrCreate(
+        link,
+        categoryName,
+        parentId,
+        userInDb,
+        queryRunnerManager,
       );
-
-      // if category doesn't exist, create it
-      if (!category) {
-        category = await queryRunnerManager.save(
-          queryRunnerManager.create(Category, {
-            slug: categorySlug,
-            name: refinedCategoryName,
-            user: userInDb,
-          }),
-        );
-
-        userInDb.categories.push(category);
-        await queryRunnerManager.save(userInDb);
-      }
-      const contentThatSameLinkAndCategory = userInDb.contents.find(
-        (contentInFilter) =>
-          contentInFilter.link === content.link &&
-          contentInFilter.id !== contentId &&
-          contentInFilter?.category?.slug === categorySlug,
-      );
-      if (contentThatSameLinkAndCategory) {
-        throw new ConflictException(
-          'Content with that link already exists in same category.',
-        );
-      }
-
-      // // update content
-      // let category: Category = null;
-      // if (categoryName) {
-      //   category = await this.categories.checkAndCreate(
-      //     categoryName,
-      //     queryRunnerManager,
-      //   );
-      //   if (!userInDb.categories.includes(category)) {
-      //     userInDb.categories.push(category);
-      //     await queryRunnerManager.save(userInDb);
-      //   }
-      // }
 
       queryRunnerManager.save(Content, [
         { id: content.id, ...newContentObj, ...(category && { category }) },
@@ -402,6 +321,76 @@ export class ContentsService {
     } catch (e) {
       throw e;
     }
+  }
+
+  /**
+   * category를 생성하거나, 이미 존재하는 category를 가져옴
+   * content service의 method 내에서 중복되는 로직을 분리함
+   *
+   * @param link
+   * @param categoryName
+   * @param parentId
+   * @param userInDb
+   * @param queryRunnerManager
+   * @returns category
+   */
+  async getOrCreate(
+    link: string,
+    categoryName: string,
+    parentId: number,
+    userInDb: User,
+    queryRunnerManager: EntityManager,
+  ): Promise<Category> {
+    // generate category name and slug
+    const { categoryName: refinedCategoryName, categorySlug } =
+      this.categories.generateNameAndSlug(categoryName);
+
+    // check if category exists in user's categories
+    let category: Category = userInDb.categories.find(
+      (category) =>
+        category.slug === categorySlug && category.parentId === parentId,
+    );
+
+    // if category doesn't exist, create it
+    if (!category) {
+      // if parent category exists, get parent category
+      const parentCategory: Category = parentId
+        ? await queryRunnerManager.findOne(Category, {
+            where: { id: parentId },
+          })
+        : null;
+      // if parent category doesn't exist, throw error
+      if (!parentCategory && parentId) {
+        throw new NotFoundException('Parent category not found');
+      }
+
+      category = await queryRunnerManager.save(
+        queryRunnerManager.create(Category, {
+          slug: categorySlug,
+          name: refinedCategoryName,
+          parentId: parentCategory ? parentCategory.id : null,
+          user: userInDb,
+        }),
+      );
+
+      userInDb.categories.push(category);
+      await queryRunnerManager.save(userInDb);
+    }
+
+    // TODO : 대 카테고리를 기준으로 중복 체크해야함.
+    const contentThatSameLinkAndCategory = userInDb.contents.find(
+      (contentInFilter) =>
+        contentInFilter.link === link &&
+        contentInFilter?.category?.slug === categorySlug &&
+        contentInFilter?.category?.parentId === parentId,
+    );
+    if (contentThatSameLinkAndCategory) {
+      throw new ConflictException(
+        'Content with that link already exists in same category.',
+      );
+    }
+
+    return category;
   }
 
   async getLinkInfo(link: string) {

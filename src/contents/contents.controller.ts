@@ -311,12 +311,12 @@ export class CategoryController {
   @UseInterceptors(TransactionInterceptor)
   async updateCategory(
     @AuthUser() user: User,
-    @Body() content: UpdateCategoryBodyDto,
+    @Body() updateCategoryBody: UpdateCategoryBodyDto,
     @TransactionManager() queryRunnerManager: EntityManager,
   ): Promise<UpdateCategoryOutput> {
     return await this.categoryService.updateCategory(
       user,
-      content,
+      updateCategoryBody,
       queryRunnerManager,
     );
   }

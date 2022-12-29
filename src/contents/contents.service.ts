@@ -79,22 +79,46 @@ export class ContentsService {
       } = await this.getLinkInfo(link);
       title = title ? title : linkTitle;
 
-      // Get or create category
-      const category = categoryName
-        ? await this.categories.getOrCreate(categoryName, queryRunnerManager)
-        : null;
+      // generate category name and slug
+      const { categoryName: refinedCategoryName, categorySlug } =
+        this.categories.generateNameAndSlug(categoryName);
 
-      // Check if content already exists in same category
-      if (
-        userInDb.contents.filter(
-          (content) =>
-            content.link === link && content.category?.name === category?.name,
-        )[0]
-      ) {
-        throw new ConflictException(
-          'Content with that link already exists in same category.',
+      // check if category exists in user's categories
+      // TODO : 대 카테고리를 기준으로 중복 체크해야함.
+      let category: Category = userInDb.categories.find(
+        (category) => category.slug === categorySlug,
+      );
+
+      // if category doesn't exist, create it
+      if (!category) {
+        category = await queryRunnerManager.save(
+          queryRunnerManager.create(Category, {
+            slug: categorySlug,
+            name: refinedCategoryName,
+            user: userInDb,
+          }),
         );
+
+        userInDb.categories.push(category);
+        await queryRunnerManager.save(userInDb);
       }
+
+      // // Get or create category
+      // const category = categoryName
+      //   ? await this.categories.checkAndCreate(categoryName, queryRunnerManager)
+      //   : null;
+
+      // // Check if content already exists in same category
+      // if (
+      //   userInDb.contents.filter(
+      //     (content) =>
+      //       content.link === link && content.category?.name === category?.name,
+      //   )[0]
+      // ) {
+      //   throw new ConflictException(
+      //     'Content with that link already exists in same category.',
+      //   );
+      // }
 
       const newContent = queryRunnerManager.create(Content, {
         link,
@@ -171,7 +195,7 @@ export class ContentsService {
   async updateContent(
     user: User,
     {
-      id,
+      id: contentId,
       link,
       title,
       description,
@@ -205,37 +229,59 @@ export class ContentsService {
       }
 
       const content = userInDb.contents.filter(
-        (content) => content.id === id,
+        (content) => content.id === contentId,
       )[0];
       if (!content) {
         throw new NotFoundException('Content not found.');
       }
 
-      // Check if content already exists in same category
-      const contentThatSameLinkAndCategory = userInDb.contents.filter(
+      // generate category name and slug
+      const { categoryName: refinedCategoryName, categorySlug } =
+        this.categories.generateNameAndSlug(categoryName);
+
+      // check if category exists in user's categories
+      // TODO : 대 카테고리를 기준으로 중복 체크해야함.
+      let category: Category = userInDb.categories.find(
+        (category) => category.slug === categorySlug,
+      );
+
+      // if category doesn't exist, create it
+      if (!category) {
+        category = await queryRunnerManager.save(
+          queryRunnerManager.create(Category, {
+            slug: categorySlug,
+            name: refinedCategoryName,
+            user: userInDb,
+          }),
+        );
+
+        userInDb.categories.push(category);
+        await queryRunnerManager.save(userInDb);
+      }
+      const contentThatSameLinkAndCategory = userInDb.contents.find(
         (contentInFilter) =>
           contentInFilter.link === content.link &&
-          contentInFilter.id !== id &&
-          contentInFilter?.category?.name === categoryName,
-      )[0];
+          contentInFilter.id !== contentId &&
+          contentInFilter?.category?.slug === categorySlug,
+      );
       if (contentThatSameLinkAndCategory) {
         throw new ConflictException(
           'Content with that link already exists in same category.',
         );
       }
 
-      // update content
-      let category: Category = null;
-      if (categoryName) {
-        category = await this.categories.getOrCreate(
-          categoryName,
-          queryRunnerManager,
-        );
-        if (!userInDb.categories.includes(category)) {
-          userInDb.categories.push(category);
-          await queryRunnerManager.save(userInDb);
-        }
-      }
+      // // update content
+      // let category: Category = null;
+      // if (categoryName) {
+      //   category = await this.categories.checkAndCreate(
+      //     categoryName,
+      //     queryRunnerManager,
+      //   );
+      //   if (!userInDb.categories.includes(category)) {
+      //     userInDb.categories.push(category);
+      //     await queryRunnerManager.save(userInDb);
+      //   }
+      // }
 
       queryRunnerManager.save(Content, [
         { id: content.id, ...newContentObj, ...(category && { category }) },
@@ -497,7 +543,7 @@ export class CategoryService {
 
   async addCategory(
     user: User,
-    categoryName: string,
+    name: string,
     queryRunnerManager: EntityManager,
   ): Promise<AddCategoryOutput> {
     try {
@@ -511,15 +557,36 @@ export class CategoryService {
         throw new NotFoundException('User not found');
       }
 
-      const category = await this.categories.getOrCreate(
-        categoryName,
-        queryRunnerManager,
+      // // Check if a category exists and create a new one or throw a duplicate error
+      // await this.categories.checkAndCreate(
+      //   userInDb,
+      //   categoryName,
+      //   queryRunnerManager,
+      // );
+
+      const { categoryName, categorySlug } =
+        this.categories.generateNameAndSlug(name);
+
+      // check if category exists in user's categories
+      const category = userInDb.categories.find(
+        (category) => category.slug === categorySlug,
       );
-      if (userInDb.categories.includes(category)) {
+
+      // if category doesn't exist, create it
+      if (category) {
         throw new ConflictException('Category already exists');
+      } else {
+        const category = await queryRunnerManager.save(
+          queryRunnerManager.create(Category, {
+            slug: categorySlug,
+            name: categoryName,
+            user: userInDb,
+          }),
+        );
+
+        userInDb.categories.push(category);
+        await queryRunnerManager.save(userInDb);
       }
-      userInDb.categories.push(category);
-      await queryRunnerManager.save(userInDb);
 
       return;
     } catch (e) {
@@ -529,7 +596,7 @@ export class CategoryService {
 
   async updateCategory(
     user: User,
-    { originalName, name }: UpdateCategoryBodyDto,
+    { categoryId, name }: UpdateCategoryBodyDto,
     queryRunnerManager: EntityManager,
   ): Promise<UpdateCategoryOutput> {
     try {
@@ -547,38 +614,53 @@ export class CategoryService {
         throw new NotFoundException('User not found.');
       }
 
-      // Get or create category
-      const category = await this.categories.getOrCreate(
-        name,
-        queryRunnerManager,
+      // // Check if a category exists and create a new one or throw a duplicate error
+      // const category = await this.categories.checkAndCreate(
+      //   userInDb,
+      //   name,
+      //   queryRunnerManager,
+      // );
+
+      const category = userInDb.categories.find(
+        (category) => category.id === categoryId,
       );
 
-      // Check if user has category
+      // Check if user has category with same slug
+      const { categoryName, categorySlug } =
+        this.categories.generateNameAndSlug(name);
       if (
-        !userInDb.categories.filter(
-          (category) => category.name === originalName,
+        userInDb.categories.filter(
+          (category) =>
+            category.slug === categorySlug && category.id !== categoryId,
         )[0]
       ) {
-        throw new NotFoundException("Category doesn't exists in current user.");
-      }
-      // Check if user has category with same name
-      if (userInDb.categories.filter((category) => category.name === name)[0]) {
-        throw new ConflictException(
+        throw new NotFoundException(
           'Category with that name already exists in current user.',
         );
       }
+
+      // Update category
+      category.name = categoryName;
+      category.slug = categorySlug;
+      await queryRunnerManager.save(category);
+      // Check if user has category with same name
+      // if (userInDb.categories.filter((category) => category.name === name)[0]) {
+      //   throw new ConflictException(
+      //     'Category with that name already exists in current user.',
+      //   );
+      // }
       // Update and delete previous category
-      userInDb.categories.push(category);
-      userInDb.contents.forEach(async (content) => {
-        if (content.category && content.category.name === originalName) {
-          content.category = category;
-          await queryRunnerManager.save(content);
-        }
-      });
-      userInDb.categories = userInDb.categories.filter(
-        (category) => category.name !== originalName,
-      );
-      await queryRunnerManager.save(userInDb);
+      // userInDb.categories.push(category);
+      // userInDb.contents.forEach(async (content) => {
+      //   if (content.category && content.category.name === originalName) {
+      //     content.category = category;
+      //     await queryRunnerManager.save(content);
+      //   }
+      // });
+      // userInDb.categories = userInDb.categories.filter(
+      //   (category) => category.name !== originalName,
+      // );
+      // await queryRunnerManager.save(userInDb);
 
       return;
     } catch (e) {
@@ -592,37 +674,47 @@ export class CategoryService {
     queryRunnerManager: EntityManager,
   ): Promise<DeleteCategoryOutput> {
     try {
-      const userInDb = await queryRunnerManager.findOne(User, {
-        where: { id: user.id },
-        relations: {
-          contents: {
-            category: true,
-          },
-          categories: true,
-        },
-      });
-      if (!userInDb) {
-        throw new NotFoundException('User not found');
-      }
+      // const userInDb = await queryRunnerManager.findOne(User, {
+      //   where: { id: user.id },
+      //   relations: {
+      //     contents: {
+      //       category: true,
+      //     },
+      //     categories: true,
+      //   },
+      // });
+      // if (!userInDb) {
+      //   throw new NotFoundException('User not found');
+      // }
 
-      const category = userInDb.categories.filter(
-        (category) => category.id === categoryId,
-      )[0];
+      // const category = userInDb.categories.filter(
+      //   (category) => category.id === categoryId,
+      // )[0];
+
+      // if (!category) {
+      //   throw new NotFoundException('Category not found.');
+      // }
+
+      // userInDb.categories = userInDb.categories.filter(
+      //   (category) => category.id !== categoryId,
+      // );
+      // userInDb.contents.forEach(async (content) => {
+      //   if (content.category && content.category.id === categoryId) {
+      //     content.category = null;
+      //     await queryRunnerManager.save(content);
+      //   }
+      // });
+      // await queryRunnerManager.save(userInDb);
+
+      const category = await queryRunnerManager.findOne(Category, {
+        where: { id: categoryId, userId: user.id },
+      });
 
       if (!category) {
         throw new NotFoundException('Category not found.');
       }
 
-      userInDb.categories = userInDb.categories.filter(
-        (category) => category.id !== categoryId,
-      );
-      userInDb.contents.forEach(async (content) => {
-        if (content.category && content.category.id === categoryId) {
-          content.category = null;
-          await queryRunnerManager.save(content);
-        }
-      });
-      await queryRunnerManager.save(userInDb);
+      await queryRunnerManager.delete(Category, { id: categoryId });
 
       return;
     } catch (e) {

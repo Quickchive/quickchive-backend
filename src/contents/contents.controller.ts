@@ -285,6 +285,9 @@ export class CategoryController {
   @ApiConflictResponse({
     description: '동일한 이름의 카테고리가 존재할 경우',
   })
+  @ApiNotFoundResponse({
+    description: '존재하지 않는 것일 경우',
+  })
   @Post('add')
   @UseInterceptors(TransactionInterceptor)
   async addCategory(

@@ -558,13 +558,6 @@ export class CategoryService {
         throw new NotFoundException('User not found');
       }
 
-      // // Check if a category exists and create a new one or throw a duplicate error
-      // await this.categories.checkAndCreate(
-      //   userInDb,
-      //   categoryName,
-      //   queryRunnerManager,
-      // );
-
       const { categoryName, categorySlug } =
         this.categories.generateNameAndSlug(name);
 
@@ -578,12 +571,15 @@ export class CategoryService {
       if (category) {
         throw new ConflictException('Category already exists');
       } else {
-        // if parent category exists, get its id
-        let parentCategory: Category;
-        if (parentId) {
-          parentCategory = await queryRunnerManager.findOne(Category, {
-            where: { id: parentId },
-          });
+        // if parent category exists, get parent category
+        let parentCategory: Category = parentId
+          ? await queryRunnerManager.findOne(Category, {
+              where: { id: parentId },
+            })
+          : null;
+        // if parent category doesn't exist, throw error
+        if (!parentCategory && parentId) {
+          throw new NotFoundException('Parent category not found');
         }
 
         const category = await queryRunnerManager.save(
@@ -625,13 +621,6 @@ export class CategoryService {
         throw new NotFoundException('User not found.');
       }
 
-      // // Check if a category exists and create a new one or throw a duplicate error
-      // const category = await this.categories.checkAndCreate(
-      //   userInDb,
-      //   name,
-      //   queryRunnerManager,
-      // );
-
       const category = userInDb.categories.find(
         (category) => category.id === categoryId,
       );
@@ -654,24 +643,6 @@ export class CategoryService {
       category.name = categoryName;
       category.slug = categorySlug;
       await queryRunnerManager.save(category);
-      // Check if user has category with same name
-      // if (userInDb.categories.filter((category) => category.name === name)[0]) {
-      //   throw new ConflictException(
-      //     'Category with that name already exists in current user.',
-      //   );
-      // }
-      // Update and delete previous category
-      // userInDb.categories.push(category);
-      // userInDb.contents.forEach(async (content) => {
-      //   if (content.category && content.category.name === originalName) {
-      //     content.category = category;
-      //     await queryRunnerManager.save(content);
-      //   }
-      // });
-      // userInDb.categories = userInDb.categories.filter(
-      //   (category) => category.name !== originalName,
-      // );
-      // await queryRunnerManager.save(userInDb);
 
       return;
     } catch (e) {
@@ -685,38 +656,6 @@ export class CategoryService {
     queryRunnerManager: EntityManager,
   ): Promise<DeleteCategoryOutput> {
     try {
-      // const userInDb = await queryRunnerManager.findOne(User, {
-      //   where: { id: user.id },
-      //   relations: {
-      //     contents: {
-      //       category: true,
-      //     },
-      //     categories: true,
-      //   },
-      // });
-      // if (!userInDb) {
-      //   throw new NotFoundException('User not found');
-      // }
-
-      // const category = userInDb.categories.filter(
-      //   (category) => category.id === categoryId,
-      // )[0];
-
-      // if (!category) {
-      //   throw new NotFoundException('Category not found.');
-      // }
-
-      // userInDb.categories = userInDb.categories.filter(
-      //   (category) => category.id !== categoryId,
-      // );
-      // userInDb.contents.forEach(async (content) => {
-      //   if (content.category && content.category.id === categoryId) {
-      //     content.category = null;
-      //     await queryRunnerManager.save(content);
-      //   }
-      // });
-      // await queryRunnerManager.save(userInDb);
-
       const category = await queryRunnerManager.findOne(Category, {
         where: { id: categoryId, userId: user.id },
       });

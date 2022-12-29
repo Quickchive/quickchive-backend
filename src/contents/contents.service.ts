@@ -54,6 +54,7 @@ export class ContentsService {
       deadline,
       favorite,
       categoryName,
+      parentId,
     }: AddContentBodyDto,
     queryRunnerManager: EntityManager,
   ): Promise<AddContentOutput> {
@@ -85,17 +86,29 @@ export class ContentsService {
         this.categories.generateNameAndSlug(categoryName);
 
       // check if category exists in user's categories
-      // TODO : 대 카테고리를 기준으로 중복 체크해야함.
-      let category: Category = userInDb.categories.find(
-        (category) => category.slug === categorySlug,
+      const category: Category = userInDb.categories.find(
+        (category) =>
+          category.slug === categorySlug && category.parentId === parentId,
       );
 
       // if category doesn't exist, create it
       if (!category) {
-        category = await queryRunnerManager.save(
+        // if parent category exists, get parent category
+        const parentCategory: Category = parentId
+          ? await queryRunnerManager.findOne(Category, {
+              where: { id: parentId },
+            })
+          : null;
+        // if parent category doesn't exist, throw error
+        if (!parentCategory && parentId) {
+          throw new NotFoundException('Parent category not found');
+        }
+
+        const category = await queryRunnerManager.save(
           queryRunnerManager.create(Category, {
             slug: categorySlug,
             name: refinedCategoryName,
+            parentId: parentCategory ? parentCategory.id : null,
             user: userInDb,
           }),
         );
@@ -104,22 +117,18 @@ export class ContentsService {
         await queryRunnerManager.save(userInDb);
       }
 
-      // // Get or create category
-      // const category = categoryName
-      //   ? await this.categories.checkAndCreate(categoryName, queryRunnerManager)
-      //   : null;
-
-      // // Check if content already exists in same category
-      // if (
-      //   userInDb.contents.filter(
-      //     (content) =>
-      //       content.link === link && content.category?.name === category?.name,
-      //   )[0]
-      // ) {
-      //   throw new ConflictException(
-      //     'Content with that link already exists in same category.',
-      //   );
-      // }
+      // TODO : 대 카테고리를 기준으로 중복 체크해야함.
+      const contentThatSameLinkAndCategory = userInDb.contents.find(
+        (contentInFilter) =>
+          contentInFilter.link === link &&
+          contentInFilter?.category?.slug === categorySlug &&
+          contentInFilter?.category?.parentId === parentId,
+      );
+      if (contentThatSameLinkAndCategory) {
+        throw new ConflictException(
+          'Content with that link already exists in same category.',
+        );
+      }
 
       const newContent = queryRunnerManager.create(Content, {
         link,
@@ -204,6 +213,7 @@ export class ContentsService {
       deadline,
       favorite,
       categoryName,
+      parentId,
     }: UpdateContentBodyDto,
     queryRunnerManager: EntityManager,
   ): Promise<AddContentOutput> {
@@ -572,7 +582,7 @@ export class CategoryService {
         throw new ConflictException('Category already exists');
       } else {
         // if parent category exists, get parent category
-        let parentCategory: Category = parentId
+        const parentCategory: Category = parentId
           ? await queryRunnerManager.findOne(Category, {
               where: { id: parentId },
             })

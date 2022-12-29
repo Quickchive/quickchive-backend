@@ -285,16 +285,19 @@ export class CategoryController {
   @ApiConflictResponse({
     description: '동일한 이름의 카테고리가 존재할 경우',
   })
+  @ApiNotFoundResponse({
+    description: '존재하지 않는 것일 경우',
+  })
   @Post('add')
   @UseInterceptors(TransactionInterceptor)
   async addCategory(
     @AuthUser() user: User,
-    @Body() { categoryName }: AddCategoryBodyDto,
+    @Body() addCategoryBody: AddCategoryBodyDto,
     @TransactionManager() queryRunnerManager: EntityManager,
   ): Promise<AddCategoryOutput> {
     return await this.categoryService.addCategory(
       user,
-      categoryName,
+      addCategoryBody,
       queryRunnerManager,
     );
   }
@@ -311,12 +314,12 @@ export class CategoryController {
   @UseInterceptors(TransactionInterceptor)
   async updateCategory(
     @AuthUser() user: User,
-    @Body() content: UpdateCategoryBodyDto,
+    @Body() updateCategoryBody: UpdateCategoryBodyDto,
     @TransactionManager() queryRunnerManager: EntityManager,
   ): Promise<UpdateCategoryOutput> {
     return await this.categoryService.updateCategory(
       user,
-      content,
+      updateCategoryBody,
       queryRunnerManager,
     );
   }

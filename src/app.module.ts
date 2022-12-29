@@ -5,17 +5,13 @@ import { UsersModule } from './users/users.module';
 import { CommonModule } from './common/common.module';
 import { AuthModule } from './auth/auth.module';
 import { MailModule } from './mail/mail.module';
-import { User } from './users/entities/user.entity';
 import { ContentsModule } from './contents/contents.module';
-import { Content } from './contents/entities/content.entity';
-import { Category } from './contents/entities/category.entity';
 import { DataSource } from 'typeorm';
 import * as Joi from 'joi';
 import { CollectionsModule } from './collections/collections.module';
-import { Collection } from './collections/entities/collection.entity';
-import { NestedContent } from './collections/entities/nested-content.entity';
 import { BatchModule } from './batch/batch.module';
 import { SummaryModule } from './summary/summary.module';
+import { TypeOrmConfigService } from './database/typerom-config.service';
 
 @Module({
   imports: [
@@ -58,31 +54,12 @@ import { SummaryModule } from './summary/summary.module';
         NAVER_CLOVA_SUMMARY_REQUEST_URL: Joi.string().required(),
       }),
     }),
-    TypeOrmModule.forRoot({
-      type: 'postgres',
-      ...(process.env.POSTGRES_DB
-        ? {
-            host: process.env.POSTGRES_DB,
-            port: +process.env.DB_PORT,
-            username: process.env.POSTGRES_USER,
-            password: process.env.POSTGRES_PASSWORD,
-            database: process.env.POSTGRES_DB_NAME,
-          }
-        : {
-            host: process.env.DB_HOST,
-            port: +process.env.DB_PORT,
-            username: process.env.DB_USERNAME,
-            password: process.env.DB_PW,
-            database: process.env.DB_NAME,
-          }),
-      maxQueryExecutionTime: 10000, // If query execution time exceed this given max execution time (in milliseconds) then logger will log this query.
-      extra: {
-        statement_timeout: 10000, // timeout in milliseconds
+    TypeOrmModule.forRootAsync({
+      useClass: TypeOrmConfigService,
+      dataSourceFactory: async (options) => {
+        const dataSource = await new DataSource(options).initialize();
+        return dataSource;
       },
-      synchronize: process.env.NODE_ENV !== 'prod',
-      logging:
-        process.env.NODE_ENV !== 'prod' && process.env.NODE_ENV !== 'test',
-      entities: [User, Content, Category, Collection, NestedContent],
     }),
     UsersModule,
     CommonModule,

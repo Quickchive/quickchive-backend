@@ -151,33 +151,33 @@ export class UsersService {
     }
   }
 
-  async loadPersonalCollections(
-    user: User,
-    categoryId: number,
-  ): Promise<LoadPersonalCollectionsOutput> {
-    try {
-      let { collections } = await this.users.findOne({
-        where: { id: user.id },
-        relations: {
-          collections: {
-            category: true,
-            contents: true,
-          },
-        },
-      });
-      if (categoryId) {
-        collections = collections.filter(
-          (collection) => collection?.category?.id === categoryId,
-        );
-      }
+  // async loadPersonalCollections(
+  //   user: User,
+  //   categoryId: number,
+  // ): Promise<LoadPersonalCollectionsOutput> {
+  //   try {
+  //     let { collections } = await this.users.findOne({
+  //       where: { id: user.id },
+  //       relations: {
+  //         collections: {
+  //           category: true,
+  //           contents: true,
+  //         },
+  //       },
+  //     });
+  //     if (categoryId) {
+  //       collections = collections.filter(
+  //         (collection) => collection?.category?.id === categoryId,
+  //       );
+  //     }
 
-      return {
-        collections,
-      };
-    } catch (e) {
-      throw e;
-    }
-  }
+  //     return {
+  //       collections,
+  //     };
+  //   } catch (e) {
+  //     throw e;
+  //   }
+  // }
 
   async loadPersonalCategories(
     user: User,

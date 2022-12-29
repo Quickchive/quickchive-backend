@@ -1,5 +1,6 @@
 import { IsOptional, IsString, IsUrl } from 'class-validator';
-import { CoreEntity } from 'src/common/entities/core.entity';
+// import { CoreEntity } from 'src/common/entities/core.entity';
+import { CoreEntity } from '../../common/entities/core.entity';
 import { Column, Entity, ManyToOne, RelationId } from 'typeorm';
 import { ApiProperty } from '@nestjs/swagger';
 import { Collection } from './collection.entity';

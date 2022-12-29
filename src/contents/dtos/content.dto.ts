@@ -4,7 +4,7 @@ import {
   PartialType,
   PickType,
 } from '@nestjs/swagger';
-import { IsOptional, IsString } from 'class-validator';
+import { IsNumber, IsOptional, IsString } from 'class-validator';
 import { CoreOutput } from 'src/common/dtos/output.dto';
 import { Content } from '../entities/content.entity';
 
@@ -15,6 +15,15 @@ class ContentBodyExceptLink extends PartialType(
   @IsString()
   @IsOptional()
   categoryName?: string;
+
+  @ApiProperty({
+    description: '부모 카테고리 id',
+    example: 1,
+    nullable: true,
+  })
+  @IsNumber()
+  @IsOptional()
+  parentId?: number;
 }
 class ContentBodyWithLinkOnly extends PickType(Content, ['link']) {}
 

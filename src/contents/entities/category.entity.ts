@@ -1,20 +1,21 @@
 import { ApiProperty } from '@nestjs/swagger';
 import { IsString, Length } from 'class-validator';
-import { Collection } from 'src/collections/entities/collection.entity';
-import { CoreEntity } from 'src/common/entities/core.entity';
-import { Column, Entity, OneToMany } from 'typeorm';
+import { Column, Entity, ManyToOne, OneToMany, RelationId } from 'typeorm';
 import { Content } from './content.entity';
+import { CoreEntity } from '../../common/entities/core.entity';
+import { Collection } from '../../collections/entities/collection.entity';
+import { User } from '../../users/entities/user.entity';
 
 @Entity()
 export class Category extends CoreEntity {
   @ApiProperty({ description: 'Category Name' })
-  @Column({ unique: true })
+  @Column()
   @IsString()
   @Length(2)
   name: string;
 
   @ApiProperty({ description: 'Category Slug' })
-  @Column({ unique: true })
+  @Column()
   @IsString()
   slug: string;
 
@@ -23,4 +24,16 @@ export class Category extends CoreEntity {
 
   @OneToMany((type) => Collection, (collection) => collection.category)
   collections: Collection[];
+
+  @Column({ nullable: true })
+  parentId?: number;
+
+  @ManyToOne((type) => User, (user) => user.categories, {
+    onDelete: 'CASCADE',
+  })
+  user: User;
+
+  @ApiProperty({ description: 'Owner ID' })
+  @RelationId((category: Category) => category.user)
+  userId: number;
 }

@@ -344,6 +344,8 @@ export class ContentsService {
     const { categoryName: refinedCategoryName, categorySlug } =
       this.categories.generateNameAndSlug(categoryName);
 
+    // if parent id is undefined, set it to null to avoid bug caused by type mismatch
+    if (!parentId) parentId = null;
     // check if category exists in user's categories
     let category: Category = userInDb.categories.find(
       (category) =>

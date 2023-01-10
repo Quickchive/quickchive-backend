@@ -206,12 +206,13 @@ export class ContentsService {
       }
 
       const category = await this.getOrCreateCategory(
-        // link,
         categoryName,
         parentId,
         userInDb,
         queryRunnerManager,
       );
+
+      this.checkContentDuplicateAndPlusCategoryCount(link, category, userInDb);
 
       queryRunnerManager.save(Content, [
         { id: content.id, ...newContentObj, ...(category && { category }) },

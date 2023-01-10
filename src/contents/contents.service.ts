@@ -81,13 +81,14 @@ export class ContentsService {
       } = await this.getLinkInfo(link);
       title = title ? title : linkTitle;
 
-      const category = await this.getOrCreate(
-        link,
+      const category = await this.getOrCreateCategory(
         categoryName,
         parentId,
         userInDb,
         queryRunnerManager,
       );
+
+      this.checkContentDuplicateAndPlusCategoryCount(link, category, userInDb);
 
       const newContent = queryRunnerManager.create(Content, {
         link,
@@ -204,8 +205,8 @@ export class ContentsService {
         throw new NotFoundException('Content not found.');
       }
 
-      const category = await this.getOrCreate(
-        link,
+      const category = await this.getOrCreateCategory(
+        // link,
         categoryName,
         parentId,
         userInDb,
@@ -333,8 +334,8 @@ export class ContentsService {
    * @param queryRunnerManager
    * @returns category
    */
-  async getOrCreate(
-    link: string,
+  async getOrCreateCategory(
+    // link: string,
     categoryName: string,
     parentId: number,
     userInDb: User,
@@ -378,20 +379,74 @@ export class ContentsService {
       await queryRunnerManager.save(userInDb);
     }
 
+    return category;
+  }
+
+  /**
+   * 대 카테고리를 기준으로 중복 체크하고,
+   * 최상위 카테고리의 카운트를 올려줌
+   *
+   * @param link
+   * @param category
+   * @param userInDb
+   */
+  checkContentDuplicateAndPlusCategoryCount(
+    link: string,
+    category: Category,
+    userInDb: User,
+  ): void {
     // TODO : 대 카테고리를 기준으로 중복 체크해야함.
+
+    // 최상위 카테고리부터 시작해서 하위 카테고리까지의 그룹을 찾아옴
+    const categoryFamily = this.categories.findCategoryFamily(
+      userInDb.categories,
+      category,
+    );
+
+    // 카테고리의 중복을 체크하고, 중복이 없다면 최상위 카테고리의 count를 증가시킴
+
+    // flat categoryFamily with children
+    categoryFamily.reduce((acc, cur) => {
+      acc.push(cur);
+      if (cur.children) {
+        acc.push(cur.children.reduce);
+      }
+      return acc;
+    }, []);
+    const flatDeep = (arr, d) => {
+      return d > 0
+        ? arr.reduce((acc, cur) => {
+            const forConcat = [cur];
+            return acc.concat(
+              cur.children
+                ? forConcat.concat(flatDeep(cur.children, d - 1))
+                : cur,
+            );
+          }, [])
+        : arr.slice();
+    };
+
+    const flatCategoryFamily = flatDeep(categoryFamily, Infinity);
+
     const contentThatSameLinkAndCategory = userInDb.contents.find(
       (contentInFilter) =>
         contentInFilter.link === link &&
-        contentInFilter?.category?.slug === categorySlug &&
-        contentInFilter?.category?.parentId === parentId,
+        flatCategoryFamily.filter(
+          (categoryInFamily) =>
+            categoryInFamily.id === contentInFilter.category.id,
+        ).length > 0,
     );
     if (contentThatSameLinkAndCategory) {
       throw new ConflictException(
-        'Content with that link already exists in same category.',
+        'Content with that link already exists in same category family.',
       );
     }
 
-    return category;
+    // TODO: 최상위 카테고리의 count를 증가시킨 후, 해당 카테고리를 저장함
+    // delete categoryFamily[0].children;
+    // const updatedTopCategory: Category = categoryFamily[0];
+    // updatedTopCategory.count++;
+    // this.categories.save(updatedTopCategory);
   }
 
   async getLinkInfo(link: string) {

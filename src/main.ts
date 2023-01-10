@@ -22,7 +22,7 @@ async function bootstrap() {
   const config = new DocumentBuilder()
     .setTitle('Quickchive')
     .setDescription('The API description')
-    .setVersion('0.1')
+    .setVersion('1.0.0')
     .addTag('Minimally Viable Product Version')
     .addBearerAuth(
       {

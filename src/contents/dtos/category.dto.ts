@@ -37,7 +37,7 @@ export class UpdateCategoryOutput extends CoreOutput {}
 
 export class DeleteCategoryOutput extends CoreOutput {}
 
-export class categoryNameAndSlug {
+export class CategoryNameAndSlug {
   @ApiProperty({ description: '카테고리 이름' })
   @IsString()
   categoryName: string;
@@ -45,4 +45,9 @@ export class categoryNameAndSlug {
   @ApiProperty({ description: '카테고리 슬러그' })
   @IsString()
   categorySlug: string;
+}
+
+export class CategoryTreeNode extends Category {
+  @ApiProperty({ description: '자식 카테고리' })
+  children?: CategoryTreeNode[];
 }

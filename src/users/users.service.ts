@@ -1,6 +1,5 @@
 import {
   CACHE_MANAGER,
-  HttpException,
   Inject,
   Injectable,
   NotFoundException,
@@ -21,8 +20,7 @@ import {
 } from './dtos/reset-password.dto';
 import { User } from './entities/user.entity';
 import { Cache } from 'cache-manager';
-import { LoadPersonalCollectionsOutput } from './dtos/load-personal-collections.dto';
-import { Collection } from 'src/collections/entities/collection.entity';
+import { CategoryTreeNode } from 'src/contents/dtos/category.dto';
 
 @Injectable()
 export class UsersService {
@@ -190,8 +188,24 @@ export class UsersService {
         },
       });
 
+      // make categories tree by parentid
+      const categoriesTree: CategoryTreeNode[] = categories;
+      categoriesTree.reduce((acc, cur) => {
+        if (cur.parentId) {
+          const parent = categoriesTree.find(
+            (category) => category.id === cur.parentId,
+          );
+          if (parent) {
+            if (!parent.children) parent.children = [];
+            parent.children.push(cur);
+            categoriesTree.splice(categoriesTree.indexOf(cur), 1);
+          }
+        }
+        return acc;
+      });
+
       return {
-        categories,
+        categoriesTree,
       };
     } catch (e) {
       throw e;

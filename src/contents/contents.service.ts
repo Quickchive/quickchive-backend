@@ -1,14 +1,13 @@
 import {
   BadRequestException,
   ConflictException,
-  HttpException,
   Injectable,
   NotFoundException,
 } from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
-import { SummaryService } from 'src/summary/summary.service';
-import { User } from 'src/users/entities/user.entity';
 import { EntityManager, Repository } from 'typeorm';
+import * as cheerio from 'cheerio';
+import axios from 'axios';
 import {
   AddCategoryBodyDto,
   AddCategoryOutput,
@@ -27,11 +26,12 @@ import {
   toggleFavoriteOutput,
   UpdateContentBodyDto,
 } from './dtos/content.dto';
+import { LoadPersonalCategoriesOutput } from 'src/contents/dtos/load-personal-categories.dto';
+import { SummaryService } from 'src/summary/summary.service';
+import { User } from 'src/users/entities/user.entity';
 import { Category } from './entities/category.entity';
 import { Content } from './entities/content.entity';
 import { CategoryRepository } from './repository/category.repository';
-import * as cheerio from 'cheerio';
-import axios from 'axios';
 
 @Injectable()
 export class ContentsService {
@@ -540,6 +540,8 @@ export class CategoryService {
   constructor(
     @InjectRepository(Category)
     private readonly categories: CategoryRepository,
+    @InjectRepository(User)
+    private readonly users: Repository<User>,
   ) {}
 
   async addCategory(
@@ -667,6 +669,28 @@ export class CategoryService {
       await queryRunnerManager.delete(Category, { id: categoryId });
 
       return;
+    } catch (e) {
+      throw e;
+    }
+  }
+
+  async loadPersonalCategories(
+    user: User,
+  ): Promise<LoadPersonalCategoriesOutput> {
+    try {
+      const { categories } = await this.users.findOne({
+        where: { id: user.id },
+        relations: {
+          categories: true,
+        },
+      });
+
+      // make categories tree by parentid
+      const categoriesTree = this.categories.generateCategoriesTree(categories);
+
+      return {
+        categoriesTree,
+      };
     } catch (e) {
       throw e;
     }

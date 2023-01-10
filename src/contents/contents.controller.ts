@@ -46,6 +46,7 @@ import {
   UpdateContentBodyDto,
   UpdateContentOutput,
 } from './dtos/content.dto';
+import { LoadPersonalCategoriesOutput } from './dtos/load-personal-categories.dto';
 
 @Controller('contents')
 @ApiTags('Contents')
@@ -347,5 +348,22 @@ export class CategoryController {
       categoryId,
       queryRunnerManager,
     );
+  }
+
+  @ApiOperation({
+    summary: '자신의 카테고리 목록 조회',
+    description: '자신의 카테고리 목록을 조회하는 메서드',
+  })
+  @ApiOkResponse({
+    description: '카테고리 목록을 반환한다.',
+    type: LoadPersonalCategoriesOutput,
+  })
+  @ApiBearerAuth('Authorization')
+  @UseGuards(JwtAuthGuard)
+  @Get('load-categories')
+  async loadPersonalCategories(
+    @AuthUser() user: User,
+  ): Promise<LoadPersonalCategoriesOutput> {
+    return await this.categoryService.loadPersonalCategories(user);
   }
 }

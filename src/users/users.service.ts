@@ -9,7 +9,6 @@ import { InjectRepository } from '@nestjs/typeorm';
 import { Content } from 'src/contents/entities/content.entity';
 import { EntityManager, Repository } from 'typeorm';
 import { EditProfileInput, EditProfileOutput } from './dtos/edit-profile.dto';
-import { LoadPersonalCategoriesOutput } from './dtos/load-personal-categories.dto';
 import {
   LoadFavoritesOutput,
   LoadPersonalContentsOutput,
@@ -20,7 +19,6 @@ import {
 } from './dtos/reset-password.dto';
 import { User } from './entities/user.entity';
 import { Cache } from 'cache-manager';
-import { CategoryTreeNode } from 'src/contents/dtos/category.dto';
 
 @Injectable()
 export class UsersService {
@@ -177,38 +175,38 @@ export class UsersService {
   //   }
   // }
 
-  async loadPersonalCategories(
-    user: User,
-  ): Promise<LoadPersonalCategoriesOutput> {
-    try {
-      const { categories } = await this.users.findOne({
-        where: { id: user.id },
-        relations: {
-          categories: true,
-        },
-      });
+  // async loadPersonalCategories(
+  //   user: User,
+  // ): Promise<LoadPersonalCategoriesOutput> {
+  //   try {
+  //     const { categories } = await this.users.findOne({
+  //       where: { id: user.id },
+  //       relations: {
+  //         categories: true,
+  //       },
+  //     });
 
-      // make categories tree by parentid
-      const categoriesTree: CategoryTreeNode[] = categories;
-      categoriesTree.reduce((acc, cur) => {
-        if (cur.parentId) {
-          const parent = categoriesTree.find(
-            (category) => category.id === cur.parentId,
-          );
-          if (parent) {
-            if (!parent.children) parent.children = [];
-            parent.children.push(cur);
-            categoriesTree.splice(categoriesTree.indexOf(cur), 1);
-          }
-        }
-        return acc;
-      });
+  //     // make categories tree by parentid
+  //     const categoriesTree: CategoryTreeNode[] = categories;
+  //     categoriesTree.reduce((acc, cur) => {
+  //       if (cur.parentId) {
+  //         const parent = categoriesTree.find(
+  //           (category) => category.id === cur.parentId,
+  //         );
+  //         if (parent) {
+  //           if (!parent.children) parent.children = [];
+  //           parent.children.push(cur);
+  //           categoriesTree.splice(categoriesTree.indexOf(cur), 1);
+  //         }
+  //       }
+  //       return acc;
+  //     });
 
-      return {
-        categoriesTree,
-      };
-    } catch (e) {
-      throw e;
-    }
-  }
+  //     return {
+  //       categoriesTree,
+  //     };
+  //   } catch (e) {
+  //     throw e;
+  //   }
+  // }
 }

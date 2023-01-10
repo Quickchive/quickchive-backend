@@ -174,39 +174,4 @@ export class UsersService {
   //     throw e;
   //   }
   // }
-
-  // async loadPersonalCategories(
-  //   user: User,
-  // ): Promise<LoadPersonalCategoriesOutput> {
-  //   try {
-  //     const { categories } = await this.users.findOne({
-  //       where: { id: user.id },
-  //       relations: {
-  //         categories: true,
-  //       },
-  //     });
-
-  //     // make categories tree by parentid
-  //     const categoriesTree: CategoryTreeNode[] = categories;
-  //     categoriesTree.reduce((acc, cur) => {
-  //       if (cur.parentId) {
-  //         const parent = categoriesTree.find(
-  //           (category) => category.id === cur.parentId,
-  //         );
-  //         if (parent) {
-  //           if (!parent.children) parent.children = [];
-  //           parent.children.push(cur);
-  //           categoriesTree.splice(categoriesTree.indexOf(cur), 1);
-  //         }
-  //       }
-  //       return acc;
-  //     });
-
-  //     return {
-  //       categoriesTree,
-  //     };
-  //   } catch (e) {
-  //     throw e;
-  //   }
-  // }
 }

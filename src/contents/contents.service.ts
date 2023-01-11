@@ -103,8 +103,6 @@ export class ContentsService {
         ...(favorite && { favorite }),
       });
       await queryRunnerManager.save(newContent);
-      userInDb.contents.push(newContent);
-      await queryRunnerManager.save(userInDb);
 
       return;
     } catch (e) {
@@ -148,11 +146,10 @@ export class ContentsService {
             siteName,
             coverImg,
             description,
+            user: userInDb,
           });
           await queryRunnerManager.save(newContent);
-          userInDb.contents.push(newContent);
         }
-        await queryRunnerManager.save(userInDb);
       }
 
       return;

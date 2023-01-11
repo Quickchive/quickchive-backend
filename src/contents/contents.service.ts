@@ -103,8 +103,6 @@ export class ContentsService {
         ...(favorite && { favorite }),
       });
       await queryRunnerManager.save(newContent);
-      userInDb.contents.push(newContent);
-      await queryRunnerManager.save(userInDb);
 
       return;
     } catch (e) {
@@ -148,11 +146,10 @@ export class ContentsService {
             siteName,
             coverImg,
             description,
+            user: userInDb,
           });
           await queryRunnerManager.save(newContent);
-          userInDb.contents.push(newContent);
         }
-        await queryRunnerManager.save(userInDb);
       }
 
       return;
@@ -404,7 +401,9 @@ export class ContentsService {
       category,
     );
 
-    // 카테고리의 중복을 체크하고, 중복이 없다면 최상위 카테고리의 count를 증가시킴
+    /*
+     * 카테고리의 중복을 체크하고, 중복이 없다면 최상위 카테고리의 count를 증가시킴
+     */
 
     // flat categoryFamily with children
     categoryFamily.reduce((acc, cur) => {

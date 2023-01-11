@@ -51,3 +51,8 @@ export class CategoryTreeNode extends Category {
   @ApiProperty({ description: '자식 카테고리' })
   children?: CategoryTreeNode[];
 }
+
+export class CategoryCount {
+  categoryId: number;
+  categorySaves: number;
+}

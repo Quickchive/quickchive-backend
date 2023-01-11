@@ -3,6 +3,8 @@ import {
   ConflictException,
   Injectable,
   NotFoundException,
+  CACHE_MANAGER,
+  Inject,
 } from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
 import { EntityManager, Repository } from 'typeorm';
@@ -11,6 +13,7 @@ import axios from 'axios';
 import {
   AddCategoryBodyDto,
   AddCategoryOutput,
+  CategoryCount,
   DeleteCategoryOutput,
   UpdateCategoryBodyDto,
   UpdateCategoryOutput,
@@ -32,6 +35,8 @@ import { User } from 'src/users/entities/user.entity';
 import { Category } from './entities/category.entity';
 import { Content } from './entities/content.entity';
 import { CategoryRepository } from './repository/category.repository';
+import { categoryCountExpirationInCache } from './contents.module';
+import { Cache } from 'cache-manager';
 
 @Injectable()
 export class ContentsService {
@@ -43,6 +48,8 @@ export class ContentsService {
     private readonly summaryService: SummaryService,
     @InjectRepository(Category)
     private readonly categories: CategoryRepository,
+    @Inject(CACHE_MANAGER)
+    private readonly cacheManager: Cache,
   ) {}
 
   async addContent(
@@ -88,7 +95,12 @@ export class ContentsService {
         queryRunnerManager,
       );
 
-      this.checkContentDuplicateAndPlusCategoryCount(link, category, userInDb);
+      await this.checkContentDuplicateAndPlusCategoryCount(
+        link,
+        category,
+        userInDb,
+        queryRunnerManager,
+      );
 
       const newContent = queryRunnerManager.create(Content, {
         link,
@@ -209,9 +221,14 @@ export class ContentsService {
         queryRunnerManager,
       );
 
-      this.checkContentDuplicateAndPlusCategoryCount(link, category, userInDb);
+      await this.checkContentDuplicateAndPlusCategoryCount(
+        link,
+        category,
+        userInDb,
+        queryRunnerManager,
+      );
 
-      queryRunnerManager.save(Content, [
+      await queryRunnerManager.save(Content, [
         { id: content.id, ...newContentObj, ...(category && { category }) },
       ]);
 
@@ -388,11 +405,12 @@ export class ContentsService {
    * @param category
    * @param userInDb
    */
-  checkContentDuplicateAndPlusCategoryCount(
+  async checkContentDuplicateAndPlusCategoryCount(
     link: string,
     category: Category,
     userInDb: User,
-  ): void {
+    queryRunnerManager: EntityManager,
+  ): Promise<void> {
     // TODO : 대 카테고리를 기준으로 중복 체크해야함.
 
     // 최상위 카테고리부터 시작해서 하위 카테고리까지의 그룹을 찾아옴
@@ -442,11 +460,47 @@ export class ContentsService {
       );
     }
 
-    // TODO: 최상위 카테고리의 count를 증가시킨 후, 해당 카테고리를 저장함
-    // delete categoryFamily[0].children;
-    // const updatedTopCategory: Category = categoryFamily[0];
-    // updatedTopCategory.count++;
-    // this.categories.save(updatedTopCategory);
+    /*
+     * 최상위 카테고리의 count를 증가시킨 후, 해당 카테고리를 저장함
+     */
+
+    // DB 내의 saves 카운트 증가
+    delete categoryFamily[0].children;
+    const updatedTopCategory: Category = categoryFamily[0];
+    updatedTopCategory.saves++;
+    await queryRunnerManager.save(updatedTopCategory);
+
+    // 캐시 내의 saves 카운트 증가
+    let categoryCount: CategoryCount[] = await this.cacheManager.get(
+      userInDb.id,
+    );
+
+    // 캐시에 저장된 카테고리 카운트가 없다면, 새로운 배열을 만들어줌
+    categoryCount = categoryCount ? categoryCount : [];
+
+    // 캐시에 저장된 카테고리 카운트가 있다면, 해당 카테고리 카운트를 증가시킴
+    if (
+      categoryCount.find(
+        (categoryCountInDb) =>
+          categoryCountInDb.categoryId === updatedTopCategory.id,
+      )
+    ) {
+      categoryCount.forEach((categoryCountInDb) => {
+        if (categoryCountInDb.categoryId === updatedTopCategory.id) {
+          categoryCountInDb.categorySaves++;
+        }
+      });
+    }
+    // 캐시에 저장된 카테고리 카운트가 없다면, 새로운 카테고리 카운트를 만들어주고 기존 것과 합쳐줌
+    else {
+      categoryCount.push({
+        categoryId: updatedTopCategory.id,
+        categorySaves: 1,
+      });
+    }
+    this.cacheManager.set(userInDb.id, categoryCount, {
+      ttl: categoryCountExpirationInCache,
+    });
   }
 
   async getLinkInfo(link: string) {

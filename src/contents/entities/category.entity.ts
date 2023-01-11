@@ -37,4 +37,8 @@ export class Category extends CoreEntity {
   @ApiProperty({ description: 'Owner ID' })
   @RelationId((category: Category) => category.user)
   userId: number;
+
+  @ApiProperty({ description: 'Number of saves for that category' })
+  @Column({ default: 0 })
+  saves: number;
 }

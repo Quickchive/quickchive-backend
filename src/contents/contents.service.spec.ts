@@ -1,12 +1,18 @@
 import { Test, TestingModule } from '@nestjs/testing';
-import { getRepositoryToken } from '@nestjs/typeorm';
-import { CONFIG_OPTIONS } from 'src/common/common.constants';
-import { SummarizeDocumentOutput } from 'src/summary/dtos/summary-content.dto';
-import { SummaryService } from 'src/summary/summary.service';
-import { User, UserRole } from 'src/users/entities/user.entity';
+import { getDataSourceToken, getRepositoryToken } from '@nestjs/typeorm';
+import { CONFIG_OPTIONS } from '../common/common.constants';
+import { SummaryService } from '../summary/summary.service';
+import { User, UserRole } from '../users/entities/user.entity';
 import { DataSource, Repository } from 'typeorm';
-import { ContentsService } from './contents.service';
+import { CategoryService, ContentsService } from './contents.service';
 import { Content } from './entities/content.entity';
+import { Cache } from 'cache-manager';
+import { CACHE_MANAGER } from '@nestjs/common';
+import { Category } from './entities/category.entity';
+import {
+  CategoryRepository,
+  customCategoryRepositoryMethods,
+} from './repository/category.repository';
 
 const mockRepository = () => ({
   // make as a function type that returns Object.
@@ -15,6 +21,14 @@ const mockRepository = () => ({
   save: jest.fn(),
   create: jest.fn(),
   delete: jest.fn(),
+});
+
+const mockCategoryRepository = () => ({
+  findOne: jest.fn(), // create Mock Func
+  save: jest.fn(),
+  create: jest.fn(),
+  delete: jest.fn(),
+  ...customCategoryRepositoryMethods,
 });
 
 type MockRepository<T = any> = Partial<Record<keyof Repository<T>, jest.Mock>>;
@@ -33,6 +47,8 @@ describe('ContentsService', () => {
   let service: ContentsService;
   let usersRepository: MockRepository<User>;
   let summarizeService: SummaryService;
+  let categoryRepository: CategoryRepository;
+  let cacheManager: Cache;
 
   beforeEach(async () => {
     const module: TestingModule = await Test.createTestingModule({
@@ -46,6 +62,18 @@ describe('ContentsService', () => {
         {
           provide: getRepositoryToken(Content),
           useValue: mockRepository(),
+        },
+        {
+          provide: getRepositoryToken(Category),
+          useValue: mockCategoryRepository(),
+        },
+        {
+          provide: CACHE_MANAGER,
+          useValue: {
+            get: jest.fn(),
+            set: jest.fn(),
+            del: jest.fn(),
+          },
         },
         {
           provide: DataSource,
@@ -65,6 +93,8 @@ describe('ContentsService', () => {
     service = module.get<ContentsService>(ContentsService);
     usersRepository = module.get(getRepositoryToken(User));
     summarizeService = module.get<SummaryService>(SummaryService);
+    categoryRepository = module.get(getRepositoryToken(Category));
+    cacheManager = module.get<Cache>(CACHE_MANAGER);
   });
 
   it('should be defined', () => {
@@ -74,6 +104,7 @@ describe('ContentsService', () => {
   describe('summarizeContent', () => {
     const fakeUser: User = {
       id: 1,
+      name: 'hou27',
       email: '',
       password: '',
       role: UserRole.Client,
@@ -114,6 +145,140 @@ describe('ContentsService', () => {
       );
       expect(summaryContentSpyFn).toHaveBeenCalledWith(expect.any(Object));
       expect(typeof result.summary).toBe('string');
+    });
+  });
+});
+
+describe('CategoryService', () => {
+  let service: CategoryService;
+  let categoryRepository: MockRepository<CategoryRepository>;
+  let usersRepository: MockRepository<User>;
+  let cacheManager: Cache;
+
+  beforeEach(async () => {
+    const module: TestingModule = await Test.createTestingModule({
+      providers: [
+        CategoryService,
+        {
+          provide: getRepositoryToken(Category),
+          useValue: mockCategoryRepository(),
+        },
+        {
+          provide: getRepositoryToken(User),
+          useValue: mockRepository(),
+        },
+        {
+          provide: CACHE_MANAGER,
+          useValue: {
+            get: jest.fn(),
+            set: jest.fn(),
+            del: jest.fn(),
+          },
+        },
+        {
+          provide: DataSource,
+          useClass: class MockDataSource {},
+        },
+      ],
+    }).compile();
+
+    service = module.get<CategoryService>(CategoryService);
+    categoryRepository = module.get(getRepositoryToken(Category));
+    usersRepository = module.get(getRepositoryToken(User));
+    cacheManager = module.get(CACHE_MANAGER);
+  });
+
+  it('should be defined', () => {
+    expect(service).toBeDefined();
+  });
+
+  describe('loadRecentCategories', () => {
+    const fakeUser: User = {
+      id: 1,
+      name: 'hou27',
+      email: '',
+      password: '',
+      role: UserRole.Client,
+      verified: false,
+      hashPassword: jest.fn(),
+      checkPassword: jest.fn(),
+      createdAt: undefined,
+      updatedAt: undefined,
+    };
+
+    const fakeCategoryInCache: Category[] = [
+      {
+        id: 1,
+        createdAt: undefined,
+        updatedAt: undefined,
+        name: 'test1',
+        slug: 'test1',
+        userId: 1,
+        saves: 3,
+        collections: [],
+        contents: [],
+        user: fakeUser,
+      },
+      {
+        id: 2,
+        createdAt: undefined,
+        updatedAt: undefined,
+        name: 'test2',
+        slug: 'test2',
+        userId: 1,
+        saves: 2,
+        collections: [],
+        contents: [],
+        user: fakeUser,
+      },
+    ];
+
+    it('recentCategories should be less than 3 in length and the data in the cache should come first', async () => {
+      usersRepository.findOne.mockReturnValue({
+        id: 1,
+        name: 'hou27',
+        email: '',
+        password: '',
+        role: UserRole.Client,
+        verified: false,
+        hashPassword: jest.fn(),
+        checkPassword: jest.fn(),
+        createdAt: undefined,
+        updatedAt: undefined,
+        categories: [
+          {
+            id: 5,
+            createdAt: undefined,
+            updatedAt: undefined,
+            name: 'test5',
+            slug: 'test5',
+            userId: 1,
+            saves: 7,
+          },
+          {
+            id: 6,
+            createdAt: undefined,
+            updatedAt: undefined,
+            name: 'test6',
+            slug: 'test6',
+            userId: 1,
+            saves: 17,
+          },
+        ],
+      });
+
+      categoryRepository.findOne.mockImplementation(({ where: { id } }) => {
+        return fakeCategoryInCache.find((category) => category.id === id);
+      });
+
+      cacheManager.get.mockReturnValue([
+        { categoryId: 1, categorySaves: 3 },
+        { categoryId: 2, categorySaves: 2 },
+      ]);
+
+      const { recentCategories } = await service.loadRecentCategories(fakeUser);
+
+      expect(recentCategories).toHaveLength(3);
     });
   });
 });

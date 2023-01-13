@@ -2,12 +2,13 @@ import { CACHE_MANAGER } from '@nestjs/common';
 import { JwtService } from '@nestjs/jwt';
 import { Test, TestingModule } from '@nestjs/testing';
 import { getRepositoryToken } from '@nestjs/typeorm';
-import { CONFIG_OPTIONS } from 'src/common/common.constants';
-import { MailService } from 'src/mail/mail.service';
-import { User } from 'src/users/entities/user.entity';
+import { CONFIG_OPTIONS } from '../common/common.constants';
+import { MailService } from '../mail/mail.service';
+import { User } from '../users/entities/user.entity';
 import { Repository } from 'typeorm';
 import { AuthService } from './auth.service';
 import { customJwtService } from './jwt/jwt.service';
+import { Cache } from 'cache-manager';
 
 const mockRepository = () => ({
   findOne: jest.fn(),

@@ -1,6 +1,6 @@
-import { ApiProperty, PickType } from '@nestjs/swagger';
+import { ApiProperty } from '@nestjs/swagger';
 import { IsOptional, IsString } from 'class-validator';
-import { CoreOutput } from 'src/common/dtos/output.dto';
+import { CoreOutput } from '../../common/dtos/output.dto';
 
 export class RefreshTokenDto {
   @ApiProperty({ description: 'refresh token', required: true })

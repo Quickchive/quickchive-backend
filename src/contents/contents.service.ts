@@ -32,9 +32,9 @@ import {
 import {
   LoadPersonalCategoriesOutput,
   LoadRecentCategoriesOutput,
-} from 'src/contents/dtos/load-personal-categories.dto';
-import { SummaryService } from 'src/summary/summary.service';
-import { User } from 'src/users/entities/user.entity';
+} from './dtos/load-personal-categories.dto';
+import { SummaryService } from '../summary/summary.service';
+import { User } from '../users/entities/user.entity';
 import { Category } from './entities/category.entity';
 import { Content } from './entities/content.entity';
 import { CategoryRepository } from './repository/category.repository';
@@ -821,15 +821,14 @@ export class CategoryService {
 
       // 카테고리별로 저장된 콘텐츠 수를 세어서 오름차순으로 정렬
       const recentCategories: Category[] = [];
-
       // Cache
       let categoryCount: CategoryCount[] = await this.cacheManager.get(user.id);
       if (categoryCount) {
         categoryCount = categoryCount.sort(
-          (a, b) => a.categorySaves - b.categorySaves,
+          (a, b) => b.categorySaves - a.categorySaves,
         );
         for (let i = 0; i < 3; i++) {
-          if (categoryCount.length > i) {
+          if (categoryCount.length === i) {
             break;
           }
           const current_category = await this.categories.findOne({
@@ -848,8 +847,8 @@ export class CategoryService {
       }
 
       // recentCategories가 3개보다 크다면 recentCategories를 잘라줌
-      if (recentCategories.length >= 3) {
-        recentCategories.splice(0, 3);
+      if (recentCategories.length > 3) {
+        recentCategories.splice(3);
       }
 
       return {

@@ -29,7 +29,10 @@ import {
   toggleFavoriteOutput,
   UpdateContentBodyDto,
 } from './dtos/content.dto';
-import { LoadPersonalCategoriesOutput } from 'src/contents/dtos/load-personal-categories.dto';
+import {
+  LoadPersonalCategoriesOutput,
+  LoadRecentCategoriesOutput,
+} from 'src/contents/dtos/load-personal-categories.dto';
 import { SummaryService } from 'src/summary/summary.service';
 import { User } from 'src/users/entities/user.entity';
 import { Category } from './entities/category.entity';
@@ -370,7 +373,7 @@ export class ContentsService {
 
     // if category doesn't exist, create it
     if (!category) {
-      // if parent category exists, get parent category
+      // if parent id exists, get parent category
       const parentCategory: Category = parentId
         ? await queryRunnerManager.findOne(Category, {
             where: { id: parentId },
@@ -651,6 +654,8 @@ export class CategoryService {
     private readonly categories: CategoryRepository,
     @InjectRepository(User)
     private readonly users: Repository<User>,
+    @Inject(CACHE_MANAGER)
+    private readonly cacheManager: Cache,
   ) {}
 
   async addCategory(
@@ -799,6 +804,56 @@ export class CategoryService {
 
       return {
         categoriesTree,
+      };
+    } catch (e) {
+      throw e;
+    }
+  }
+
+  async loadRecentCategories(user: User): Promise<LoadRecentCategoriesOutput> {
+    try {
+      const { categories } = await this.users.findOne({
+        where: { id: user.id },
+        relations: {
+          categories: true,
+        },
+      });
+
+      // 카테고리별로 저장된 콘텐츠 수를 세어서 오름차순으로 정렬
+      const recentCategories: Category[] = [];
+
+      // Cache
+      let categoryCount: CategoryCount[] = await this.cacheManager.get(user.id);
+      if (categoryCount) {
+        categoryCount = categoryCount.sort(
+          (a, b) => a.categorySaves - b.categorySaves,
+        );
+        for (let i = 0; i < 3; i++) {
+          if (categoryCount.length > i) {
+            break;
+          }
+          const current_category = await this.categories.findOne({
+            where: { id: categoryCount[i].categoryId },
+          });
+          recentCategories.push(current_category);
+        }
+      }
+
+      // DB
+      categories.sort((a, b) => b.saves - a.saves);
+      for (let i = 0; i < 3; i++) {
+        if (categories[i] && categories[i].saves > 0) {
+          recentCategories.push(categories[i]);
+        }
+      }
+
+      // recentCategories가 3개보다 크다면 recentCategories를 잘라줌
+      if (recentCategories.length >= 3) {
+        recentCategories.splice(0, 3);
+      }
+
+      return {
+        recentCategories,
       };
     } catch (e) {
       throw e;

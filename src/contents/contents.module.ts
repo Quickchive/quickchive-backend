@@ -17,8 +17,8 @@ import { Content } from './entities/content.entity';
 import { customCategoryRepositoryMethods } from './repository/category.repository';
 import * as redisStore from 'cache-manager-redis-store';
 
-// 카테고리에 저장된 콘텐츠 카운트 캐시에 2달간 저장을 위한 시간 값
-export const categoryCountExpirationInCache = 60 * 60 * 24 * 60;
+// 카테고리에 저장된 콘텐츠 카운트를 캐시에 2일간 저장하기 위한 시간 값
+export const categoryCountExpirationInCache = 60 * 60 * 24 * 2;
 
 @Module({
   imports: [

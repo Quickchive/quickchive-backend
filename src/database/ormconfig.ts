@@ -1,6 +1,11 @@
 import { DataSource, DataSourceOptions } from 'typeorm';
-import * as dotenv from 'dotenv';
 
+/**
+ * 아래 2줄은 로컬에서만 사용하는 코드이다.(.env.dev 파일을 사용하기 위함)
+ * 배포 서버에선 docker container 내부에 이미 환경변수가 설정되어 있기 때문에
+ * 아래 2줄은 주석처리한다.
+ */
+// import * as dotenv from 'dotenv';
 // dotenv.config({ path: __dirname + '/../../.env.dev' });
 
 export const AppDataSource = new DataSource({

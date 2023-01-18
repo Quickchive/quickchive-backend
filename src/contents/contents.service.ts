@@ -102,7 +102,6 @@ export class ContentsService {
         link,
         category,
         userInDb,
-        queryRunnerManager,
       );
 
       const newContent = queryRunnerManager.create(Content, {
@@ -228,7 +227,6 @@ export class ContentsService {
         link,
         category,
         userInDb,
-        queryRunnerManager,
       );
 
       await queryRunnerManager.save(Content, [
@@ -412,7 +410,6 @@ export class ContentsService {
     link: string,
     category: Category,
     userInDb: User,
-    queryRunnerManager: EntityManager,
   ): Promise<void> {
     // TODO : 대 카테고리를 기준으로 중복 체크해야함.
 
@@ -467,11 +464,9 @@ export class ContentsService {
      * 최상위 카테고리의 count를 증가시킨 후, 해당 카테고리를 저장함
      */
 
-    // DB 내의 saves 카운트 증가
+    // 최상위 카테고리의 children을 제거함
     delete categoryFamily[0].children;
     const updatedTopCategory: Category = categoryFamily[0];
-    updatedTopCategory.saves++;
-    await queryRunnerManager.save(updatedTopCategory);
 
     // 캐시 내의 saves 카운트 증가
     let categoryCount: CategoryCount[] = await this.cacheManager.get(
@@ -812,13 +807,6 @@ export class CategoryService {
 
   async loadRecentCategories(user: User): Promise<LoadRecentCategoriesOutput> {
     try {
-      const { categories } = await this.users.findOne({
-        where: { id: user.id },
-        relations: {
-          categories: true,
-        },
-      });
-
       // 카테고리별로 저장된 콘텐츠 수를 세어서 오름차순으로 정렬
       const recentCategories: Category[] = [];
       // Cache
@@ -835,14 +823,6 @@ export class CategoryService {
             where: { id: categoryCount[i].categoryId },
           });
           recentCategories.push(current_category);
-        }
-      }
-
-      // DB
-      categories.sort((a, b) => b.saves - a.saves);
-      for (let i = 0; i < 3; i++) {
-        if (categories[i] && categories[i].saves > 0) {
-          recentCategories.push(categories[i]);
         }
       }
 

@@ -52,7 +52,7 @@ export class CategoryTreeNode extends Category {
   children?: CategoryTreeNode[];
 }
 
-export class CategoryCount {
+export class RecentCategoryList {
   categoryId: number;
-  categorySaves: number;
+  savedAt: Date;
 }

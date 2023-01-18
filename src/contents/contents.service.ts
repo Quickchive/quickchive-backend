@@ -13,7 +13,7 @@ import axios from 'axios';
 import {
   AddCategoryBodyDto,
   AddCategoryOutput,
-  CategoryCount,
+  RecentCategoryList,
   DeleteCategoryOutput,
   UpdateCategoryBodyDto,
   UpdateCategoryOutput,
@@ -469,7 +469,7 @@ export class ContentsService {
     const updatedTopCategory: Category = categoryFamily[0];
 
     // 캐시 내의 saves 카운트 증가
-    let categoryCount: CategoryCount[] = await this.cacheManager.get(
+    let categoryCount: RecentCategoryList[] = await this.cacheManager.get(
       userInDb.id,
     );
 
@@ -807,28 +807,99 @@ export class CategoryService {
 
   async loadRecentCategories(user: User): Promise<LoadRecentCategoriesOutput> {
     try {
-      // 카테고리별로 저장된 콘텐츠 수를 세어서 오름차순으로 정렬
-      const recentCategories: Category[] = [];
-      // Cache
-      let categoryCount: CategoryCount[] = await this.cacheManager.get(user.id);
-      if (categoryCount) {
-        categoryCount = categoryCount.sort(
-          (a, b) => b.categorySaves - a.categorySaves,
-        );
-        for (let i = 0; i < 3; i++) {
-          if (categoryCount.length === i) {
-            break;
+      interface RecentCategoryListWithSaveCount extends RecentCategoryList {
+        saveCount: number;
+      }
+      // 캐시 내의 카테고리 리스트를 가져온다.
+      const recentCategoryList: RecentCategoryList[] =
+        await this.cacheManager.get(user.id);
+
+      // 2일 내의 데이터만 남긴 후 캐시 저장소에 반영한다.
+      const recentCategoryListWithSaveCount: RecentCategoryListWithSaveCount[] =
+        [];
+      const time: Date = new Date();
+      time.setDate(time.getDate() - 2);
+      if (recentCategoryList) {
+        recentCategoryList.filter((category) => time < category.savedAt);
+      }
+      this.cacheManager.set(user.id, recentCategoryList, {
+        ttl: categoryCountExpirationInCache,
+      });
+
+      // 캐시 내의 카테고리 리스트를 최신 순으로 정렬하고, 동시에 저장된 횟수를 추가한다.
+      const recentCategoriesWithSaveCount: RecentCategoryListWithSaveCount[] =
+        [];
+      if (recentCategoryList) {
+        for (let i = 0; i < recentCategoryList.length; i++) {
+          const inNewList = recentCategoriesWithSaveCount.find(
+            (category) =>
+              category.categoryId === recentCategoryList[i].categoryId,
+          );
+          if (inNewList) {
+            inNewList.saveCount++;
+          } else {
+            recentCategoriesWithSaveCount.push({
+              ...recentCategoryList[i],
+              saveCount: 1,
+            });
           }
-          const current_category = await this.categories.findOne({
-            where: { id: categoryCount[i].categoryId },
+        }
+      } else {
+        return {
+          recentCategories: [],
+        };
+      }
+
+      // 최근 저장 순
+      const orderByDate: number[] = recentCategoriesWithSaveCount.map(
+        (category) => category.categoryId,
+      );
+      // 저장된 횟수 순
+      const orderBySaveCount: RecentCategoryListWithSaveCount[] =
+        recentCategoriesWithSaveCount.sort((a, b) => b.saveCount - a.saveCount);
+
+      const recentCategories: Category[] = [];
+
+      /*
+       * 2번째 카테고리까지 선정 기준
+       * 1. 저장 횟수 순
+       * 2. 저장 횟수 동일 시, 최근 저장 순
+       */
+      for (let i = 0; i < 2; i++) {
+        if (i < orderBySaveCount.length) {
+          const category = await this.categories.findOne({
+            where: { id: orderBySaveCount[i].categoryId },
           });
-          recentCategories.push(current_category);
+
+          // orderByDate에서 제거
+          orderByDate.splice(
+            orderByDate.findIndex(
+              (categoryId) => categoryId === orderBySaveCount[i].categoryId,
+            ),
+            1,
+          );
+
+          if (category) {
+            recentCategories.push(category);
+          }
         }
       }
 
-      // recentCategories가 3개보다 크다면 recentCategories를 잘라줌
-      if (recentCategories.length > 3) {
-        recentCategories.splice(3);
+      /*
+       * 나머지 3-n 개 선정 기준
+       * 1. 최근 저장 순
+       */
+      const N = 3 - recentCategories.length;
+      for (let i = 0; i < N; i++) {
+        if (i < orderByDate.length) {
+          const category = await this.categories.findOne({
+            where: { id: orderByDate[i] },
+          });
+
+          if (category) {
+            recentCategories.push(category);
+          }
+        }
       }
 
       return {

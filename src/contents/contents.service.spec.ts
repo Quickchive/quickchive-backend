@@ -214,7 +214,6 @@ describe('CategoryService', () => {
         name: 'test1',
         slug: 'test1',
         userId: 1,
-        saves: 3,
         collections: [],
         contents: [],
         user: fakeUser,
@@ -226,7 +225,6 @@ describe('CategoryService', () => {
         name: 'test2',
         slug: 'test2',
         userId: 1,
-        saves: 2,
         collections: [],
         contents: [],
         user: fakeUser,
@@ -247,13 +245,34 @@ describe('CategoryService', () => {
         updatedAt: undefined,
         categories: [
           {
+            id: 1,
+            createdAt: undefined,
+            updatedAt: undefined,
+            name: 'test1',
+            slug: 'test1',
+            userId: 1,
+            collections: [],
+            contents: [],
+            user: fakeUser,
+          },
+          {
+            id: 2,
+            createdAt: undefined,
+            updatedAt: undefined,
+            name: 'test2',
+            slug: 'test2',
+            userId: 1,
+            collections: [],
+            contents: [],
+            user: fakeUser,
+          },
+          {
             id: 5,
             createdAt: undefined,
             updatedAt: undefined,
             name: 'test5',
             slug: 'test5',
             userId: 1,
-            saves: 7,
           },
           {
             id: 6,
@@ -262,7 +281,6 @@ describe('CategoryService', () => {
             name: 'test6',
             slug: 'test6',
             userId: 1,
-            saves: 17,
           },
         ],
       });
@@ -272,13 +290,13 @@ describe('CategoryService', () => {
       });
 
       cacheManager.get.mockReturnValue([
-        { categoryId: 1, categorySaves: 3 },
-        { categoryId: 2, categorySaves: 2 },
+        { categoryId: 1, savedAt: new Date() },
+        { categoryId: 2, savedAt: new Date() },
       ]);
 
       const { recentCategories } = await service.loadRecentCategories(fakeUser);
 
-      expect(recentCategories).toHaveLength(3);
+      expect(recentCategories).toHaveLength(2);
     });
   });
 });

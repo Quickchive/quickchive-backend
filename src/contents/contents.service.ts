@@ -461,14 +461,13 @@ export class ContentsService {
     }
 
     /*
-     * 최상위 카테고리의 count를 증가시킨 후, 해당 카테고리를 저장함
+     * 최상위 카테고리의 count를 증가시킨 후, 해당 카테고리를 저장 기록을 추가함
      */
 
-    // 최상위 카테고리의 children을 제거함
-    delete categoryFamily[0].children;
+    // 최상위 카테고리 분리
     const updatedTopCategory: Category = categoryFamily[0];
 
-    // 캐시 내의 saves 카운트 증가
+    // 캐시 내에 저장 기록 불러옴
     let categoryCount: RecentCategoryList[] = await this.cacheManager.get(
       userInDb.id,
     );
@@ -476,26 +475,12 @@ export class ContentsService {
     // 캐시에 저장된 카테고리 카운트가 없다면, 새로운 배열을 만들어줌
     categoryCount = categoryCount ? categoryCount : [];
 
-    // 캐시에 저장된 카테고리 카운트가 있다면, 해당 카테고리 카운트를 증가시킴
-    if (
-      categoryCount.find(
-        (categoryCountInDb) =>
-          categoryCountInDb.categoryId === updatedTopCategory.id,
-      )
-    ) {
-      categoryCount.forEach((categoryCountInDb) => {
-        if (categoryCountInDb.categoryId === updatedTopCategory.id) {
-          categoryCountInDb.categorySaves++;
-        }
-      });
-    }
-    // 캐시에 저장된 카테고리 카운트가 없다면, 새로운 카테고리 카운트를 만들어주고 기존 것과 합쳐줌
-    else {
-      categoryCount.push({
-        categoryId: updatedTopCategory.id,
-        categorySaves: 1,
-      });
-    }
+    categoryCount.push({
+      categoryId: updatedTopCategory.id,
+      savedAt: new Date(),
+    });
+
+    // 캐시에 업데이트된 정보 저장
     this.cacheManager.set(userInDb.id, categoryCount, {
       ttl: categoryCountExpirationInCache,
     });

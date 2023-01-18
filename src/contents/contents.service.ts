@@ -815,8 +815,6 @@ export class CategoryService {
         await this.cacheManager.get(user.id);
 
       // 2일 내의 데이터만 남긴 후 캐시 저장소에 반영한다.
-      const recentCategoryListWithSaveCount: RecentCategoryListWithSaveCount[] =
-        [];
       const time: Date = new Date();
       time.setDate(time.getDate() - 2);
       if (recentCategoryList) {

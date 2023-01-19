@@ -565,7 +565,7 @@ export class ContentsService {
       }
 
       // 문서 요약을 위한 본문 크롤링
-      let document: string = await this.summaryService.getDocument(
+      const document: string = await this.summaryService.getDocument(
         content.link,
       );
 

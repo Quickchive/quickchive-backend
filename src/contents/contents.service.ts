@@ -796,23 +796,16 @@ export class CategoryService {
         saveCount: number;
       }
       // 캐시 내의 카테고리 리스트를 가져온다.
-      const recentCategoryList: RecentCategoryList[] =
+      let recentCategoryList: RecentCategoryList[] =
         await this.cacheManager.get(user.id);
 
       // 2일 내의 데이터만 남긴 후 캐시 저장소에 반영한다.
       const time: Date = new Date();
       time.setDate(time.getDate() - 2);
       if (recentCategoryList) {
-        recentCategoryList.filter((category) => {
-          console.log(
-            time,
-            ' ',
-            category.savedAt,
-            ' ',
-            time < category.savedAt,
-          );
-          return time < category.savedAt;
-        });
+        recentCategoryList = recentCategoryList.filter(
+          (category) => time < category.savedAt,
+        );
       }
       this.cacheManager.set(user.id, recentCategoryList, {
         ttl: categoryCountExpirationInCache,

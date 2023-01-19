@@ -803,7 +803,16 @@ export class CategoryService {
       const time: Date = new Date();
       time.setDate(time.getDate() - 2);
       if (recentCategoryList) {
-        recentCategoryList.filter((category) => time < category.savedAt);
+        recentCategoryList.filter((category) => {
+          console.log(
+            time,
+            ' ',
+            category.savedAt,
+            ' ',
+            time < category.savedAt,
+          );
+          return time < category.savedAt;
+        });
       }
       this.cacheManager.set(user.id, recentCategoryList, {
         ttl: categoryCountExpirationInCache,

@@ -204,9 +204,9 @@ describe('CategoryService', () => {
       checkPassword: jest.fn(),
       createdAt: undefined,
       updatedAt: undefined,
+      categories: [],
     };
-
-    const fakeCategoryInCache: Category[] = [
+    const fakeCategories: Category[] = [
       {
         id: 1,
         createdAt: undefined,
@@ -216,7 +216,7 @@ describe('CategoryService', () => {
         userId: 1,
         collections: [],
         contents: [],
-        user: fakeUser,
+        user: undefined,
       },
       {
         id: 2,
@@ -227,66 +227,39 @@ describe('CategoryService', () => {
         userId: 1,
         collections: [],
         contents: [],
-        user: fakeUser,
+        user: undefined,
+      },
+      {
+        id: 5,
+        createdAt: undefined,
+        updatedAt: undefined,
+        name: 'test5',
+        slug: 'test5',
+        userId: 1,
+        collections: [],
+        contents: [],
+        user: undefined,
+      },
+      {
+        id: 6,
+        createdAt: undefined,
+        updatedAt: undefined,
+        name: 'test6',
+        slug: 'test6',
+        userId: 1,
+        collections: [],
+        contents: [],
+        user: undefined,
       },
     ];
 
-    it('recentCategories should be less than 3 in length and the data in the cache should come first', async () => {
-      usersRepository.findOne.mockReturnValue({
-        id: 1,
-        name: 'hou27',
-        email: '',
-        password: '',
-        role: UserRole.Client,
-        verified: false,
-        hashPassword: jest.fn(),
-        checkPassword: jest.fn(),
-        createdAt: undefined,
-        updatedAt: undefined,
-        categories: [
-          {
-            id: 1,
-            createdAt: undefined,
-            updatedAt: undefined,
-            name: 'test1',
-            slug: 'test1',
-            userId: 1,
-            collections: [],
-            contents: [],
-            user: fakeUser,
-          },
-          {
-            id: 2,
-            createdAt: undefined,
-            updatedAt: undefined,
-            name: 'test2',
-            slug: 'test2',
-            userId: 1,
-            collections: [],
-            contents: [],
-            user: fakeUser,
-          },
-          {
-            id: 5,
-            createdAt: undefined,
-            updatedAt: undefined,
-            name: 'test5',
-            slug: 'test5',
-            userId: 1,
-          },
-          {
-            id: 6,
-            createdAt: undefined,
-            updatedAt: undefined,
-            name: 'test6',
-            slug: 'test6',
-            userId: 1,
-          },
-        ],
-      });
+    fakeUser.categories = [...fakeCategories];
+
+    it('캐시 내에 2일 내 기록된 카테고리가 두 종류 뿐이라면 recentCategories는 2개여야만 한다.', async () => {
+      usersRepository.findOne.mockReturnValue(fakeUser);
 
       categoryRepository.findOne.mockImplementation(({ where: { id } }) => {
-        return fakeCategoryInCache.find((category) => category.id === id);
+        return fakeCategories.find((category) => category.id === id);
       });
 
       cacheManager.get.mockReturnValue([
@@ -297,6 +270,25 @@ describe('CategoryService', () => {
       const { recentCategories } = await service.loadRecentCategories(fakeUser);
 
       expect(recentCategories).toHaveLength(2);
+    });
+
+    it('캐시 내에 2일이 지난 데이터가 있다면 취급하지 않아야 한다.', async () => {
+      usersRepository.findOne.mockReturnValue(fakeUser);
+
+      categoryRepository.findOne.mockImplementation(({ where: { id } }) => {
+        return fakeCategories.find((category) => category.id === id);
+      });
+
+      const time: Date = new Date();
+      cacheManager.get.mockReturnValue([
+        { categoryId: 1, savedAt: new Date().setDate(time.getDate() - 2) }, // 2일 전 기록
+        { categoryId: 2, savedAt: new Date().setDate(time.getDate() - 1) }, // 하루 전 기록
+        { categoryId: 5, savedAt: new Date().setDate(time.getDate() - 3) }, // 3일 전 기록
+      ]);
+
+      const { recentCategories } = await service.loadRecentCategories(fakeUser);
+
+      expect(recentCategories).toHaveLength(1);
     });
   });
 });

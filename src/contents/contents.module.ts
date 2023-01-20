@@ -15,17 +15,9 @@ import { CategoryService, ContentsService } from './contents.service';
 import { Category } from './entities/category.entity';
 import { Content } from './entities/content.entity';
 import { customCategoryRepositoryMethods } from './repository/category.repository';
-import * as redisStore from 'cache-manager-redis-store';
 
 @Module({
-  imports: [
-    TypeOrmModule.forFeature([User, Content, Category]),
-    CacheModule.register({
-      store: redisStore,
-      host: process.env.REDIS_HOST,
-      port: process.env.REDIS_PORT,
-    }),
-  ],
+  imports: [TypeOrmModule.forFeature([User, Content, Category])],
   controllers: [ContentsController, CategoryController, TestController],
   providers: [
     ContentsService,

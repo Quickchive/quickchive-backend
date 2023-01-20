@@ -1,13 +1,11 @@
 import { Test, TestingModule } from '@nestjs/testing';
-import { getDataSourceToken, getRepositoryToken } from '@nestjs/typeorm';
+import { getRepositoryToken } from '@nestjs/typeorm';
 import { CONFIG_OPTIONS } from '../common/common.constants';
 import { SummaryService } from '../summary/summary.service';
 import { User, UserRole } from '../users/entities/user.entity';
 import { DataSource, Repository } from 'typeorm';
 import { CategoryService, ContentsService } from './contents.service';
 import { Content } from './entities/content.entity';
-import { Cache } from 'cache-manager';
-import { CACHE_MANAGER } from '@nestjs/common';
 import { Category } from './entities/category.entity';
 import {
   CategoryRepository,
@@ -49,7 +47,6 @@ describe('ContentsService', () => {
   let usersRepository: MockRepository<User>;
   let summarizeService: SummaryService;
   let categoryRepository: CategoryRepository;
-  let cacheManager: Cache;
 
   beforeEach(async () => {
     const module: TestingModule = await Test.createTestingModule({
@@ -67,14 +64,6 @@ describe('ContentsService', () => {
         {
           provide: getRepositoryToken(Category),
           useValue: mockCategoryRepository(),
-        },
-        {
-          provide: CACHE_MANAGER,
-          useValue: {
-            get: jest.fn(),
-            set: jest.fn(),
-            del: jest.fn(),
-          },
         },
         {
           provide: DataSource,
@@ -95,7 +84,6 @@ describe('ContentsService', () => {
     usersRepository = module.get(getRepositoryToken(User));
     summarizeService = module.get<SummaryService>(SummaryService);
     categoryRepository = module.get(getRepositoryToken(Category));
-    cacheManager = module.get<Cache>(CACHE_MANAGER);
   });
 
   it('should be defined', () => {
@@ -154,7 +142,6 @@ describe('CategoryService', () => {
   let service: CategoryService;
   let categoryRepository: MockRepository<CategoryRepository>;
   let usersRepository: MockRepository<User>;
-  let cacheManager: Cache;
 
   beforeEach(async () => {
     const module: TestingModule = await Test.createTestingModule({
@@ -169,14 +156,6 @@ describe('CategoryService', () => {
           useValue: mockRepository(),
         },
         {
-          provide: CACHE_MANAGER,
-          useValue: {
-            get: jest.fn(),
-            set: jest.fn(),
-            del: jest.fn(),
-          },
-        },
-        {
           provide: DataSource,
           useClass: class MockDataSource {},
         },
@@ -186,7 +165,6 @@ describe('CategoryService', () => {
     service = module.get<CategoryService>(CategoryService);
     categoryRepository = module.get(getRepositoryToken(Category));
     usersRepository = module.get(getRepositoryToken(User));
-    cacheManager = module.get(CACHE_MANAGER);
   });
 
   it('should be defined', () => {

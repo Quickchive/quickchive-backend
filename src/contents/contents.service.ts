@@ -3,8 +3,6 @@ import {
   ConflictException,
   Injectable,
   NotFoundException,
-  CACHE_MANAGER,
-  Inject,
 } from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
 import { EntityManager, Repository } from 'typeorm';
@@ -39,7 +37,6 @@ import { User } from '../users/entities/user.entity';
 import { Category } from './entities/category.entity';
 import { Content } from './entities/content.entity';
 import { CategoryRepository } from './repository/category.repository';
-import { Cache } from 'cache-manager';
 import * as fs from 'fs';
 
 @Injectable()
@@ -52,8 +49,6 @@ export class ContentsService {
     private readonly summaryService: SummaryService,
     @InjectRepository(Category)
     private readonly categories: CategoryRepository,
-    @Inject(CACHE_MANAGER)
-    private readonly cacheManager: Cache,
   ) {}
 
   async addContent(
@@ -624,8 +619,6 @@ export class CategoryService {
     private readonly categories: CategoryRepository,
     @InjectRepository(User)
     private readonly users: Repository<User>,
-    @Inject(CACHE_MANAGER)
-    private readonly cacheManager: Cache,
   ) {}
 
   async addCategory(

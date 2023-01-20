@@ -481,7 +481,6 @@ export class ContentsService {
       .get(link)
       .then((res) => {
         if (res.status !== 200) {
-          console.log(res.status);
           throw new BadRequestException('잘못된 링크입니다.');
         } else {
           const data = res.data;
@@ -504,7 +503,6 @@ export class ContentsService {
         }
       })
       .catch((e) => {
-        console.log(e.message);
         // Control unreachable link
         // if(e.message === 'Request failed with status code 403') {
         // 403 에러가 발생하는 링크는 크롤링이 불가능한 링크이다.
@@ -784,17 +782,33 @@ export class CategoryService {
       const recentCategories: Category[] = [];
 
       // 3번째 카테고리까지 선정되거나, 더 이상 로그가 없을 때까지 매번 10개의 로그씩 확인한다.
-      for (let i = 0; i < recentCategoryList.length / 10; i++) {
+      let remainLogCount = recentCategoryList.length,
+        i = 0;
+      while (remainLogCount > 0) {
         // 3개의 카테고리가 선정되었으면 루프를 종료한다.
         if (recentCategories.length >= 3) {
           break;
         }
 
         // 10개의 로그를 확인한다.
+        i += 10;
         recentCategoriesWithSaveCount = this.makeCategoryListWithSaveCount(
           recentCategoryList,
           recentCategoriesWithSaveCount,
-          i + 10,
+          i,
+        );
+        // 10개의 로그를 확인했으므로 남은 로그 수를 10개 감소시킨다.
+        remainLogCount -= 10;
+
+        /*
+         * 10개의 로그를 확인하고, 만약 이전 호출에서 선정된 카테고리가 이번 호출에서도 선정되는 것을 방지하기위해
+         * 이전 호출에서 선정된 카테고리를 제외한 카테고리 리스트를 만든다.
+         */
+        recentCategoriesWithSaveCount = recentCategoriesWithSaveCount.filter(
+          (category) =>
+            !recentCategories.find(
+              (recentCategory) => recentCategory.id === category.categoryId,
+            ),
         );
 
         // 최근 저장 순
@@ -806,7 +820,6 @@ export class CategoryService {
           recentCategoriesWithSaveCount.sort(
             (a, b) => b.saveCount - a.saveCount,
           );
-
         /*
          * 2번째 카테고리까지 선정 기준
          * 1. 저장 횟수 순

@@ -367,13 +367,14 @@ describe('CategoryService', () => {
 
       const { recentCategories } = await service.loadRecentCategories(fakeUser);
 
+      console.log(recentCategories);
       expect(recentCategories).toHaveLength(3);
       expect(recentCategories[0].id).toBe(1);
       expect(recentCategories[1].id).toBe(3);
       expect(recentCategories[2].id).toBe(5);
     });
 
-    it('저장한 콘텐츠가 3개인 경우', async () => {
+    it('전체 저장한 콘텐츠가 하나의 카테고리 안에 3개인 경우', async () => {
       usersRepository.findOne.mockReturnValue(fakeUser);
 
       categoryRepository.findOne.mockImplementation(({ where: { id } }) => {

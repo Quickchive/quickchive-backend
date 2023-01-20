@@ -367,7 +367,6 @@ describe('CategoryService', () => {
 
       const { recentCategories } = await service.loadRecentCategories(fakeUser);
 
-      console.log(recentCategories);
       expect(recentCategories).toHaveLength(3);
       expect(recentCategories[0].id).toBe(1);
       expect(recentCategories[1].id).toBe(3);

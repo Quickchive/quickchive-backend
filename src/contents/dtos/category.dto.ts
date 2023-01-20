@@ -52,7 +52,11 @@ export class CategoryTreeNode extends Category {
   children?: CategoryTreeNode[];
 }
 
-export class RecentCategoryList {
+export interface RecentCategoryList {
   categoryId: number;
-  savedAt: Date;
+  savedAt: number;
+}
+
+export interface RecentCategoryListWithSaveCount extends RecentCategoryList {
+  saveCount: number;
 }

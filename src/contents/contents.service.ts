@@ -17,6 +17,7 @@ import {
   DeleteCategoryOutput,
   UpdateCategoryBodyDto,
   UpdateCategoryOutput,
+  RecentCategoryListWithSaveCount,
 } from './dtos/category.dto';
 import {
   AddContentBodyDto,
@@ -40,6 +41,7 @@ import { Content } from './entities/content.entity';
 import { CategoryRepository } from './repository/category.repository';
 import { categoryCountExpirationInCache } from './contents.module';
 import { Cache } from 'cache-manager';
+import * as fs from 'fs';
 
 @Injectable()
 export class ContentsService {
@@ -411,8 +413,6 @@ export class ContentsService {
     category: Category,
     userInDb: User,
   ): Promise<void> {
-    // TODO : 대 카테고리를 기준으로 중복 체크해야함.
-
     // 최상위 카테고리부터 시작해서 하위 카테고리까지의 그룹을 찾아옴
     const categoryFamily = this.categories.findCategoryFamily(
       userInDb.categories,
@@ -461,29 +461,40 @@ export class ContentsService {
     }
 
     /*
-     * 최상위 카테고리의 count를 증가시킨 후, 해당 카테고리를 저장 기록을 추가함
+     * 최상위 카테고리의 count를 증가시킨 후,
+     * 해당 카테고리의 저장 기록을 유저 로그 파일에 추가함
      */
 
     // 최상위 카테고리 분리
     const updatedTopCategory: Category = categoryFamily[0];
 
-    // 캐시 내에 저장 기록 불러옴
-    let categoryCount: RecentCategoryList[] = await this.cacheManager.get(
-      userInDb.id,
-    );
+    const log = `{"categoryId": ${
+      updatedTopCategory.id
+    },"savedAt": ${new Date().getTime()}}\n`;
 
-    // 캐시에 저장된 카테고리 카운트가 없다면, 새로운 배열을 만들어줌
-    categoryCount = categoryCount ? categoryCount : [];
+    // path of root dir
+    // const rootDir = path.resolve(__dirname, '..', '..');
+    fs.appendFileSync(`${__dirname}/../../user_logs/${userInDb.id}.txt`, log);
 
-    categoryCount.push({
-      categoryId: updatedTopCategory.id,
-      savedAt: new Date(),
-    });
+    // // 캐시 내에 저장 기록 불러옴
+    // let categoryCount: RecentCategoryList[] = await this.cacheManager.get(
+    //   userInDb.id,
+    // );
 
-    // 캐시에 업데이트된 정보 저장
-    this.cacheManager.set(userInDb.id, categoryCount, {
-      ttl: categoryCountExpirationInCache,
-    });
+    // // 캐시에 저장된 카테고리 카운트가 없다면, 새로운 배열을 만들어줌
+    // categoryCount = categoryCount ? categoryCount : [];
+
+    // console.log('before : ', categoryCount);
+    // categoryCount.push({
+    //   categoryId: updatedTopCategory.id,
+    //   savedAt: new Date(),
+    // });
+    // console.log('after : ', categoryCount);
+
+    // // 캐시에 업데이트된 정보 저장
+    // this.cacheManager.set(userInDb.id, categoryCount, {
+    //   ttl: categoryCountExpirationInCache,
+    // });
   }
 
   async getLinkInfo(link: string) {
@@ -792,100 +803,175 @@ export class CategoryService {
 
   async loadRecentCategories(user: User): Promise<LoadRecentCategoriesOutput> {
     try {
-      interface RecentCategoryListWithSaveCount extends RecentCategoryList {
-        saveCount: number;
-      }
-      // 캐시 내의 카테고리 리스트를 가져온다.
-      let recentCategoryList: RecentCategoryList[] =
-        await this.cacheManager.get(user.id);
+      // interface RecentCategoryListWithSaveCount extends RecentCategoryList {
+      //   saveCount: number;
+      // }
 
-      // 2일 내의 데이터만 남긴 후 캐시 저장소에 반영한다.
-      const time: Date = new Date();
-      time.setDate(time.getDate() - 2);
-      if (recentCategoryList) {
-        recentCategoryList = recentCategoryList.filter(
-          (category) => time < category.savedAt,
-        );
-      }
-      this.cacheManager.set(user.id, recentCategoryList, {
-        ttl: categoryCountExpirationInCache,
-      });
+      // 로그 파일 내의 기록을 불러온다.
+      const recentCategoryList: RecentCategoryList[] = this.loadLogs(user.id);
+
+      // // 캐시 내의 카테고리 리스트를 가져온다.
+      // let recentCategoryList: RecentCategoryList[] =
+      //   await this.cacheManager.get(user.id);
+
+      // // 2일 내의 데이터만 남긴 후 캐시 저장소에 반영한다.
+      // const time: Date = new Date();
+      // time.setDate(time.getDate() - 2);
+      // if (recentCategoryList) {
+      //   recentCategoryList = recentCategoryList.filter((category) => {
+      //     // string to date
+      //     category.savedAt = new Date(category.savedAt);
+      //     return time < category.savedAt;
+      //   });
+      // }
+      // this.cacheManager.set(user.id, recentCategoryList, {
+      //   ttl: categoryCountExpirationInCache,
+      // });
 
       // 캐시 내의 카테고리 리스트를 최신 순으로 정렬하고, 동시에 저장된 횟수를 추가한다.
-      const recentCategoriesWithSaveCount: RecentCategoryListWithSaveCount[] =
-        [];
-      if (recentCategoryList) {
-        for (let i = 0; i < recentCategoryList.length; i++) {
-          const inNewList = recentCategoriesWithSaveCount.find(
-            (category) =>
-              category.categoryId === recentCategoryList[i].categoryId,
-          );
-          if (inNewList) {
-            inNewList.saveCount++;
-          } else {
-            recentCategoriesWithSaveCount.push({
-              ...recentCategoryList[i],
-              saveCount: 1,
-            });
-          }
-        }
-      } else {
-        return {
-          recentCategories: [],
-        };
-      }
 
-      // 최근 저장 순
-      const orderByDate: number[] = recentCategoriesWithSaveCount.map(
-        (category) => category.categoryId,
-      );
-      // 저장된 횟수 순
-      const orderBySaveCount: RecentCategoryListWithSaveCount[] =
-        recentCategoriesWithSaveCount.sort((a, b) => b.saveCount - a.saveCount);
-
+      let recentCategoriesWithSaveCount: RecentCategoryListWithSaveCount[] = [];
       const recentCategories: Category[] = [];
 
-      /*
-       * 2번째 카테고리까지 선정 기준
-       * 1. 저장 횟수 순
-       * 2. 저장 횟수 동일 시, 최근 저장 순
-       */
-      for (let i = 0; i < 2; i++) {
-        if (i < orderBySaveCount.length) {
-          const category = await this.categories.findOne({
-            where: { id: orderBySaveCount[i].categoryId },
-          });
+      // 3번째 카테고리까지 선정되거나, 더 이상 로그가 없을 때까지 매번 10개의 로그씩 확인한다.
+      for (let i = 0; i < recentCategoryList.length / 10; i++) {
+        // 3개의 카테고리가 선정되었으면 루프를 종료한다.
+        if (recentCategories.length >= 3) {
+          break;
+        }
 
-          // orderByDate에서 제거
-          orderByDate.splice(
-            orderByDate.findIndex(
-              (categoryId) => categoryId === orderBySaveCount[i].categoryId,
-            ),
-            1,
+        // 10개의 로그를 확인한다.
+        recentCategoriesWithSaveCount = this.makeCategoryListWithSaveCount(
+          recentCategoryList,
+          recentCategoriesWithSaveCount,
+          i + 10,
+        );
+
+        // 최근 저장 순
+        const orderByDate: number[] = recentCategoriesWithSaveCount.map(
+          (category) => category.categoryId,
+        );
+        // 저장된 횟수 순
+        const orderBySaveCount: RecentCategoryListWithSaveCount[] =
+          recentCategoriesWithSaveCount.sort(
+            (a, b) => b.saveCount - a.saveCount,
           );
 
-          if (category) {
-            recentCategories.push(category);
+        /*
+         * 2번째 카테고리까지 선정 기준
+         * 1. 저장 횟수 순
+         * 2. 저장 횟수 동일 시, 최근 저장 순
+         */
+        for (let i = 0; i < 2; i++) {
+          if (i < orderBySaveCount.length) {
+            const category = await this.categories.findOne({
+              where: { id: orderBySaveCount[i].categoryId },
+            });
+
+            // orderByDate에서 제거
+            orderByDate.splice(
+              orderByDate.findIndex(
+                (categoryId) => categoryId === orderBySaveCount[i].categoryId,
+              ),
+              1,
+            );
+
+            if (category) {
+              recentCategories.push(category);
+            }
+          }
+        }
+
+        /*
+         * 나머지 3-n 개 선정 기준
+         * 1. 최근 저장 순
+         */
+        const N = 3 - recentCategories.length;
+        for (let i = 0; i < N; i++) {
+          if (i < orderByDate.length) {
+            const category = await this.categories.findOne({
+              where: { id: orderByDate[i] },
+            });
+
+            if (category) {
+              recentCategories.push(category);
+            }
           }
         }
       }
 
-      /*
-       * 나머지 3-n 개 선정 기준
-       * 1. 최근 저장 순
-       */
-      const N = 3 - recentCategories.length;
-      for (let i = 0; i < N; i++) {
-        if (i < orderByDate.length) {
-          const category = await this.categories.findOne({
-            where: { id: orderByDate[i] },
-          });
+      // if (recentCategoryList) {
+      //   for (let i = 0; i < recentCategoryList.length; i++) {
+      //     const inNewList = recentCategoriesWithSaveCount.find(
+      //       (category) =>
+      //         category.categoryId === recentCategoryList[i].categoryId,
+      //     );
+      //     if (inNewList) {
+      //       inNewList.saveCount++;
+      //     } else {
+      //       recentCategoriesWithSaveCount.push({
+      //         ...recentCategoryList[i],
+      //         saveCount: 1,
+      //       });
+      //     }
+      //   }
+      // } else {
+      //   return {
+      //     recentCategories: [],
+      //   };
+      // }
 
-          if (category) {
-            recentCategories.push(category);
-          }
-        }
-      }
+      // // 최근 저장 순
+      // const orderByDate: number[] = recentCategoriesWithSaveCount.map(
+      //   (category) => category.categoryId,
+      // );
+      // // 저장된 횟수 순
+      // const orderBySaveCount: RecentCategoryListWithSaveCount[] =
+      //   recentCategoriesWithSaveCount.sort((a, b) => b.saveCount - a.saveCount);
+
+      // const recentCategories: Category[] = [];
+
+      // /*
+      //  * 2번째 카테고리까지 선정 기준
+      //  * 1. 저장 횟수 순
+      //  * 2. 저장 횟수 동일 시, 최근 저장 순
+      //  */
+      // for (let i = 0; i < 2; i++) {
+      //   if (i < orderBySaveCount.length) {
+      //     const category = await this.categories.findOne({
+      //       where: { id: orderBySaveCount[i].categoryId },
+      //     });
+
+      //     // orderByDate에서 제거
+      //     orderByDate.splice(
+      //       orderByDate.findIndex(
+      //         (categoryId) => categoryId === orderBySaveCount[i].categoryId,
+      //       ),
+      //       1,
+      //     );
+
+      //     if (category) {
+      //       recentCategories.push(category);
+      //     }
+      //   }
+      // }
+
+      // /*
+      //  * 나머지 3-n 개 선정 기준
+      //  * 1. 최근 저장 순
+      //  */
+      // const N = 3 - recentCategories.length;
+      // for (let i = 0; i < N; i++) {
+      //   if (i < orderByDate.length) {
+      //     const category = await this.categories.findOne({
+      //       where: { id: orderByDate[i] },
+      //     });
+
+      //     if (category) {
+      //       recentCategories.push(category);
+      //     }
+      //   }
+      // }
 
       return {
         recentCategories,
@@ -893,5 +979,62 @@ export class CategoryService {
     } catch (e) {
       throw e;
     }
+  }
+
+  /**
+   * 파일에서 로그를 불러오는 함수
+   * @param id
+   * @returns RecentCategoryList[]
+   */
+  loadLogs(id: number): RecentCategoryList[] {
+    const logList: string[] = fs
+      .readFileSync(`${__dirname}/../../user_logs/${id}.txt`)
+      .toString()
+      .split('\n');
+    logList.pop(); // 마지막 줄은 빈 줄이므로 제거
+
+    // logList를 RecentCategoryList[]로 변환
+    const recentCategoryList: RecentCategoryList[] = logList.map((str) => {
+      const categoryId = +str.split('"categoryId": ')[1].split(',')[0];
+      const savedAt = +str.split('"savedAt": ')[1].split('}')[0];
+      return {
+        categoryId,
+        savedAt,
+      };
+    });
+
+    // 최신 순으로 정렬 후 반환
+    return recentCategoryList.reverse();
+  }
+
+  /**
+   * 불러온 로그를 바탕으로 카테고리당 저장된 카운트와 함께 배열을 만드는 함수(매번 10개씩 조회한다.)
+   * @param recentCategoryList
+   * @param recentCategoriesWithSaveCount
+   * @param till
+   * @returns
+   */
+  makeCategoryListWithSaveCount(
+    recentCategoryList: RecentCategoryList[],
+    recentCategoriesWithSaveCount: RecentCategoryListWithSaveCount[],
+    till: number,
+  ): RecentCategoryListWithSaveCount[] {
+    const start: number = till - 10;
+    const end: number = till;
+    for (let i = start; i < end; i++) {
+      const inNewList = recentCategoriesWithSaveCount.find(
+        (category) => category.categoryId === recentCategoryList[i].categoryId,
+      );
+      if (inNewList) {
+        inNewList.saveCount++;
+      } else {
+        recentCategoriesWithSaveCount.push({
+          ...recentCategoryList[i],
+          saveCount: 1,
+        });
+      }
+    }
+
+    return recentCategoriesWithSaveCount;
   }
 }

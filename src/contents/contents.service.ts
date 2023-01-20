@@ -1021,7 +1021,7 @@ export class CategoryService {
   ): RecentCategoryListWithSaveCount[] {
     const start: number = till - 10;
     const end: number = till;
-    for (let i = start; i < end; i++) {
+    for (let i = start; i < end && i < recentCategoryList.length; i++) {
       const inNewList = recentCategoriesWithSaveCount.find(
         (category) => category.categoryId === recentCategoryList[i].categoryId,
       );

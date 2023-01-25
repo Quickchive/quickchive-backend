@@ -8,6 +8,7 @@ import { InjectRepository } from '@nestjs/typeorm';
 import { EntityManager, Repository } from 'typeorm';
 import * as cheerio from 'cheerio';
 import axios from 'axios';
+import * as fs from 'fs';
 import {
   AddCategoryBodyDto,
   AddCategoryOutput,
@@ -37,7 +38,6 @@ import { User } from '../users/entities/user.entity';
 import { Category } from './entities/category.entity';
 import { Content } from './entities/content.entity';
 import { CategoryRepository } from './repository/category.repository';
-import * as fs from 'fs';
 
 @Injectable()
 export class ContentsService {
@@ -87,14 +87,14 @@ export class ContentsService {
       } = await this.getLinkInfo(link);
       title = title ? title : linkTitle;
 
-      const category = await this.getOrCreateCategory(
+      const category = await this.categories.getOrCreateCategory(
         categoryName,
         parentId,
         userInDb,
         queryRunnerManager,
       );
 
-      await this.checkContentDuplicateAndPlusCategoryCount(
+      await this.categories.checkContentDuplicateAndAddCategorySaveLog(
         link,
         category,
         userInDb,
@@ -212,14 +212,14 @@ export class ContentsService {
         throw new NotFoundException('Content not found.');
       }
 
-      const category = await this.getOrCreateCategory(
+      const category = await this.categories.getOrCreateCategory(
         categoryName,
         parentId,
         userInDb,
         queryRunnerManager,
       );
 
-      await this.checkContentDuplicateAndPlusCategoryCount(
+      await this.categories.checkContentDuplicateAndAddCategorySaveLog(
         link,
         category,
         userInDb,
@@ -333,142 +333,6 @@ export class ContentsService {
     } catch (e) {
       throw e;
     }
-  }
-
-  /**
-   * category를 생성하거나, 이미 존재하는 category를 가져옴
-   * content service의 method 내에서 중복되는 로직을 분리함
-   *
-   * @param link
-   * @param categoryName
-   * @param parentId
-   * @param userInDb
-   * @param queryRunnerManager
-   * @returns category
-   */
-  async getOrCreateCategory(
-    // link: string,
-    categoryName: string,
-    parentId: number,
-    userInDb: User,
-    queryRunnerManager: EntityManager,
-  ): Promise<Category> {
-    // generate category name and slug
-    const { categoryName: refinedCategoryName, categorySlug } =
-      this.categories.generateNameAndSlug(categoryName);
-
-    // if parent id is undefined, set it to null to avoid bug caused by type mismatch
-    if (!parentId) parentId = null;
-    // check if category exists in user's categories
-    let category: Category = userInDb.categories.find(
-      (category) =>
-        category.slug === categorySlug && category.parentId === parentId,
-    );
-
-    // if category doesn't exist, create it
-    if (!category) {
-      // if parent id exists, get parent category
-      const parentCategory: Category = parentId
-        ? await queryRunnerManager.findOne(Category, {
-            where: { id: parentId },
-          })
-        : null;
-      // if parent category doesn't exist, throw error
-      if (!parentCategory && parentId) {
-        throw new NotFoundException('Parent category not found');
-      }
-
-      category = await queryRunnerManager.save(
-        queryRunnerManager.create(Category, {
-          slug: categorySlug,
-          name: refinedCategoryName,
-          parentId: parentCategory ? parentCategory.id : null,
-          user: userInDb,
-        }),
-      );
-
-      userInDb.categories.push(category);
-      await queryRunnerManager.save(userInDb);
-    }
-
-    return category;
-  }
-
-  /**
-   * 대 카테고리를 기준으로 중복 체크하고,
-   * 최상위 카테고리의 카운트를 올려줌
-   *
-   * @param link
-   * @param category
-   * @param userInDb
-   */
-  async checkContentDuplicateAndPlusCategoryCount(
-    link: string,
-    category: Category,
-    userInDb: User,
-  ): Promise<void> {
-    // 최상위 카테고리부터 시작해서 하위 카테고리까지의 그룹을 찾아옴
-    const categoryFamily = this.categories.findCategoryFamily(
-      userInDb.categories,
-      category,
-    );
-
-    /*
-     * 카테고리의 중복을 체크하고, 중복이 없다면 최상위 카테고리의 count를 증가시킴
-     */
-
-    // flat categoryFamily with children
-    categoryFamily.reduce((acc, cur) => {
-      acc.push(cur);
-      if (cur.children) {
-        acc.push(cur.children.reduce);
-      }
-      return acc;
-    }, []);
-    const flatDeep = (arr, d) => {
-      return d > 0
-        ? arr.reduce((acc, cur) => {
-            const forConcat = [cur];
-            return acc.concat(
-              cur.children
-                ? forConcat.concat(flatDeep(cur.children, d - 1))
-                : cur,
-            );
-          }, [])
-        : arr.slice();
-    };
-
-    const flatCategoryFamily = flatDeep(categoryFamily, Infinity);
-
-    const contentThatSameLinkAndCategory = userInDb.contents.find(
-      (contentInFilter) =>
-        contentInFilter.link === link &&
-        flatCategoryFamily.filter(
-          (categoryInFamily) =>
-            categoryInFamily.id === contentInFilter.category.id,
-        ).length > 0,
-    );
-    if (contentThatSameLinkAndCategory) {
-      throw new ConflictException(
-        'Content with that link already exists in same category family.',
-      );
-    }
-
-    /*
-     * 최상위 카테고리의 count를 증가시킨 후,
-     * 해당 카테고리의 저장 기록을 유저 로그 파일에 추가함
-     */
-
-    // 최상위 카테고리 분리
-    const updatedTopCategory: Category = categoryFamily[0];
-
-    // 최상위 카테고리의 count 증가
-    const log = `{"categoryId": ${
-      updatedTopCategory.id
-    },"savedAt": ${new Date().getTime()}}\n`;
-
-    // 유저 로그 파일에 로그 추가
-    fs.appendFileSync(`${__dirname}/../../user_logs/${userInDb.id}.txt`, log);
   }
 
   async getLinkInfo(link: string) {
@@ -637,6 +501,24 @@ export class CategoryService {
 
       const { categoryName, categorySlug } =
         this.categories.generateNameAndSlug(name);
+
+      // if parent id is undefined, set it to null to avoid bug caused by type mismatch
+      if (!parentId) {
+        parentId = null;
+      } else {
+        // category depth should be 3
+        let currentParentId = parentId;
+        let parentCategory: Category = null;
+        for (let i = 0; i < 2; i++) {
+          parentCategory = await queryRunnerManager.findOne(Category, {
+            where: { id: currentParentId },
+          });
+          if (i == 1 && parentCategory.parentId != null) {
+            throw new ConflictException('Category depth should be 3');
+          }
+          currentParentId = parentCategory.parentId;
+        }
+      }
 
       // check if category exists in user's categories(check if category name is duplicated in same level too)
       const category = userInDb.categories.find(

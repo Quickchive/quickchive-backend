@@ -502,6 +502,24 @@ export class CategoryService {
       const { categoryName, categorySlug } =
         this.categories.generateNameAndSlug(name);
 
+      // if parent id is undefined, set it to null to avoid bug caused by type mismatch
+      if (!parentId) {
+        parentId = null;
+      } else {
+        // category depth should be 3
+        let currentParentId = parentId;
+        let parentCategory: Category = null;
+        for (let i = 0; i < 2; i++) {
+          parentCategory = await queryRunnerManager.findOne(Category, {
+            where: { id: currentParentId },
+          });
+          if (i == 1 && parentCategory.parentId != null) {
+            throw new ConflictException('Category depth should be 3');
+          }
+          currentParentId = parentCategory.parentId;
+        }
+      }
+
       // check if category exists in user's categories(check if category name is duplicated in same level too)
       const category = userInDb.categories.find(
         (category) =>

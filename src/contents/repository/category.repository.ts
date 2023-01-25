@@ -221,6 +221,23 @@ const generateCategoriesTree = (categories: Category[]): CategoryTreeNode[] => {
   const categoriesTree: CategoryTreeNode[] = categories;
   for (let i = 0; i < categoriesTree.length; i++) {
     if (categoriesTree[i].parentId) {
+      // 세세부 카테고리 우선 작업
+      const parent = categoriesTree.find(
+        (category) =>
+          category.id === categoriesTree[i].parentId && category.parentId,
+      );
+      if (parent) {
+        if (!parent.children) parent.children = [];
+        parent.children.push(categoriesTree[i]);
+        categoriesTree.splice(i, 1);
+        i--;
+      }
+    }
+  }
+
+  for (let i = 0; i < categoriesTree.length; i++) {
+    if (categoriesTree[i].parentId) {
+      // 중간 카테고리 작업(세부 카테고리)
       const parent = categoriesTree.find(
         (category) => category.id === categoriesTree[i].parentId,
       );

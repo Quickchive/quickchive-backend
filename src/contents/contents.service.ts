@@ -87,7 +87,7 @@ export class ContentsService {
       } = await this.getLinkInfo(link);
       title = title ? title : linkTitle;
 
-      const category = await this.getOrCreateCategory(
+      const category = await this.categories.getOrCreateCategory(
         categoryName,
         parentId,
         userInDb,
@@ -212,7 +212,7 @@ export class ContentsService {
         throw new NotFoundException('Content not found.');
       }
 
-      const category = await this.getOrCreateCategory(
+      const category = await this.categories.getOrCreateCategory(
         categoryName,
         parentId,
         userInDb,
@@ -333,65 +333,6 @@ export class ContentsService {
     } catch (e) {
       throw e;
     }
-  }
-
-  /**
-   * category를 생성하거나, 이미 존재하는 category를 가져옴
-   * content service의 method 내에서 중복되는 로직을 분리함
-   *
-   * @param link
-   * @param categoryName
-   * @param parentId
-   * @param userInDb
-   * @param queryRunnerManager
-   * @returns category
-   */
-  async getOrCreateCategory(
-    // link: string,
-    categoryName: string,
-    parentId: number,
-    userInDb: User,
-    queryRunnerManager: EntityManager,
-  ): Promise<Category> {
-    // generate category name and slug
-    const { categoryName: refinedCategoryName, categorySlug } =
-      this.categories.generateNameAndSlug(categoryName);
-
-    // if parent id is undefined, set it to null to avoid bug caused by type mismatch
-    if (!parentId) parentId = null;
-    // check if category exists in user's categories
-    let category: Category = userInDb.categories.find(
-      (category) =>
-        category.slug === categorySlug && category.parentId === parentId,
-    );
-
-    // if category doesn't exist, create it
-    if (!category) {
-      // if parent id exists, get parent category
-      const parentCategory: Category = parentId
-        ? await queryRunnerManager.findOne(Category, {
-            where: { id: parentId },
-          })
-        : null;
-      // if parent category doesn't exist, throw error
-      if (!parentCategory && parentId) {
-        throw new NotFoundException('Parent category not found');
-      }
-
-      category = await queryRunnerManager.save(
-        queryRunnerManager.create(Category, {
-          slug: categorySlug,
-          name: refinedCategoryName,
-          parentId: parentCategory ? parentCategory.id : null,
-          user: userInDb,
-        }),
-      );
-
-      userInDb.categories.push(category);
-      await queryRunnerManager.save(userInDb);
-    }
-
-    return category;
   }
 
   /**

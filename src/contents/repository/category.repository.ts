@@ -2,8 +2,9 @@ import { EntityManager, Repository } from 'typeorm';
 import { Category } from '../entities/category.entity';
 import { CategoryNameAndSlug, CategoryTreeNode } from '../dtos/category.dto';
 import { User } from '../../users/entities/user.entity';
-import { NotFoundException } from '@nestjs/common';
-// import { AppDataSource } from 'src/database/ormconfig';
+import { ConflictException, NotFoundException } from '@nestjs/common';
+
+import * as fs from 'fs';
 
 export interface CategoryRepository extends Repository<Category> {
   // this: Repository<Category>;
@@ -25,6 +26,12 @@ export interface CategoryRepository extends Repository<Category> {
     userInDb: User,
     queryRunnerManager: EntityManager,
   ): Promise<Category>;
+
+  checkContentDuplicateAndAddCategorySaveLog(
+    link: string,
+    category: Category,
+    userInDb: User,
+  ): Promise<void>;
 }
 
 type CustomCategoryRepository = Pick<
@@ -33,6 +40,7 @@ type CustomCategoryRepository = Pick<
   | 'generateCategoriesTree'
   | 'findCategoryFamily'
   | 'getOrCreateCategory'
+  | 'checkContentDuplicateAndAddCategorySaveLog'
 >;
 
 export const customCategoryRepositoryMethods: CustomCategoryRepository = {
@@ -49,11 +57,7 @@ export const customCategoryRepositoryMethods: CustomCategoryRepository = {
     categories: Category[],
     category: Category,
   ): CategoryTreeNode[] {
-    const topParentId = findTopParentCategory(categories, category);
-    const categoriesTree: CategoryTreeNode[] =
-      generateCategoriesTree(categories);
-
-    return categoriesTree.filter((category) => category.id === topParentId);
+    return findCategoryFamily(categories, category);
   },
 
   /**
@@ -112,6 +116,83 @@ export const customCategoryRepositoryMethods: CustomCategoryRepository = {
 
     return category;
   },
+
+  /**
+   * 대 카테고리를 기준으로 중복 체크하고,
+   * 최상위 카테고리의 카운트를 올려줌
+   *
+   * @param link
+   * @param category
+   * @param userInDb
+   */
+  async checkContentDuplicateAndAddCategorySaveLog(
+    link: string,
+    category: Category,
+    userInDb: User,
+  ): Promise<void> {
+    // 최상위 카테고리부터 시작해서 하위 카테고리까지의 그룹을 찾아옴
+    const categoryFamily = findCategoryFamily(userInDb.categories, category);
+
+    /*
+     * 카테고리의 중복을 체크하고, 중복이 없다면 최상위 카테고리의 count를 증가시킴
+     */
+
+    // flat categoryFamily with children
+    categoryFamily.reduce((acc, cur) => {
+      acc.push(cur);
+      if (cur.children) {
+        acc.push(cur.children.reduce);
+      }
+      return acc;
+    }, []);
+    const flatDeep = (arr, d) => {
+      return d > 0
+        ? arr.reduce((acc, cur) => {
+            const forConcat = [cur];
+            return acc.concat(
+              cur.children
+                ? forConcat.concat(flatDeep(cur.children, d - 1))
+                : cur,
+            );
+          }, [])
+        : arr.slice();
+    };
+
+    const flatCategoryFamily = flatDeep(categoryFamily, Infinity);
+
+    const contentThatSameLinkAndCategory = userInDb.contents.find(
+      (contentInFilter) =>
+        contentInFilter.link === link &&
+        flatCategoryFamily.filter(
+          (categoryInFamily) =>
+            categoryInFamily.id === contentInFilter.category.id,
+        ).length > 0,
+    );
+    if (contentThatSameLinkAndCategory) {
+      throw new ConflictException(
+        'Content with that link already exists in same category family.',
+      );
+    }
+
+    /*
+     * 최상위 카테고리의 count를 증가시킨 후,
+     * 해당 카테고리의 저장 기록을 유저 로그 파일에 추가함
+     */
+
+    // 최상위 카테고리 분리
+    const updatedTopCategory: Category = categoryFamily[0];
+
+    // 최상위 카테고리의 count 증가
+    const log = `{"categoryId": ${
+      updatedTopCategory.id
+    },"savedAt": ${new Date().getTime()}}\n`;
+
+    // 유저 로그 파일에 로그 추가
+    fs.appendFileSync(
+      `${__dirname}/../../../user_logs/${userInDb.id}.txt`,
+      log,
+    );
+  },
 };
 
 const generateNameAndSlug = (name: string): CategoryNameAndSlug => {
@@ -138,6 +219,16 @@ const generateCategoriesTree = (categories: Category[]): CategoryTreeNode[] => {
   }
 
   return categoriesTree;
+};
+
+const findCategoryFamily = (
+  categories: Category[],
+  category: Category,
+): CategoryTreeNode[] => {
+  const topParentId = findTopParentCategory(categories, category);
+  const categoriesTree: CategoryTreeNode[] = generateCategoriesTree(categories);
+
+  return categoriesTree.filter((category) => category.id === topParentId);
 };
 
 const findTopParentCategory = (

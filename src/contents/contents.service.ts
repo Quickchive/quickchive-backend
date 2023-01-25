@@ -8,6 +8,7 @@ import { InjectRepository } from '@nestjs/typeorm';
 import { EntityManager, Repository } from 'typeorm';
 import * as cheerio from 'cheerio';
 import axios from 'axios';
+import * as fs from 'fs';
 import {
   AddCategoryBodyDto,
   AddCategoryOutput,
@@ -37,7 +38,6 @@ import { User } from '../users/entities/user.entity';
 import { Category } from './entities/category.entity';
 import { Content } from './entities/content.entity';
 import { CategoryRepository } from './repository/category.repository';
-import * as fs from 'fs';
 
 @Injectable()
 export class ContentsService {
@@ -94,7 +94,7 @@ export class ContentsService {
         queryRunnerManager,
       );
 
-      await this.checkContentDuplicateAndPlusCategoryCount(
+      await this.categories.checkContentDuplicateAndAddCategorySaveLog(
         link,
         category,
         userInDb,
@@ -219,7 +219,7 @@ export class ContentsService {
         queryRunnerManager,
       );
 
-      await this.checkContentDuplicateAndPlusCategoryCount(
+      await this.categories.checkContentDuplicateAndAddCategorySaveLog(
         link,
         category,
         userInDb,
@@ -333,83 +333,6 @@ export class ContentsService {
     } catch (e) {
       throw e;
     }
-  }
-
-  /**
-   * 대 카테고리를 기준으로 중복 체크하고,
-   * 최상위 카테고리의 카운트를 올려줌
-   *
-   * @param link
-   * @param category
-   * @param userInDb
-   */
-  async checkContentDuplicateAndPlusCategoryCount(
-    link: string,
-    category: Category,
-    userInDb: User,
-  ): Promise<void> {
-    // 최상위 카테고리부터 시작해서 하위 카테고리까지의 그룹을 찾아옴
-    const categoryFamily = this.categories.findCategoryFamily(
-      userInDb.categories,
-      category,
-    );
-
-    /*
-     * 카테고리의 중복을 체크하고, 중복이 없다면 최상위 카테고리의 count를 증가시킴
-     */
-
-    // flat categoryFamily with children
-    categoryFamily.reduce((acc, cur) => {
-      acc.push(cur);
-      if (cur.children) {
-        acc.push(cur.children.reduce);
-      }
-      return acc;
-    }, []);
-    const flatDeep = (arr, d) => {
-      return d > 0
-        ? arr.reduce((acc, cur) => {
-            const forConcat = [cur];
-            return acc.concat(
-              cur.children
-                ? forConcat.concat(flatDeep(cur.children, d - 1))
-                : cur,
-            );
-          }, [])
-        : arr.slice();
-    };
-
-    const flatCategoryFamily = flatDeep(categoryFamily, Infinity);
-
-    const contentThatSameLinkAndCategory = userInDb.contents.find(
-      (contentInFilter) =>
-        contentInFilter.link === link &&
-        flatCategoryFamily.filter(
-          (categoryInFamily) =>
-            categoryInFamily.id === contentInFilter.category.id,
-        ).length > 0,
-    );
-    if (contentThatSameLinkAndCategory) {
-      throw new ConflictException(
-        'Content with that link already exists in same category family.',
-      );
-    }
-
-    /*
-     * 최상위 카테고리의 count를 증가시킨 후,
-     * 해당 카테고리의 저장 기록을 유저 로그 파일에 추가함
-     */
-
-    // 최상위 카테고리 분리
-    const updatedTopCategory: Category = categoryFamily[0];
-
-    // 최상위 카테고리의 count 증가
-    const log = `{"categoryId": ${
-      updatedTopCategory.id
-    },"savedAt": ${new Date().getTime()}}\n`;
-
-    // 유저 로그 파일에 로그 추가
-    fs.appendFileSync(`${__dirname}/../../user_logs/${userInDb.id}.txt`, log);
   }
 
   async getLinkInfo(link: string) {

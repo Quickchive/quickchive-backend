@@ -1,6 +1,5 @@
 import {
   CACHE_MANAGER,
-  HttpException,
   Inject,
   Injectable,
   NotFoundException,
@@ -10,7 +9,6 @@ import { InjectRepository } from '@nestjs/typeorm';
 import { Content } from 'src/contents/entities/content.entity';
 import { EntityManager, Repository } from 'typeorm';
 import { EditProfileInput, EditProfileOutput } from './dtos/edit-profile.dto';
-import { LoadPersonalCategoriesOutput } from './dtos/load-personal-categories.dto';
 import {
   LoadFavoritesOutput,
   LoadPersonalContentsOutput,
@@ -21,8 +19,6 @@ import {
 } from './dtos/reset-password.dto';
 import { User } from './entities/user.entity';
 import { Cache } from 'cache-manager';
-import { LoadPersonalCollectionsOutput } from './dtos/load-personal-collections.dto';
-import { Collection } from 'src/collections/entities/collection.entity';
 
 @Injectable()
 export class UsersService {
@@ -109,8 +105,6 @@ export class UsersService {
         );
       }
 
-      console.log(contents);
-
       return {
         contents,
       };
@@ -178,23 +172,4 @@ export class UsersService {
   //     throw e;
   //   }
   // }
-
-  async loadPersonalCategories(
-    user: User,
-  ): Promise<LoadPersonalCategoriesOutput> {
-    try {
-      const { categories } = await this.users.findOne({
-        where: { id: user.id },
-        relations: {
-          categories: true,
-        },
-      });
-
-      return {
-        categories,
-      };
-    } catch (e) {
-      throw e;
-    }
-  }
 }

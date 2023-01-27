@@ -20,11 +20,11 @@ import {
   ApiOperation,
   ApiTags,
 } from '@nestjs/swagger';
-import { AuthUser } from 'src/auth/auth-user.decorator';
-import { JwtAuthGuard } from 'src/auth/jwt/jwt.guard';
-import { TransactionInterceptor } from 'src/common/interceptors/transaction.interceptor';
-import { TransactionManager } from 'src/common/transaction.decorator';
-import { User } from 'src/users/entities/user.entity';
+import { AuthUser } from '../auth/auth-user.decorator';
+import { JwtAuthGuard } from '../auth/jwt/jwt.guard';
+import { TransactionInterceptor } from '../common/interceptors/transaction.interceptor';
+import { TransactionManager } from '../common/transaction.decorator';
+import { User } from '../users/entities/user.entity';
 import { EntityManager } from 'typeorm';
 import { CategoryService, ContentsService } from './contents.service';
 import {
@@ -46,6 +46,10 @@ import {
   UpdateContentBodyDto,
   UpdateContentOutput,
 } from './dtos/content.dto';
+import {
+  LoadPersonalCategoriesOutput,
+  LoadRecentCategoriesOutput,
+} from './dtos/load-personal-categories.dto';
 
 @Controller('contents')
 @ApiTags('Contents')
@@ -347,5 +351,39 @@ export class CategoryController {
       categoryId,
       queryRunnerManager,
     );
+  }
+
+  @ApiOperation({
+    summary: '자신의 카테고리 목록 조회',
+    description: '자신의 카테고리 목록을 조회하는 메서드',
+  })
+  @ApiOkResponse({
+    description: '카테고리 목록을 반환한다.',
+    type: LoadPersonalCategoriesOutput,
+  })
+  @ApiBearerAuth('Authorization')
+  @UseGuards(JwtAuthGuard)
+  @Get('load-categories')
+  async loadPersonalCategories(
+    @AuthUser() user: User,
+  ): Promise<LoadPersonalCategoriesOutput> {
+    return await this.categoryService.loadPersonalCategories(user);
+  }
+
+  @ApiOperation({
+    summary: '최근 저장한 카테고리 조회',
+    description: '최근 저장한 카테고리를 3개까지 조회하는 메서드',
+  })
+  @ApiOkResponse({
+    description: '최근 저장한 카테고리를 최대 3개까지 반환한다.',
+    type: LoadRecentCategoriesOutput,
+  })
+  @ApiBearerAuth('Authorization')
+  @UseGuards(JwtAuthGuard)
+  @Get('load-recent-categories')
+  async loadRecentCategories(
+    @AuthUser() user: User,
+  ): Promise<LoadRecentCategoriesOutput> {
+    return await this.categoryService.loadRecentCategories(user);
   }
 }

@@ -22,8 +22,6 @@ import { TransactionInterceptor } from 'src/common/interceptors/transaction.inte
 import { TransactionManager } from 'src/common/transaction.decorator';
 import { EntityManager } from 'typeorm';
 import { EditProfileInput, EditProfileOutput } from './dtos/edit-profile.dto';
-import { LoadPersonalCategoriesOutput } from './dtos/load-personal-categories.dto';
-import { LoadPersonalCollectionsOutput } from './dtos/load-personal-collections.dto';
 import {
   LoadFavoritesOutput,
   LoadPersonalContentsOutput,
@@ -157,21 +155,4 @@ export class UsersController {
   // ): Promise<LoadPersonalCollectionsOutput> {
   //   return await this.usersService.loadPersonalCollections(user, +categoryId);
   // }
-
-  @ApiOperation({
-    summary: '자신의 카테고리 목록 조회',
-    description: '자신의 카테고리 목록을 조회하는 메서드',
-  })
-  @ApiOkResponse({
-    description: '카테고리 목록을 반환한다.',
-    type: LoadPersonalCategoriesOutput,
-  })
-  @ApiBearerAuth('Authorization')
-  @UseGuards(JwtAuthGuard)
-  @Get('load-categories')
-  async loadPersonalCategories(
-    @AuthUser() user: User,
-  ): Promise<LoadPersonalCategoriesOutput> {
-    return await this.usersService.loadPersonalCategories(user);
-  }
 }

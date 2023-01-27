@@ -10,7 +10,7 @@ import {
   SummarizeDocumentInput,
   SummarizeDocumentOutput,
 } from './dtos/summary-content.dto';
-import { CONFIG_OPTIONS } from 'src/common/common.constants';
+import { CONFIG_OPTIONS } from '../common/common.constants';
 import * as cheerio from 'cheerio';
 import { logger } from 'src/common/logger';
 

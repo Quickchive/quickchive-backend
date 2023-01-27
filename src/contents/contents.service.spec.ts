@@ -1,12 +1,17 @@
 import { Test, TestingModule } from '@nestjs/testing';
 import { getRepositoryToken } from '@nestjs/typeorm';
-import { CONFIG_OPTIONS } from 'src/common/common.constants';
-import { SummarizeDocumentOutput } from 'src/summary/dtos/summary-content.dto';
-import { SummaryService } from 'src/summary/summary.service';
-import { User, UserRole } from 'src/users/entities/user.entity';
+import { CONFIG_OPTIONS } from '../common/common.constants';
+import { SummaryService } from '../summary/summary.service';
+import { User, UserRole } from '../users/entities/user.entity';
 import { DataSource, Repository } from 'typeorm';
-import { ContentsService } from './contents.service';
+import { CategoryService, ContentsService } from './contents.service';
 import { Content } from './entities/content.entity';
+import { Category } from './entities/category.entity';
+import {
+  CategoryRepository,
+  customCategoryRepositoryMethods,
+} from './repository/category.repository';
+import { RecentCategoryList } from './dtos/category.dto';
 
 const mockRepository = () => ({
   // make as a function type that returns Object.
@@ -15,6 +20,14 @@ const mockRepository = () => ({
   save: jest.fn(),
   create: jest.fn(),
   delete: jest.fn(),
+});
+
+const mockCategoryRepository = () => ({
+  findOne: jest.fn(), // create Mock Func
+  save: jest.fn(),
+  create: jest.fn(),
+  delete: jest.fn(),
+  ...customCategoryRepositoryMethods,
 });
 
 type MockRepository<T = any> = Partial<Record<keyof Repository<T>, jest.Mock>>;
@@ -33,6 +46,7 @@ describe('ContentsService', () => {
   let service: ContentsService;
   let usersRepository: MockRepository<User>;
   let summarizeService: SummaryService;
+  let categoryRepository: CategoryRepository;
 
   beforeEach(async () => {
     const module: TestingModule = await Test.createTestingModule({
@@ -46,6 +60,10 @@ describe('ContentsService', () => {
         {
           provide: getRepositoryToken(Content),
           useValue: mockRepository(),
+        },
+        {
+          provide: getRepositoryToken(Category),
+          useValue: mockCategoryRepository(),
         },
         {
           provide: DataSource,
@@ -65,6 +83,7 @@ describe('ContentsService', () => {
     service = module.get<ContentsService>(ContentsService);
     usersRepository = module.get(getRepositoryToken(User));
     summarizeService = module.get<SummaryService>(SummaryService);
+    categoryRepository = module.get(getRepositoryToken(Category));
   });
 
   it('should be defined', () => {
@@ -74,6 +93,7 @@ describe('ContentsService', () => {
   describe('summarizeContent', () => {
     const fakeUser: User = {
       id: 1,
+      name: 'hou27',
       email: '',
       password: '',
       role: UserRole.Client,
@@ -114,6 +134,305 @@ describe('ContentsService', () => {
       );
       expect(summaryContentSpyFn).toHaveBeenCalledWith(expect.any(Object));
       expect(typeof result.summary).toBe('string');
+    });
+  });
+});
+
+describe('CategoryService', () => {
+  let service: CategoryService;
+  let categoryRepository: MockRepository<CategoryRepository>;
+  let usersRepository: MockRepository<User>;
+
+  beforeEach(async () => {
+    const module: TestingModule = await Test.createTestingModule({
+      providers: [
+        CategoryService,
+        {
+          provide: getRepositoryToken(Category),
+          useValue: mockCategoryRepository(),
+        },
+        {
+          provide: getRepositoryToken(User),
+          useValue: mockRepository(),
+        },
+        {
+          provide: DataSource,
+          useClass: class MockDataSource {},
+        },
+      ],
+    }).compile();
+
+    service = module.get<CategoryService>(CategoryService);
+    categoryRepository = module.get(getRepositoryToken(Category));
+    usersRepository = module.get(getRepositoryToken(User));
+  });
+
+  it('should be defined', () => {
+    expect(service).toBeDefined();
+  });
+
+  describe('loadRecentCategories', () => {
+    const fakeUser: User = {
+      id: 1,
+      name: 'hou27',
+      email: '',
+      password: '',
+      role: UserRole.Client,
+      verified: false,
+      hashPassword: jest.fn(),
+      checkPassword: jest.fn(),
+      createdAt: undefined,
+      updatedAt: undefined,
+      categories: [],
+    };
+    const fakeCategories: Category[] = [
+      {
+        id: 1,
+        createdAt: undefined,
+        updatedAt: undefined,
+        name: 'Dev',
+        slug: 'Dev',
+        userId: 1,
+        collections: [],
+        contents: [],
+        user: undefined,
+      },
+      {
+        id: 2,
+        createdAt: undefined,
+        updatedAt: undefined,
+        name: '쇼핑리스트',
+        slug: '쇼핑리스트',
+        userId: 1,
+        collections: [],
+        contents: [],
+        user: undefined,
+      },
+      {
+        id: 3,
+        createdAt: undefined,
+        updatedAt: undefined,
+        name: '운동',
+        slug: '운동',
+        userId: 1,
+        collections: [],
+        contents: [],
+        user: undefined,
+      },
+      {
+        id: 4,
+        createdAt: undefined,
+        updatedAt: undefined,
+        name: '여행',
+        slug: '여행',
+        userId: 1,
+        collections: [],
+        contents: [],
+        user: undefined,
+      },
+      {
+        id: 5,
+        createdAt: undefined,
+        updatedAt: undefined,
+        name: '꿀팁',
+        slug: '꿀팁',
+        userId: 1,
+        collections: [],
+        contents: [],
+        user: undefined,
+      },
+      {
+        id: 6,
+        createdAt: undefined,
+        updatedAt: undefined,
+        name: '데이터분석',
+        slug: '데이터분석',
+        userId: 1,
+        collections: [],
+        contents: [],
+        user: undefined,
+      },
+    ];
+
+    fakeUser.categories = [...fakeCategories];
+
+    it('최초 호출에서 n번자리가 모두 확정된 경우', async () => {
+      usersRepository.findOne.mockReturnValue(fakeUser);
+
+      categoryRepository.findOne.mockImplementation(({ where: { id } }) => {
+        return fakeCategories.find((category) => category.id === id);
+      });
+
+      // 콘텐츠 저장 기록
+      /**
+       * Dev : categoryId 1
+       * 쇼핑리스트 : categoryId 2
+       * 꿀팁 : categoryId 5
+       * 데이터분석 : categoryId 6
+       *
+       * 2023.01.15 07:30:00 Dev에 저장
+       * 2023.01.15 07:25:00 쇼핑리스트에 저장
+       * 2023.01.15 07:15:00 Dev에 저장
+       * 2023.01.10 21:00:00 꿀팁에 저장
+       * 2023.01.10 20:50:00 Dev에 저장
+       * 2022.12.29 09:00:00 데이터분석에 저장
+       * 2022.06.20 20:45:00 쇼핑리스트에 저장
+       * 2022.06.20 20:50:00 Dev에 저장
+       * 2022.06.20 20:10:00 Dev에 저장
+       * 2022.06.17 01:30:00 Dev에 저장
+       */
+      const recentCategoryList: RecentCategoryList[] = [
+        { categoryId: 1, savedAt: new Date('2023-01-15 07:30:00').getTime() },
+        { categoryId: 2, savedAt: new Date('2023-01-15 07:25:00').getTime() },
+        { categoryId: 1, savedAt: new Date('2023-01-15 07:15:00').getTime() },
+        { categoryId: 5, savedAt: new Date('2023-01-10 21:00:00').getTime() },
+        { categoryId: 1, savedAt: new Date('2023-01-10 20:50:00').getTime() },
+        { categoryId: 6, savedAt: new Date('2022-12-29 09:00:00').getTime() },
+        { categoryId: 2, savedAt: new Date('2022-06-20 20:45:00').getTime() },
+        { categoryId: 1, savedAt: new Date('2022-06-20 20:50:00').getTime() },
+        { categoryId: 1, savedAt: new Date('2022-06-20 20:10:00').getTime() },
+        { categoryId: 1, savedAt: new Date('2022-06-17 01:30:00').getTime() },
+      ];
+
+      service.loadLogs = jest.fn().mockReturnValue(recentCategoryList);
+
+      const { recentCategories } = await service.loadRecentCategories(fakeUser);
+
+      expect(recentCategories).toHaveLength(3);
+      expect(recentCategories[0].id).toBe(1);
+      expect(recentCategories[1].id).toBe(2);
+      expect(recentCategories[2].id).toBe(5);
+    });
+
+    it('최초 호출에서 n번자리가 모두 확정되지 않은 경우', async () => {
+      usersRepository.findOne.mockReturnValue(fakeUser);
+
+      categoryRepository.findOne.mockImplementation(({ where: { id } }) => {
+        return fakeCategories.find((category) => category.id === id);
+      });
+
+      // 콘텐츠 저장 기록
+      /**
+       * Dev : categoryId 1
+       * 쇼핑리스트 : categoryId 2
+       * 운동 : categoryId 3
+       * 여행 : categoryId 4
+       * 꿀팁 : categoryId 5
+       * 데이터분석 : categoryId 6
+       *
+       * 2023.01.15 07:30:00 Dev에 저장
+       * 2023.01.15 07:25:00 Dev에 저장
+       * 2023.01.15 07:15:00 Dev에 저장
+       * 2023.01.10 21:00:00 Dev에 저장
+       * 2023.01.10 20:50:00 Dev에 저장
+       * 2022.12.29 09:00:00 Dev에 저장
+       * 2022.06.20 20:45:00 Dev에 저장
+       * 2022.06.20 20:50:00 Dev에 저장
+       * 2022.06.20 20:10:00 Dev에 저장
+       * 2022.06.17 01:30:00 Dev에 저장
+       *
+       * 2022.06.16 07:30:00 Dev에 저장
+       * 2022.05.10 08:25:00 운동에 저장
+       * 2022.05.03 14:00:00 꿀팁에 저장
+       * 2022.05.02 20:30:00 운동에 저장
+       * 2022.05.02 20:30:00 운동에 저장
+       * 2022.04.29 09:00:00 쇼핑리스트에 저장
+       * 2022.04.20 23:55:00 여행에 저장
+       * 2022.04.20 23:45:00 꿀팁에 저장
+       * 2022.04.20 23:00:00 꿀팁에 저장
+       */
+      const recentCategoryList: RecentCategoryList[] = [
+        { categoryId: 1, savedAt: new Date('2023-01-15 07:30:00').getTime() },
+        { categoryId: 1, savedAt: new Date('2023-01-15 07:25:00').getTime() },
+        { categoryId: 1, savedAt: new Date('2023-01-15 07:15:00').getTime() },
+        { categoryId: 1, savedAt: new Date('2023-01-10 21:00:00').getTime() },
+        { categoryId: 1, savedAt: new Date('2023-01-10 20:50:00').getTime() },
+        { categoryId: 1, savedAt: new Date('2022-12-29 09:00:00').getTime() },
+        { categoryId: 1, savedAt: new Date('2022-06-20 20:45:00').getTime() },
+        { categoryId: 1, savedAt: new Date('2022-06-20 20:50:00').getTime() },
+        { categoryId: 1, savedAt: new Date('2022-06-20 20:10:00').getTime() },
+        { categoryId: 1, savedAt: new Date('2022-06-17 01:30:00').getTime() },
+        { categoryId: 1, savedAt: new Date('2022-06-16 07:30:00').getTime() },
+        { categoryId: 3, savedAt: new Date('2022-05-10 08:25:00').getTime() },
+        { categoryId: 5, savedAt: new Date('2022-05-03 14:00:00').getTime() },
+        { categoryId: 3, savedAt: new Date('2022-05-02 20:30:00').getTime() },
+        { categoryId: 3, savedAt: new Date('2022-05-02 20:30:00').getTime() },
+        { categoryId: 2, savedAt: new Date('2022-04-29 09:00:00').getTime() },
+        { categoryId: 4, savedAt: new Date('2022-04-20 23:55:00').getTime() },
+        { categoryId: 5, savedAt: new Date('2022-04-20 23:45:00').getTime() },
+        { categoryId: 5, savedAt: new Date('2022-04-20 23:00:00').getTime() },
+      ];
+
+      service.loadLogs = jest.fn().mockReturnValue(recentCategoryList);
+
+      const { recentCategories } = await service.loadRecentCategories(fakeUser);
+
+      expect(recentCategories).toHaveLength(3);
+      expect(recentCategories[0].id).toBe(1);
+      expect(recentCategories[1].id).toBe(3);
+      expect(recentCategories[2].id).toBe(5);
+    });
+
+    it('전체 저장한 콘텐츠가 하나의 카테고리 안에 3개인 경우', async () => {
+      usersRepository.findOne.mockReturnValue(fakeUser);
+
+      categoryRepository.findOne.mockImplementation(({ where: { id } }) => {
+        return fakeCategories.find((category) => category.id === id);
+      });
+
+      // 콘텐츠 저장 기록
+      /**
+       * Dev : categoryId 1
+       *
+       * 2023.01.15 07:30:00 Dev에 저장
+       * 2023.01.15 07:25:00 Dev에 저장
+       * 2023.01.15 07:15:00 Dev에 저장
+       */
+      const recentCategoryList: RecentCategoryList[] = [
+        { categoryId: 1, savedAt: new Date('2023-01-15 07:30:00').getTime() },
+        { categoryId: 1, savedAt: new Date('2023-01-15 07:25:00').getTime() },
+        { categoryId: 1, savedAt: new Date('2023-01-15 07:15:00').getTime() },
+      ];
+
+      service.loadLogs = jest.fn().mockReturnValue(recentCategoryList);
+
+      const { recentCategories } = await service.loadRecentCategories(fakeUser);
+
+      expect(recentCategories).toHaveLength(1);
+      expect(recentCategories[0].id).toBe(1);
+    });
+
+    it('저장 횟수 공동 1번이 있는 경우', async () => {
+      usersRepository.findOne.mockReturnValue(fakeUser);
+
+      categoryRepository.findOne.mockImplementation(({ where: { id } }) => {
+        return fakeCategories.find((category) => category.id === id);
+      });
+
+      // 콘텐츠 저장 기록
+      /**
+       * Dev : categoryId 1
+       * 쇼핑리스트 : categoryId 2
+       * 운동 : categoryId 3
+       *
+       * 2023.01.15 07:30:00 Dev에 저장
+       * 2023.01.15 07:25:00 운동에 저장
+       * 2023.01.15 07:15:00 쇼핑리스트에 저장
+       */
+      const recentCategoryList: RecentCategoryList[] = [
+        { categoryId: 1, savedAt: new Date('2023-01-15 07:30:00').getTime() },
+        { categoryId: 3, savedAt: new Date('2023-01-15 07:25:00').getTime() },
+        { categoryId: 2, savedAt: new Date('2023-01-15 07:15:00').getTime() },
+      ];
+
+      service.loadLogs = jest.fn().mockReturnValue(recentCategoryList);
+
+      const { recentCategories } = await service.loadRecentCategories(fakeUser);
+
+      expect(recentCategories).toHaveLength(3);
+      expect(recentCategories[0].id).toBe(1);
+      expect(recentCategories[1].id).toBe(3);
+      expect(recentCategories[2].id).toBe(2);
     });
   });
 });

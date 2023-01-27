@@ -120,3 +120,8 @@ create랑 generate 모두 마이그레이션 파일을 생성하지만 둘 사�
 create는 그냥 빈 파일만을 생성시켜 줄 뿐이지만  
 generate는 db와 entity 사이의 차이점이 있다면 이를 파악하고 sql구문을 작성한다.  
 그러나 컬럼의 길이 또는 타입 변경 시 해당 테이블의 컬럼을 DROP한 후 재생성하는 방식이기 때문에 기존 컬럼에 있던 데이터가 모두 삭제된다.
+
+```bash
+EX)
+npm run migration:generate src/database/migrations/migration_test
+```

@@ -1,7 +1,7 @@
 import { ApiProperty, PickType } from '@nestjs/swagger';
 import { IsOptional, IsString } from 'class-validator';
-import { CoreOutput } from 'src/common/dtos/output.dto';
-import { User } from 'src/users/entities/user.entity';
+import { CoreOutput } from '../../common/dtos/output.dto';
+import { User } from '../../users/entities/user.entity';
 
 export class LoginWithKakaoDto {
   @ApiProperty({ description: 'kakao authorize code' })

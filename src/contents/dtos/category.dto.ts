@@ -1,6 +1,6 @@
 import { ApiProperty, PickType } from '@nestjs/swagger';
 import { IsNumber, IsOptional, IsString } from 'class-validator';
-import { CoreOutput } from 'src/common/dtos/output.dto';
+import { CoreOutput } from '../../common/dtos/output.dto';
 import { Category } from '../entities/category.entity';
 
 export class AddCategoryBodyDto {
@@ -37,7 +37,7 @@ export class UpdateCategoryOutput extends CoreOutput {}
 
 export class DeleteCategoryOutput extends CoreOutput {}
 
-export class categoryNameAndSlug {
+export class CategoryNameAndSlug {
   @ApiProperty({ description: '카테고리 이름' })
   @IsString()
   categoryName: string;
@@ -45,4 +45,18 @@ export class categoryNameAndSlug {
   @ApiProperty({ description: '카테고리 슬러그' })
   @IsString()
   categorySlug: string;
+}
+
+export class CategoryTreeNode extends Category {
+  @ApiProperty({ description: '자식 카테고리' })
+  children?: CategoryTreeNode[];
+}
+
+export interface RecentCategoryList {
+  categoryId: number;
+  savedAt: number;
+}
+
+export interface RecentCategoryListWithSaveCount extends RecentCategoryList {
+  saveCount: number;
 }

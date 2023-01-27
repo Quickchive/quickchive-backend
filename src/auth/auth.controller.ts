@@ -23,7 +23,7 @@ import {
   ApiUnauthorizedResponse,
 } from '@nestjs/swagger';
 import { Response } from 'express';
-import { User } from 'src/users/entities/user.entity';
+import { User } from '../users/entities/user.entity';
 import { AuthUser } from './auth-user.decorator';
 import { AuthService, OauthService } from './auth.service';
 import {
@@ -32,7 +32,6 @@ import {
 } from './dtos/create-account.dto';
 import { DeleteAccountOutput } from './dtos/delete-account.dto';
 import { googleUserInfo } from './dtos/google.dto';
-import { LoginWithKakaoDto } from './dtos/kakao.dto';
 import {
   LoginBodyDto,
   LoginOutput,

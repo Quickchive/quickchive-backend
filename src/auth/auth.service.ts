@@ -9,8 +9,8 @@ import {
   UnauthorizedException,
 } from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
-import { MailService } from 'src/mail/mail.service';
-import { User } from 'src/users/entities/user.entity';
+import { MailService } from '../mail/mail.service';
+import { User } from '../users/entities/user.entity';
 import { Repository } from 'typeorm';
 import {
   refreshTokenExpirationInCache,

@@ -64,7 +64,7 @@ export class MailService {
     );
   }
 
-  sendNotificationEmail(email: string, message) {
+  sendNotificationEmail(email: string, message: string) {
     this.sendEmail(
       email,
       'Notification',

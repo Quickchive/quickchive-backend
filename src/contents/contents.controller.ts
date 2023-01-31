@@ -50,6 +50,7 @@ import {
   LoadPersonalCategoriesOutput,
   LoadRecentCategoriesOutput,
 } from './dtos/load-personal-categories.dto';
+import { ErrorOutput } from '../common/dtos/output.dto';
 
 @Controller('contents')
 @ApiTags('Contents')
@@ -68,6 +69,7 @@ export class ContentsController {
   })
   @ApiConflictResponse({
     description: '같은 카테고리 내에 동일한 링크의 콘텐츠가 존재할 경우',
+    type: ErrorOutput,
   })
   @Post('add')
   @UseInterceptors(TransactionInterceptor)
@@ -93,6 +95,7 @@ export class ContentsController {
   })
   @ApiConflictResponse({
     description: '같은 카테고리 내에 동일한 링크의 콘텐츠가 존재할 경우',
+    type: ErrorOutput,
   })
   @Post('addMultiple')
   @UseInterceptors(TransactionInterceptor)
@@ -118,9 +121,11 @@ export class ContentsController {
   })
   @ApiConflictResponse({
     description: '동일한 링크의 콘텐츠가 같은 카테고리 내에 존재할 경우',
+    type: ErrorOutput,
   })
   @ApiNotFoundResponse({
     description: '존재하지 않는 콘텐츠 또는 유저인 경우',
+    type: ErrorOutput,
   })
   @Post('update')
   @UseInterceptors(TransactionInterceptor)
@@ -146,6 +151,7 @@ export class ContentsController {
   })
   @ApiNotFoundResponse({
     description: '존재하지 않는 콘텐츠 또는 유저인 경우',
+    type: ErrorOutput,
   })
   @Patch('favorite/:contentId')
   @UseInterceptors(TransactionInterceptor)
@@ -171,6 +177,7 @@ export class ContentsController {
   })
   @ApiNotFoundResponse({
     description: '존재하지 않는 콘텐츠 또는 유저인 경우',
+    type: ErrorOutput,
   })
   @Patch('read/:contentId')
   async readContent(
@@ -190,6 +197,7 @@ export class ContentsController {
   })
   @ApiNotFoundResponse({
     description: '존재하지 않는 콘텐츠 또는 유저인 경우',
+    type: ErrorOutput,
   })
   @Delete('delete/:contentId')
   @UseInterceptors(TransactionInterceptor)
@@ -216,9 +224,11 @@ export class ContentsController {
   @ApiNotFoundResponse({
     description:
       '존재하지 않는 콘텐츠 또는 유저거나 접근이 불가능한 페이지인 경우',
+    type: ErrorOutput,
   })
   @ApiBadRequestResponse({
     description: '잘못된 요청을 보냈을 경우',
+    type: ErrorOutput,
   })
   @Get('summarize/:contentId')
   async summarizeContent(
@@ -262,6 +272,7 @@ export class TestController {
   })
   @ApiBadRequestResponse({
     description: 'naver 서버에 잘못된 요청을 보냈을 경우',
+    type: ErrorOutput,
   })
   @Post('summarize')
   async testSummarizeContent(
@@ -288,9 +299,11 @@ export class CategoryController {
   })
   @ApiConflictResponse({
     description: '동일한 이름의 카테고리가 존재할 경우',
+    type: ErrorOutput,
   })
   @ApiNotFoundResponse({
     description: '존재하지 않는 것일 경우',
+    type: ErrorOutput,
   })
   @Post('add')
   @UseInterceptors(TransactionInterceptor)
@@ -338,6 +351,7 @@ export class CategoryController {
   })
   @ApiNotFoundResponse({
     description: '존재하지 않는 카테고리를 삭제하려고 할 경우',
+    type: ErrorOutput,
   })
   @Delete('delete/:categoryId')
   @UseInterceptors(TransactionInterceptor)

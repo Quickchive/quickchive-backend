@@ -13,7 +13,6 @@ export class ErrorOutput {
   @ApiProperty({
     description: 'Status Code',
     type: Number,
-    example: 409,
   })
   statusCode!: number;
 

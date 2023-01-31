@@ -13,13 +13,13 @@ export class AddNestedContentBodyDto extends PickType(NestedContent, [
 ]) {}
 export class AddNestedContentOutput {
   @ApiProperty({ description: 'Created Nested Content' })
-  nestedContent: NestedContent;
+  nestedContent!: NestedContent;
 }
 
 export class AddNestedContentToCollectionBodyDto extends AddNestedContentBodyDto {
   @ApiProperty({ description: 'Collection ID' })
   @IsNumber()
-  collectionId: number;
+  collectionId!: number;
 }
 export class AddNestedContentToCollectionOutput extends CoreOutput {}
 

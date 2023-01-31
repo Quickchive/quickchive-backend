@@ -2,7 +2,7 @@ import { CACHE_MANAGER } from '@nestjs/common';
 import { Cache } from 'cache-manager';
 import { Test, TestingModule } from '@nestjs/testing';
 import { getRepositoryToken } from '@nestjs/typeorm';
-import { DataSource, Repository } from 'typeorm';
+import { DataSource, ObjectLiteral, Repository } from 'typeorm';
 import { User } from './entities/user.entity';
 import { UsersService } from './users.service';
 
@@ -15,7 +15,9 @@ const mockRepository = () => ({
   delete: jest.fn(),
 });
 
-type MockRepository<T = any> = Partial<Record<keyof Repository<T>, jest.Mock>>;
+type MockRepository<T extends ObjectLiteral = any> = Partial<
+  Record<keyof Repository<T>, jest.Mock>
+>;
 
 describe('UsersService', () => {
   let service: UsersService;

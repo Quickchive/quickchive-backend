@@ -5,7 +5,7 @@ import { User } from '../entities/user.entity';
 class passwordForResetPassword extends PickType(User, ['password']) {}
 class codeForResetPassword {
   @ApiProperty({ description: 'Authentication code' })
-  code: string;
+  code!: string;
 }
 
 export class ResetPasswordInput extends IntersectionType(

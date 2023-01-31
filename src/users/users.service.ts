@@ -95,7 +95,7 @@ export class UsersService {
 
   async loadPersonalContents(
     user: User,
-    categoryId: number,
+    categoryId: number | undefined,
   ): Promise<LoadPersonalContentsOutput> {
     try {
       let { contents }: User = await this.users.findOneOrFail({

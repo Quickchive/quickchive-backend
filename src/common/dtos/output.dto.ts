@@ -4,9 +4,18 @@ export class CoreOutput {
   @ApiProperty({
     description: 'Status Code',
     type: Number,
-    example: 409,
+    example: 200,
   })
   statusCode?: number;
+}
+
+export class ErrorOutput {
+  @ApiProperty({
+    description: 'Status Code',
+    type: Number,
+    example: 409,
+  })
+  statusCode!: number;
 
   @ApiProperty({
     description: 'Error Message',

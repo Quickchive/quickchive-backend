@@ -10,7 +10,7 @@ export class SummarizeDocumentInput {
 
   @ApiProperty({ description: '콘텐츠 내용', required: true })
   @IsString()
-  content: string;
+  content!: string;
 }
 
 export class SummarizeDocumentOutput {

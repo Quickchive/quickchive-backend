@@ -23,6 +23,7 @@ import {
   ApiUnauthorizedResponse,
 } from '@nestjs/swagger';
 import { Response } from 'express';
+import { ErrorOutput } from '../common/dtos/output.dto';
 import { User } from '../users/entities/user.entity';
 import { AuthUser } from './auth-user.decorator';
 import { AuthService, OauthService } from './auth.service';
@@ -55,6 +56,7 @@ export class AuthController {
   })
   @ApiNotFoundResponse({
     description: '메일 인증된 유저가 존재하지 않는다.',
+    type: ErrorOutput,
   })
   @Post('register')
   async register(
@@ -70,9 +72,11 @@ export class AuthController {
   })
   @ApiBadRequestResponse({
     description: '잘못된 파라미터로 요청 시 반환되는 응답',
+    type: ErrorOutput,
   })
   @ApiNotFoundResponse({
     description: '해당 이메일의 유저가 존재하지 않는다.',
+    type: ErrorOutput,
   })
   @Post('login')
   async login(@Body() loginBody: LoginBodyDto): Promise<LoginOutput> {
@@ -86,9 +90,11 @@ export class AuthController {
   })
   @ApiNotFoundResponse({
     description: '유저가 존재하지 않거나 refresh token이 DB에 존재하지 않는다.',
+    type: ErrorOutput,
   })
   @ApiBadRequestResponse({
     description: 'Refresh token이 잘못되었다.',
+    type: ErrorOutput,
   })
   @ApiBearerAuth('Authorization')
   @UseGuards(JwtAuthGuard)
@@ -107,6 +113,7 @@ export class AuthController {
   })
   @ApiNotFoundResponse({
     description: '유저가 존재하지 않는다.',
+    type: ErrorOutput,
   })
   @ApiBearerAuth('Authorization')
   @UseGuards(JwtAuthGuard)
@@ -125,9 +132,11 @@ export class AuthController {
   })
   @ApiNotFoundResponse({
     description: '존재하지 않는 refresh token이므로 재발행할 수 없다.',
+    type: ErrorOutput,
   })
   @ApiUnauthorizedResponse({
     description: 'refresh token이 유효하지 않다.',
+    type: ErrorOutput,
   })
   @Post('reissue')
   async reissueToken(
@@ -147,6 +156,7 @@ export class AuthController {
   @ApiConflictResponse({
     description:
       '해당 이메일이 이미 인증됐다고 알려준다.(이미 회원가입이 된 경우와 메일만 인증된 경우가 존재한다.)',
+    type: ErrorOutput,
   })
   @Get('send-verify-email/:email')
   async sendVerifyEmail(
@@ -165,9 +175,11 @@ export class AuthController {
   })
   @ApiNotFoundResponse({
     description: '유저가 존재하지 않음을 알려준다.',
+    type: ErrorOutput,
   })
   @ApiUnauthorizedResponse({
     description: '이메일이 인증되지 않은 경우에 응답한다.',
+    type: ErrorOutput,
   })
   @Get('send-password-reset-email/:email')
   async sendPasswordResetEmail(
@@ -186,6 +198,7 @@ export class AuthController {
   })
   @ApiNotFoundResponse({
     description: '이메일 인증 코드가 존재하지 않음을 알려준다.',
+    type: ErrorOutput,
   })
   @Get('verify-email')
   async verifyEmail(@Query('code') code: string): Promise<VerifyEmailOutput> {
@@ -224,11 +237,11 @@ export class OauthController {
   @ApiBadRequestResponse({
     description:
       '카카오 로그인 요청 시 발생하는 에러를 알려준다.(ex : email 제공에 동의하지 않은 경우)',
-    type: LoginOutput,
+    type: ErrorOutput,
   })
   @ApiUnauthorizedResponse({
     description: '카카오 로그인 실패 여부를 알려준다.',
-    type: LoginOutput,
+    type: ErrorOutput,
   })
   @Get('kakao-login')
   async kakaoOauth(@Query('code') code: string): Promise<LoginOutput> {
@@ -259,6 +272,7 @@ export class OauthController {
   })
   @ApiBadRequestResponse({
     description: 'code가 잘못된 경우',
+    type: ErrorOutput,
   })
   @Get('google-login')
   @UseGuards(AuthGuard('google'))

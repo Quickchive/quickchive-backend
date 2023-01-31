@@ -13,14 +13,14 @@ export const AppDataSource = new DataSource({
   ...(process.env.POSTGRES_DB
     ? {
         host: process.env.POSTGRES_DB,
-        port: +process.env.DB_PORT,
+        port: process.env.DB_PORT ? +process.env.DB_PORT : undefined,
         username: process.env.POSTGRES_USER,
         password: process.env.POSTGRES_PASSWORD,
         database: process.env.POSTGRES_DB_NAME,
       }
     : {
         host: process.env.DB_HOST,
-        port: +process.env.DB_PORT,
+        port: process.env.DB_PORT ? +process.env.DB_PORT : undefined,
         username: process.env.DB_USERNAME,
         password: process.env.DB_PW,
         database: process.env.DB_NAME,

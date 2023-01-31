@@ -41,7 +41,7 @@ export class AddMultipleContentsBodyDto {
     isArray: true,
   })
   @IsString({ each: true })
-  contentLinks: string[];
+  contentLinks!: string[];
 }
 
 class ContentBody extends PartialType(AddContentBodyDto) {}
@@ -70,7 +70,7 @@ export class SummarizeContentBodyDto {
 
   @ApiProperty({ description: '콘텐츠 내용', required: true })
   @IsString()
-  content: string;
+  content!: string;
 }
 
 export class SummarizeContentOutput extends CoreOutput {

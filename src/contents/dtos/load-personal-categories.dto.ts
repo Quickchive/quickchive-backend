@@ -17,5 +17,5 @@ export class LoadRecentCategoriesOutput extends CoreOutput {
     description: '최근 저장한 카테고리 목록',
     type: [Category],
   })
-  recentCategories?: Category[];
+  recentCategories!: Category[];
 }

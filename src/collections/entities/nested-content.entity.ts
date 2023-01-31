@@ -11,7 +11,7 @@ export class NestedContent extends CoreEntity {
   @Column()
   @IsString({ message: 'String URL must be required.' })
   @IsUrl()
-  link: string;
+  link!: string;
 
   @ApiProperty({ description: 'Nested Content Title', required: false })
   @Column({ nullable: true })
@@ -39,5 +39,5 @@ export class NestedContent extends CoreEntity {
   @ManyToOne((type) => Collection, (collection) => collection.contents, {
     onDelete: 'CASCADE',
   })
-  collection: Collection;
+  collection!: Collection;
 }

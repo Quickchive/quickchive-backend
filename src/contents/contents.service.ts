@@ -87,18 +87,21 @@ export class ContentsService {
       } = await this.getLinkInfo(link);
       title = title ? title : linkTitle;
 
-      const category = await this.categories.getOrCreateCategory(
-        categoryName,
-        parentId,
-        userInDb,
-        queryRunnerManager,
-      );
+      let category: Category | null = null;
+      if (categoryName) {
+        category = await this.categories.getOrCreateCategory(
+          categoryName,
+          parentId,
+          userInDb,
+          queryRunnerManager,
+        );
 
-      await this.categories.checkContentDuplicateAndAddCategorySaveLog(
-        link,
-        category,
-        userInDb,
-      );
+        await this.categories.checkContentDuplicateAndAddCategorySaveLog(
+          link,
+          category,
+          userInDb,
+        );
+      }
 
       const newContent = queryRunnerManager.create(Content, {
         link,
@@ -108,13 +111,13 @@ export class ContentsService {
         description,
         comment,
         deadline,
-        category,
+        ...(category && { category }),
         user,
         ...(favorite && { favorite }),
       });
       await queryRunnerManager.save(newContent);
 
-      return;
+      return {};
     } catch (e) {
       throw e;
     }
@@ -126,7 +129,7 @@ export class ContentsService {
     queryRunnerManager: EntityManager,
   ): Promise<AddContentOutput> {
     try {
-      const userInDb = await queryRunnerManager.findOne(User, {
+      const userInDb = await queryRunnerManager.findOneOrFail(User, {
         where: { id: user.id },
         relations: {
           contents: true,
@@ -141,7 +144,7 @@ export class ContentsService {
 
           // Check if content already exists in same category
           if (
-            userInDb.contents.filter(
+            userInDb?.contents?.filter(
               (content) => content.link === link && !content.category,
             )[0]
           ) {
@@ -162,7 +165,7 @@ export class ContentsService {
         }
       }
 
-      return;
+      return {};
     } catch (e) {
       throw e;
     }
@@ -205,31 +208,34 @@ export class ContentsService {
         throw new NotFoundException('User not found');
       }
 
-      const content = userInDb.contents.filter(
+      const content = userInDb?.contents?.filter(
         (content) => content.id === contentId,
       )[0];
       if (!content) {
         throw new NotFoundException('Content not found.');
       }
 
-      const category = await this.categories.getOrCreateCategory(
-        categoryName,
-        parentId,
-        userInDb,
-        queryRunnerManager,
-      );
+      let category: Category | null = null;
+      if (categoryName) {
+        category = await this.categories.getOrCreateCategory(
+          categoryName,
+          parentId,
+          userInDb,
+          queryRunnerManager,
+        );
 
-      await this.categories.checkContentDuplicateAndAddCategorySaveLog(
-        link,
-        category,
-        userInDb,
-      );
+        await this.categories.checkContentDuplicateAndAddCategorySaveLog(
+          link,
+          category,
+          userInDb,
+        );
+      }
 
       await queryRunnerManager.save(Content, [
         { id: content.id, ...newContentObj, ...(category && { category }) },
       ]);
 
-      return;
+      return {};
     } catch (e) {
       throw e;
     }
@@ -251,7 +257,7 @@ export class ContentsService {
         throw new NotFoundException('User not found');
       }
 
-      const content = userInDb.contents.filter(
+      const content = userInDb?.contents?.filter(
         (content) => content.id === contentId,
       )[0];
 
@@ -262,7 +268,7 @@ export class ContentsService {
       content.favorite = !content.favorite;
       await queryRunnerManager.save(content);
 
-      return;
+      return {};
     } catch (e) {
       throw e;
     }
@@ -283,7 +289,7 @@ export class ContentsService {
         throw new NotFoundException('User not found');
       }
 
-      const content = userInDb.contents.filter(
+      const content = userInDb?.contents?.filter(
         (content) => content.id === contentId,
       )[0];
 
@@ -295,7 +301,7 @@ export class ContentsService {
 
       await this.contents.save(content);
 
-      return;
+      return {};
     } catch (e) {
       throw e;
     }
@@ -318,7 +324,7 @@ export class ContentsService {
         throw new NotFoundException('User not found');
       }
 
-      const content = userInDb.contents.filter(
+      const content = userInDb?.contents?.filter(
         (content) => content.id === contentId,
       )[0];
 
@@ -329,17 +335,17 @@ export class ContentsService {
       // delete content
       await queryRunnerManager.delete(Content, content.id);
 
-      return;
+      return {};
     } catch (e) {
       throw e;
     }
   }
 
   async getLinkInfo(link: string) {
-    let title: string = '';
-    let coverImg: string = '';
-    let description: string = '';
-    let siteName: string = null;
+    let title: string | undefined = '';
+    let coverImg: string | undefined = '';
+    let description: string | undefined = '';
+    let siteName: string | undefined;
 
     await axios
       .get(link)
@@ -403,7 +409,7 @@ export class ContentsService {
         throw new NotFoundException('User not found');
       }
 
-      const content: Content = userInDb.contents.filter(
+      const content: Content | undefined = userInDb?.contents?.filter(
         (content) => content.id === contentId,
       )[0];
 
@@ -502,26 +508,23 @@ export class CategoryService {
       const { categoryName, categorySlug } =
         this.categories.generateNameAndSlug(name);
 
-      // if parent id is undefined, set it to null to avoid bug caused by type mismatch
-      if (!parentId) {
-        parentId = null;
-      } else {
+      if (parentId) {
         // category depth should be 3
-        let currentParentId = parentId;
-        let parentCategory: Category = null;
+        let currentParentId: number | undefined = parentId;
+        let parentCategory: Category | null;
         for (let i = 0; i < 2; i++) {
           parentCategory = await queryRunnerManager.findOne(Category, {
             where: { id: currentParentId },
           });
-          if (i == 1 && parentCategory.parentId != null) {
+          if (i == 1 && parentCategory?.parentId != null) {
             throw new ConflictException('Category depth should be 3');
           }
-          currentParentId = parentCategory.parentId;
+          currentParentId = parentCategory?.parentId;
         }
       }
 
       // check if category exists in user's categories(check if category name is duplicated in same level too)
-      const category = userInDb.categories.find(
+      const category = userInDb.categories?.find(
         (category) =>
           category.slug === categorySlug && category.parentId === parentId,
       );
@@ -531,7 +534,7 @@ export class CategoryService {
         throw new ConflictException('Category already exists');
       } else {
         // if parent category exists, get parent category
-        const parentCategory: Category = parentId
+        const parentCategory: Category | null = parentId
           ? await queryRunnerManager.findOne(Category, {
               where: { id: parentId },
             })
@@ -545,16 +548,16 @@ export class CategoryService {
           queryRunnerManager.create(Category, {
             slug: categorySlug,
             name: categoryName,
-            parentId: parentCategory ? parentCategory.id : null,
+            parentId: parentCategory?.id,
             user: userInDb,
           }),
         );
 
-        userInDb.categories.push(category);
+        userInDb.categories?.push(category);
         await queryRunnerManager.save(userInDb);
       }
 
-      return;
+      return {};
     } catch (e) {
       throw e;
     }
@@ -580,30 +583,34 @@ export class CategoryService {
         throw new NotFoundException('User not found.');
       }
 
-      const category = userInDb.categories.find(
+      const category = userInDb.categories?.find(
         (category) => category.id === categoryId,
       );
 
-      // Check if user has category with same slug
-      const { categoryName, categorySlug } =
-        this.categories.generateNameAndSlug(name);
-      if (
-        userInDb.categories.filter(
-          (category) =>
-            category.slug === categorySlug && category.id !== categoryId,
-        )[0]
-      ) {
-        throw new NotFoundException(
-          'Category with that name already exists in current user.',
-        );
+      if (category) {
+        // Check if user has category with same slug
+        const { categoryName, categorySlug } =
+          this.categories.generateNameAndSlug(name);
+        if (
+          userInDb.categories?.filter(
+            (category) =>
+              category.slug === categorySlug && category.id !== categoryId,
+          )[0]
+        ) {
+          throw new NotFoundException(
+            'Category with that name already exists in current user.',
+          );
+        }
+
+        // Update category
+        category.name = categoryName;
+        category.slug = categorySlug;
+        await queryRunnerManager.save(category);
+      } else {
+        throw new NotFoundException('Category not found.');
       }
 
-      // Update category
-      category.name = categoryName;
-      category.slug = categorySlug;
-      await queryRunnerManager.save(category);
-
-      return;
+      return {};
     } catch (e) {
       throw e;
     }
@@ -625,7 +632,7 @@ export class CategoryService {
 
       await queryRunnerManager.delete(Category, { id: categoryId });
 
-      return;
+      return {};
     } catch (e) {
       throw e;
     }
@@ -635,12 +642,16 @@ export class CategoryService {
     user: User,
   ): Promise<LoadPersonalCategoriesOutput> {
     try {
-      const { categories } = await this.users.findOne({
+      const { categories } = await this.users.findOneOrFail({
         where: { id: user.id },
         relations: {
           categories: true,
         },
       });
+
+      if (!categories) {
+        throw new NotFoundException('Categories not found.');
+      }
 
       // make categories tree by parentid
       const categoriesTree = this.categories.generateCategoriesTree(categories);

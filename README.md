@@ -8,7 +8,7 @@
 [Quickchive](https://quickchive.swygbro.com/)  
 [Quickchive Frontend](https://github.com/Quickchive/Quickchive-frontend)
 
-# v0.1.0
+# v1.0.0
 
 > releated with quickchive version 1.0
 

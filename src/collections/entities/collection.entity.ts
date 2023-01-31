@@ -10,7 +10,7 @@ import { Category } from '../../contents/entities/category.entity';
 export class Collection extends CoreEntity {
   @ApiProperty({ description: 'Collection Title' })
   @Column()
-  title: string;
+  title!: string;
 
   @ApiProperty({
     description: 'Collection Comment',
@@ -46,14 +46,14 @@ export class Collection extends CoreEntity {
 
   @ApiProperty({ description: 'Favorite' })
   @Column({ default: false })
-  favorite: boolean;
+  favorite!: boolean;
 
   @ManyToOne((type) => User, (user) => user.collections, {
     onDelete: 'CASCADE',
   })
-  user: User;
+  user!: User;
 
   @ApiProperty({ description: 'Owner ID' })
   @RelationId((collection: Collection) => collection.user)
-  userId: number;
+  userId!: number;
 }

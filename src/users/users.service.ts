@@ -33,7 +33,7 @@ export class UsersService {
     queryRunnerManager: EntityManager,
   ): Promise<EditProfileOutput> {
     try {
-      const user = await queryRunnerManager.findOne(User, {
+      const user = await queryRunnerManager.findOneOrFail(User, {
         where: { id: userId },
         select: { id: true, email: true, name: true, password: true },
       });
@@ -42,16 +42,23 @@ export class UsersService {
         user.name = name;
       }
 
+      interface UserWithoutPassword extends Omit<User, 'password'> {}
+
       if (password && oldPassword) {
-        if (user.checkPassword(oldPassword)) user.password = password;
+        if (await user?.checkPassword(oldPassword)) user.password = password;
         else throw new UnauthorizedException('The password is incorrect');
-      } else {
-        delete user.password;
+
+        await queryRunnerManager.save(user);
+      }
+      // else {
+      //   delete user.password;
+      // }
+      else {
+        const userWithoutPassword: UserWithoutPassword = user;
+        await queryRunnerManager.save(userWithoutPassword);
       }
 
-      await queryRunnerManager.save(user);
-
-      return;
+      return {};
     } catch (e) {
       throw e;
     }
@@ -62,7 +69,7 @@ export class UsersService {
     queryRunnerManager: EntityManager,
   ): Promise<ResetPasswordOutput> {
     try {
-      const userId: number = await this.cacheManager.get(code);
+      const userId: number | undefined = await this.cacheManager.get(code);
 
       if (userId) {
         const user = await queryRunnerManager.findOne(User, {
@@ -77,7 +84,7 @@ export class UsersService {
         await queryRunnerManager.save(user); // update password
         await this.cacheManager.del(code); // delete verification value
 
-        return;
+        return {};
       } else {
         throw new NotFoundException('Reset Code not found');
       }
@@ -88,10 +95,10 @@ export class UsersService {
 
   async loadPersonalContents(
     user: User,
-    categoryId: number,
+    categoryId: number | undefined,
   ): Promise<LoadPersonalContentsOutput> {
     try {
-      let { contents } = await this.users.findOne({
+      let { contents }: User = await this.users.findOneOrFail({
         where: { id: user.id },
         relations: {
           contents: {
@@ -99,7 +106,7 @@ export class UsersService {
           },
         },
       });
-      if (categoryId) {
+      if (categoryId && contents) {
         contents = contents.filter(
           (content) => content?.category?.id === categoryId,
         );
@@ -115,7 +122,7 @@ export class UsersService {
 
   async loadFavorites(user: User): Promise<LoadFavoritesOutput> {
     try {
-      const { contents /*collections*/ } = await this.users.findOne({
+      const { contents /*collections*/ } = await this.users.findOneOrFail({
         where: { id: user.id },
         relations: {
           contents: {
@@ -128,7 +135,7 @@ export class UsersService {
         },
       });
 
-      const favoriteContents: Content[] = contents.filter(
+      const favoriteContents: Content[] | undefined = contents?.filter(
         (content) => content.favorite,
       );
 

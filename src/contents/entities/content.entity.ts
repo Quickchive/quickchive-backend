@@ -20,7 +20,7 @@ export class Content extends CoreEntity {
   @Column()
   @IsString({ message: 'String URL must be required.' })
   @IsUrl()
-  link: string;
+  link!: string;
 
   @ApiProperty({ description: 'Article Title', required: false })
   @Column({ nullable: true })
@@ -62,12 +62,12 @@ export class Content extends CoreEntity {
   @ApiProperty({ description: 'Favorite' })
   @Column({ default: false })
   @IsBoolean()
-  favorite: boolean;
+  favorite!: boolean;
 
   @ApiProperty({ description: 'Flag indicating read' })
   @Column({ default: false })
   @IsBoolean()
-  readFlag: boolean;
+  readFlag!: boolean;
 
   @ApiProperty({ description: 'Article Category', required: false })
   @ManyToOne((type) => Category, (category) => category.contents, {
@@ -79,9 +79,9 @@ export class Content extends CoreEntity {
   @ManyToOne((type) => User, (user) => user.contents, {
     onDelete: 'CASCADE',
   })
-  user: User;
+  user!: User;
 
   @ApiProperty({ description: 'Owner ID' })
   @RelationId((content: Content) => content.user)
-  userId: number;
+  userId!: number;
 }

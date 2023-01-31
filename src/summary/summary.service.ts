@@ -12,7 +12,6 @@ import {
 } from './dtos/summary-content.dto';
 import { CONFIG_OPTIONS } from '../common/common.constants';
 import * as cheerio from 'cheerio';
-import { logger } from 'src/common/logger';
 
 @Injectable()
 export class SummaryService {
@@ -80,7 +79,7 @@ export class SummaryService {
       // send request to naver server with axios
       const response = await axios.post(api_url, body, { headers });
       return { summary: response.data.summary };
-    } catch (e) {
+    } catch (e: any) {
       const errorMessage = e.response.data.error.message
         ? e.response.data.error.message
         : e.message;

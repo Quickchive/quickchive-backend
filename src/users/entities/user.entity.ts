@@ -18,12 +18,12 @@ export class User extends CoreEntity {
   @ApiProperty({ example: 'tester', description: 'User Name' })
   @Column()
   @IsString()
-  name: string;
+  name!: string;
 
   @ApiProperty({ example: 'ex@g.com', description: 'User Email' })
   @Column({ unique: true })
   @IsEmail()
-  email: string;
+  email!: string;
 
   @ApiProperty({ example: 'passw0rd', description: 'User Password' })
   @Column({ select: false })
@@ -31,7 +31,7 @@ export class User extends CoreEntity {
   @Matches(/^(?=.*\d)[A-Za-z\d@$!%*?&]{8,}$/, {
     message: 'Password must be at least 8 characters long, contain 1 number',
   })
-  password: string;
+  password!: string;
 
   @ApiProperty({
     example: 'Client',
@@ -40,12 +40,12 @@ export class User extends CoreEntity {
   })
   @Column({ type: 'enum', enum: UserRole, default: UserRole.Client })
   @IsEnum(UserRole)
-  role: UserRole;
+  role!: UserRole;
 
   @ApiProperty({ description: 'User Verified' })
   @Column({ default: false })
   @IsBoolean()
-  verified: boolean;
+  verified!: boolean;
 
   @ApiProperty({
     description: 'User Content List',

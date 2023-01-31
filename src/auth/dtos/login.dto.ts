@@ -9,26 +9,23 @@ export class LoginBodyDto extends PickType(User, ['email', 'password']) {
     example: true,
   })
   @IsBoolean()
-  auto_login: boolean;
+  auto_login!: boolean;
 }
 
 export class LoginOutput extends CoreOutput {
-  @ApiProperty({ description: 'access token', required: false })
+  @ApiProperty({ description: 'access token', required: true })
   @IsString()
-  @IsOptional()
-  access_token?: string;
+  access_token!: string;
 
-  @ApiProperty({ description: 'refresh token', required: false })
+  @ApiProperty({ description: 'refresh token', required: true })
   @IsString()
-  @IsOptional()
-  refresh_token?: string;
+  refresh_token!: string;
 }
 
 export class LogoutBodyDto {
   @ApiProperty({ description: 'refresh token', required: true })
   @IsString()
-  @IsOptional()
-  refresh_token?: string;
+  refresh_token!: string;
 }
 
 export class LogoutOutput extends CoreOutput {}

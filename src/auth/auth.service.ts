@@ -103,7 +103,7 @@ export class AuthService {
         user.password = password;
         await this.users.save(user);
 
-        return;
+        return {};
       } else {
         throw new NotFoundException('User is not verified');
       }
@@ -119,14 +119,13 @@ export class AuthService {
     const user = await this.users.findOneBy({ id: userId });
     if (user) {
       if (refreshToken && typeof refreshToken === 'string') {
-        const refreshTokenInCache: number = await this.cacheManager.get(
-          refreshToken,
-        );
+        const refreshTokenInCache: number | undefined =
+          await this.cacheManager.get(refreshToken);
 
         if (refreshTokenInCache) {
           if (refreshTokenInCache === userId) {
             await this.cacheManager.del(refreshToken);
-            return;
+            return {};
           } else {
             throw new BadRequestException('Invalid refresh token');
           }
@@ -145,7 +144,7 @@ export class AuthService {
     const { affected } = await this.users.delete(userId);
 
     if (affected === 1) {
-      return;
+      return {};
     } else {
       throw new NotFoundException('User not found');
     }
@@ -154,7 +153,7 @@ export class AuthService {
   async reissueToken({
     refresh_token: refreshToken,
   }: RefreshTokenDto): Promise<RefreshTokenOutput> {
-    let decoded: Payload = null;
+    let decoded: Payload;
     try {
       // decoding refresh token
       decoded = this.jwtService.verify(refreshToken, {
@@ -199,7 +198,7 @@ export class AuthService {
 
   async sendVerifyEmail(email: string): Promise<VerifyEmailOutput> {
     const user = await this.users.findOneBy({ email });
-    let newUser: User = null;
+    let newUser: User;
     if (user && user.verified === true) {
       if (!user.name) {
         throw new ConflictException(
@@ -228,7 +227,7 @@ export class AuthService {
 
     this.mailService.sendVerificationEmail(newUser.email, newUser.email, code);
 
-    return;
+    return {};
   }
 
   async sendPasswordResetEmail(
@@ -248,17 +247,17 @@ export class AuthService {
       // send password reset email to user using mailgun
       this.mailService.sendResetPasswordEmail(user.email, user.name, code);
 
-      return;
+      return {};
     } else {
       throw new NotFoundException('User not found');
     }
   }
 
   async verifyEmail(code: string): Promise<VerifyEmailOutput> {
-    const userId: number = await this.cacheManager.get(code);
+    const userId: number | undefined = await this.cacheManager.get(code);
 
     if (userId) {
-      const user = await this.users.findOneBy({ id: userId });
+      const user = await this.users.findOneByOrFail({ id: userId });
       user.verified = true;
       await this.users.save(user); // verify
       await this.cacheManager.del(code); // delete verification value
@@ -283,7 +282,6 @@ export class AuthService {
       }
 
       const isPasswordCorrect = await user.checkPassword(password);
-      delete user.password;
 
       if (isPasswordCorrect) {
         return { user };
@@ -312,7 +310,6 @@ export class OauthService {
 
   // Get access token from Kakao Auth Server
   async getKakaoAccessToken(code: string): Promise<GetKakaoAccessTokenOutput> {
-    console.log(code);
     try {
       const formData = {
         grant_type: 'authorization_code',
@@ -388,7 +385,7 @@ export class OauthService {
         return { user: newUser };
       }
     } catch (e) {
-      throw new HttpException(e.message, e.status ? e.status : 400);
+      throw e;
     }
   }
 
@@ -420,16 +417,14 @@ export class OauthService {
   // OAuth Login
   async oauthLogin(email: string): Promise<LoginOutput> {
     try {
-      const user: User = await this.users.findOneBy({ email });
+      const user: User = await this.users.findOneByOrFail({ email });
       if (user) {
         const payload: Payload = this.jwtService.createPayload(
           user.email,
           true,
           user.id,
         );
-        const refreshToken = await this.jwtService.generateRefreshToken(
-          payload,
-        );
+        const refreshToken = this.jwtService.generateRefreshToken(payload);
         await this.cacheManager.set(refreshToken, user.id, {
           ttl: refreshTokenExpirationInCache,
         });
@@ -441,8 +436,8 @@ export class OauthService {
       } else {
         throw new UnauthorizedException('Error in OAuth login');
       }
-    } catch (error) {
-      throw new UnauthorizedException(error.message);
+    } catch (e) {
+      throw e;
     }
   }
 
@@ -452,20 +447,9 @@ export class OauthService {
    */
   async kakaoOauth({ code }: LoginWithKakaoDto): Promise<LoginOutput> {
     try {
-      const { access_token, error: accessTokenError } =
-        await this.getKakaoAccessToken(code);
-      if (accessTokenError) {
-        console.log(accessTokenError);
-        return { error: 'Please go back and Try again' };
-      }
+      const { access_token } = await this.getKakaoAccessToken(code);
 
-      const { userInfo, error: userInfoError } = await this.getKakaoUserInfo(
-        access_token,
-      );
-      if (userInfoError) {
-        console.log(userInfoError);
-        return { error: 'Please go back and Try again' };
-      }
+      const { userInfo } = await this.getKakaoUserInfo(access_token);
 
       const email = userInfo.kakao_account.email;
       if (!email) {
@@ -484,19 +468,14 @@ export class OauthService {
         const password = CryptoJS.SHA256(
           email + process.env.KAKAO_JS_KEY,
         ).toString();
-        const { user } = await this.createKakaoAccount({
+        await this.createKakaoAccount({
           name,
           email,
           password,
         });
-        if (user) {
-          return await this.oauthLogin(email);
-        }
-      } else if (userInDb) {
-        return await this.oauthLogin(userInDb.email);
-      } else {
-        throw new BadRequestException("Couldn't log in with Kakao");
       }
+
+      return await this.oauthLogin(email);
     } catch (e) {
       throw e;
     }
@@ -516,19 +495,14 @@ export class OauthService {
         const password = CryptoJS.SHA256(
           email + process.env.GOOGLE_CLIENT_ID,
         ).toString();
-        const { user } = await this.createKakaoAccount({
+        await this.createKakaoAccount({
           name,
           email,
           password,
         });
-        if (user) {
-          return await this.oauthLogin(email);
-        }
-      } else if (userInDb) {
-        return await this.oauthLogin(userInDb.email);
-      } else {
-        throw new BadRequestException("Couldn't log in with Google");
       }
+
+      return await this.oauthLogin(email);
     } catch (e) {
       throw e;
     }

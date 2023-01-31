@@ -5,7 +5,7 @@ import { getRepositoryToken } from '@nestjs/typeorm';
 import { CONFIG_OPTIONS } from '../common/common.constants';
 import { MailService } from '../mail/mail.service';
 import { User } from '../users/entities/user.entity';
-import { Repository } from 'typeorm';
+import { ObjectLiteral, Repository } from 'typeorm';
 import { AuthService } from './auth.service';
 import { customJwtService } from './jwt/jwt.service';
 import { Cache } from 'cache-manager';
@@ -17,7 +17,9 @@ const mockRepository = () => ({
   delete: jest.fn(),
 });
 
-type MockRepository<T = any> = Partial<Record<keyof Repository<T>, jest.Mock>>;
+type MockRepository<T extends ObjectLiteral = any> = Partial<
+  Record<keyof Repository<T>, jest.Mock>
+>;
 
 describe('AuthService', () => {
   let service: AuthService;

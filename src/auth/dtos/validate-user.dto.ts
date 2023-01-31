@@ -8,5 +8,5 @@ export class ValidateUserOutput extends CoreOutput {
   @ApiProperty({
     description: '사용자 정보',
   })
-  user?: User;
+  user!: User;
 }

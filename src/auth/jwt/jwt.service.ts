@@ -12,10 +12,10 @@ export class customJwtService {
   }
 
   verify(token: string, options?: JwtVerifyOptions): Payload {
-    return this.jwtService.verify(token, { secret: options.secret });
+    return this.jwtService.verify(token, { secret: options?.secret });
   }
 
-  createPayload(email, autoLogin, sub): Payload {
+  createPayload(email: string, autoLogin: boolean, sub: number): Payload {
     const period: string = autoLogin ? ONEMONTH : TWOHOUR;
 
     const payload: Payload = { email, period, sub };

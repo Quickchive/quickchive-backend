@@ -12,18 +12,18 @@ export class Category extends CoreEntity {
   @Column()
   @IsString()
   @Length(2)
-  name: string;
+  name!: string;
 
   @ApiProperty({ description: 'Category Slug' })
   @Column()
   @IsString()
-  slug: string;
+  slug!: string;
 
   @OneToMany((type) => Content, (content) => content.category)
-  contents: Content[];
+  contents!: Content[];
 
   @OneToMany((type) => Collection, (collection) => collection.category)
-  collections: Collection[];
+  collections!: Collection[];
 
   @Column({ nullable: true })
   parentId?: number;
@@ -32,9 +32,9 @@ export class Category extends CoreEntity {
     onDelete: 'CASCADE',
     nullable: false,
   })
-  user: User;
+  user!: User;
 
   @ApiProperty({ description: 'Owner ID' })
   @RelationId((category: Category) => category.user)
-  userId: number;
+  userId!: number;
 }

@@ -9,7 +9,7 @@ export class AddCategoryBodyDto {
     example: '정보',
   })
   @IsString()
-  categoryName: string;
+  categoryName!: string;
 
   @ApiProperty({
     description: '부모 카테고리 id',
@@ -30,7 +30,7 @@ export class AddCategoryOutput extends CoreOutput {}
 export class UpdateCategoryBodyDto extends PickType(Category, ['name']) {
   @ApiProperty({ description: '수정할 카테고리 id' })
   @IsNumber()
-  categoryId: number;
+  categoryId!: number;
 }
 
 export class UpdateCategoryOutput extends CoreOutput {}
@@ -40,11 +40,11 @@ export class DeleteCategoryOutput extends CoreOutput {}
 export class CategoryNameAndSlug {
   @ApiProperty({ description: '카테고리 이름' })
   @IsString()
-  categoryName: string;
+  categoryName!: string;
 
   @ApiProperty({ description: '카테고리 슬러그' })
   @IsString()
-  categorySlug: string;
+  categorySlug!: string;
 }
 
 export class CategoryTreeNode extends Category {

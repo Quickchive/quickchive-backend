@@ -6,6 +6,7 @@ import {
 } from '@nestjs/common';
 import { User } from 'src/users/entities/user.entity';
 import { EntityManager } from 'typeorm';
+import { InjectRepository } from '@nestjs/typeorm';
 import {
   AddCollectionBodyDto,
   AddCollectionOutput,
@@ -19,11 +20,10 @@ import {
   AddNestedContentBodyDto,
   AddNestedContentOutput,
 } from './dtos/nested-content.dto';
-import { Category } from 'src/contents/entities/category.entity';
 import { toggleFavoriteOutput } from 'src/contents/dtos/content.dto';
-import { InjectRepository } from '@nestjs/typeorm';
-import { CategoryRepository } from 'src/contents/repository/category.repository';
-import { ContentsService } from 'src/contents/contents.service';
+import { Category } from '../contents/entities/category.entity';
+import { CategoryRepository } from '../contents/repository/category.repository';
+import { ContentsService } from '../contents/contents.service';
 
 @Injectable()
 export class CollectionsService {

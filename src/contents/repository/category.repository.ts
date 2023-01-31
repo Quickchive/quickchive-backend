@@ -20,15 +20,14 @@ export interface CategoryRepository extends Repository<Category> {
   ): CategoryTreeNode[];
 
   getOrCreateCategory(
-    // link: string,
     categoryName: string,
-    parentId: number,
+    parentId: number | undefined,
     userInDb: User,
     queryRunnerManager: EntityManager,
   ): Promise<Category>;
 
   checkContentDuplicateAndAddCategorySaveLog(
-    link: string,
+    link: string | undefined,
     category: Category,
     userInDb: User,
   ): Promise<void>;
@@ -72,7 +71,7 @@ export const customCategoryRepositoryMethods: CustomCategoryRepository = {
    */
   async getOrCreateCategory(
     categoryName: string,
-    parentId: number,
+    parentId: number | undefined,
     userInDb: User,
     queryRunnerManager: EntityManager,
   ): Promise<Category> {
@@ -80,33 +79,30 @@ export const customCategoryRepositoryMethods: CustomCategoryRepository = {
     const { categoryName: refinedCategoryName, categorySlug } =
       generateNameAndSlug(categoryName);
 
-    // if parent id is undefined, set it to null to avoid bug caused by type mismatch
-    if (!parentId) {
-      parentId = null;
-    } else {
+    if (parentId) {
       // category depth should be 3
-      let currentParentId = parentId;
-      let parentCategory: Category = null;
+      let currentParentId: number | undefined = parentId;
+      let parentCategory: Category | null;
       for (let i = 0; i < 2; i++) {
         parentCategory = await queryRunnerManager.findOne(Category, {
           where: { id: currentParentId },
         });
-        if (i == 1 && parentCategory.parentId != null) {
+        if (i == 1 && parentCategory?.parentId != null) {
           throw new ConflictException('Category depth should be 3');
         }
-        currentParentId = parentCategory.parentId;
+        currentParentId = parentCategory?.parentId;
       }
     }
     // check if category exists in user's categories
-    let category: Category = userInDb.categories.find(
+    let category: Category | undefined = userInDb.categories?.find(
       (category) =>
-        category.slug === categorySlug && category.parentId === parentId,
+        category.slug === categorySlug && category.parentId == parentId,
     );
 
     // if category doesn't exist, create it
     if (!category) {
       // if parent id exists, get parent category
-      const parentCategory: Category = parentId
+      const parentCategory: Category | null = parentId
         ? await queryRunnerManager.findOne(Category, {
             where: { id: parentId },
           })
@@ -120,12 +116,12 @@ export const customCategoryRepositoryMethods: CustomCategoryRepository = {
         queryRunnerManager.create(Category, {
           slug: categorySlug,
           name: refinedCategoryName,
-          parentId: parentCategory ? parentCategory.id : null,
+          parentId: parentCategory?.id,
           user: userInDb,
         }),
       );
 
-      userInDb.categories.push(category);
+      userInDb.categories?.push(category);
       await queryRunnerManager.save(userInDb);
     }
 
@@ -141,28 +137,34 @@ export const customCategoryRepositoryMethods: CustomCategoryRepository = {
    * @param userInDb
    */
   async checkContentDuplicateAndAddCategorySaveLog(
-    link: string,
+    link: string | undefined,
     category: Category,
     userInDb: User,
   ): Promise<void> {
     // 최상위 카테고리부터 시작해서 하위 카테고리까지의 그룹을 찾아옴
-    const categoryFamily = findCategoryFamily(userInDb.categories, category);
+    const categoryFamily: CategoryTreeNode[] = findCategoryFamily(
+      userInDb?.categories,
+      category,
+    );
 
     /*
      * 카테고리의 중복을 체크하고, 중복이 없다면 최상위 카테고리의 count를 증가시킴
      */
 
     // flat categoryFamily with children
-    categoryFamily.reduce((acc, cur) => {
-      acc.push(cur);
-      if (cur.children) {
-        acc.push(cur.children.reduce);
-      }
-      return acc;
-    }, []);
-    const flatDeep = (arr, d) => {
+    // categoryFamily.reduce((acc: CategoryTreeNode[], cur) => {
+    //   acc.push(cur);
+    //   if (cur.children) {
+    //     acc.push(cur.children.reduce);
+    //   }
+    //   return acc;
+    // }, []);
+    const flatDeep = (
+      arr: CategoryTreeNode[],
+      d: number,
+    ): CategoryTreeNode[] => {
       return d > 0
-        ? arr.reduce((acc, cur) => {
+        ? arr.reduce((acc: CategoryTreeNode[], cur) => {
             const forConcat = [cur];
             return acc.concat(
               cur.children
@@ -173,14 +175,17 @@ export const customCategoryRepositoryMethods: CustomCategoryRepository = {
         : arr.slice();
     };
 
-    const flatCategoryFamily = flatDeep(categoryFamily, Infinity);
+    const flatCategoryFamily: CategoryTreeNode[] = flatDeep(
+      categoryFamily,
+      Infinity,
+    );
 
-    const contentThatSameLinkAndCategory = userInDb.contents.find(
+    const contentThatSameLinkAndCategory = userInDb.contents?.find(
       (contentInFilter) =>
         contentInFilter.link === link &&
         flatCategoryFamily.filter(
           (categoryInFamily) =>
-            categoryInFamily.id === contentInFilter.category.id,
+            categoryInFamily.id === contentInFilter.category?.id,
         ).length > 0,
     );
     if (contentThatSameLinkAndCategory) {
@@ -254,9 +259,11 @@ const generateCategoriesTree = (categories: Category[]): CategoryTreeNode[] => {
 };
 
 const findCategoryFamily = (
-  categories: Category[],
+  categories: Category[] | undefined,
   category: Category,
 ): CategoryTreeNode[] => {
+  if (!categories) return [category];
+
   const topParentId = findTopParentCategory(categories, category);
   const categoriesTree: CategoryTreeNode[] = generateCategoriesTree(categories);
 
@@ -272,7 +279,7 @@ const findTopParentCategory = (
     if (parent) {
       return findTopParentCategory(categories, parent);
     }
-  } else {
-    return category.id;
   }
+
+  return category.id;
 };

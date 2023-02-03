@@ -111,8 +111,9 @@ export class UsersController {
   @Get('load-contents')
   async loadPersonalContents(
     @AuthUser() user: User,
-    @Query('categoryId', new ParseIntPipe()) categoryId?: number,
+    @Query('categoryId') categoryId?: number,
   ): Promise<LoadPersonalContentsOutput> {
+    if (categoryId) categoryId = +categoryId;
     return await this.usersService.loadPersonalContents(user, categoryId);
   }
 

@@ -19,7 +19,7 @@ class ContentBodyExceptLink extends PartialType(
   @ApiProperty({
     description: '부모 카테고리 id',
     example: 1,
-    nullable: true,
+    required: false,
   })
   @IsNumber()
   @IsOptional()

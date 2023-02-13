@@ -1,6 +1,6 @@
 import { EntityManager, Repository } from 'typeorm';
 import { Category } from '../entities/category.entity';
-import { CategoryNameAndSlug, CategoryTreeNode } from '../dtos/category.dto';
+import { CategorySlug, CategoryTreeNode } from '../dtos/category.dto';
 import { User } from '../../users/entities/user.entity';
 import { ConflictException, NotFoundException } from '@nestjs/common';
 
@@ -9,7 +9,7 @@ import * as fs from 'fs';
 export interface CategoryRepository extends Repository<Category> {
   // this: Repository<Category>;
 
-  generateNameAndSlug(name: string): CategoryNameAndSlug;
+  generateSlug(name: string): CategorySlug;
 
   // make categories tree by parentId
   generateCategoriesTree(categories: Category[]): CategoryTreeNode[];
@@ -35,7 +35,7 @@ export interface CategoryRepository extends Repository<Category> {
 
 type CustomCategoryRepository = Pick<
   CategoryRepository,
-  | 'generateNameAndSlug'
+  | 'generateSlug'
   | 'generateCategoriesTree'
   | 'findCategoryFamily'
   | 'getOrCreateCategory'
@@ -43,8 +43,8 @@ type CustomCategoryRepository = Pick<
 >;
 
 export const customCategoryRepositoryMethods: CustomCategoryRepository = {
-  generateNameAndSlug(name: string): CategoryNameAndSlug {
-    return generateNameAndSlug(name);
+  generateSlug(name: string): CategorySlug {
+    return generateSlug(name);
   },
 
   // make categories tree by parentId
@@ -76,8 +76,7 @@ export const customCategoryRepositoryMethods: CustomCategoryRepository = {
     queryRunnerManager: EntityManager,
   ): Promise<Category> {
     // generate category name and slug
-    const { categoryName: refinedCategoryName, categorySlug } =
-      generateNameAndSlug(categoryName);
+    const { categorySlug } = generateSlug(categoryName);
 
     if (parentId) {
       // category depth should be 3
@@ -115,7 +114,7 @@ export const customCategoryRepositoryMethods: CustomCategoryRepository = {
       category = await queryRunnerManager.save(
         queryRunnerManager.create(Category, {
           slug: categorySlug,
-          name: refinedCategoryName,
+          name: categoryName,
           parentId: parentCategory?.id,
           user: userInDb,
         }),
@@ -215,11 +214,11 @@ export const customCategoryRepositoryMethods: CustomCategoryRepository = {
   },
 };
 
-const generateNameAndSlug = (name: string): CategoryNameAndSlug => {
+const generateSlug = (name: string): CategorySlug => {
   const categoryName = name.trim().toLowerCase();
   const categorySlug = categoryName.replace(/ /g, '-');
 
-  return { categoryName, categorySlug };
+  return { categorySlug };
 };
 
 const generateCategoriesTree = (categories: Category[]): CategoryTreeNode[] => {

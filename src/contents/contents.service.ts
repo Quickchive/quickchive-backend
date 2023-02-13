@@ -491,7 +491,7 @@ export class CategoryService {
 
   async addCategory(
     user: User,
-    { categoryName: name, parentId }: AddCategoryBodyDto,
+    { categoryName, parentId }: AddCategoryBodyDto,
     queryRunnerManager: EntityManager,
   ): Promise<AddCategoryOutput> {
     try {
@@ -505,8 +505,7 @@ export class CategoryService {
         throw new NotFoundException('User not found');
       }
 
-      const { categoryName, categorySlug } =
-        this.categories.generateNameAndSlug(name);
+      const { categorySlug } = this.categories.generateSlug(categoryName);
 
       if (parentId) {
         // category depth should be 3
@@ -565,7 +564,7 @@ export class CategoryService {
 
   async updateCategory(
     user: User,
-    { categoryId, name }: UpdateCategoryBodyDto,
+    { categoryId, name: categoryName }: UpdateCategoryBodyDto,
     queryRunnerManager: EntityManager,
   ): Promise<UpdateCategoryOutput> {
     try {
@@ -589,8 +588,7 @@ export class CategoryService {
 
       if (category) {
         // Check if user has category with same slug
-        const { categoryName, categorySlug } =
-          this.categories.generateNameAndSlug(name);
+        const { categorySlug } = this.categories.generateSlug(categoryName);
         if (
           userInDb.categories?.filter(
             (category) =>

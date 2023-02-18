@@ -3,7 +3,7 @@ import { getRepositoryToken } from '@nestjs/typeorm';
 import { CONFIG_OPTIONS } from '../common/common.constants';
 import { SummaryService } from '../summary/summary.service';
 import { User, UserRole } from '../users/entities/user.entity';
-import { DataSource, ObjectLiteral, Repository } from 'typeorm';
+import { DataSource, EntityManager, ObjectLiteral, Repository } from 'typeorm';
 import { CategoryService, ContentsService } from './contents.service';
 import { Content } from './entities/content.entity';
 import { Category } from './entities/category.entity';
@@ -173,6 +173,87 @@ describe('CategoryService', () => {
 
   it('should be defined', () => {
     expect(service).toBeDefined();
+  });
+
+  describe('deleteCategory', () => {
+    const fakeCategories: Category[] = [
+      {
+        id: 1,
+        createdAt: new Date(),
+        updatedAt: new Date(),
+        name: 'Dev',
+        slug: 'Dev',
+        userId: 1,
+        collections: [],
+        contents: [],
+        user: fakeUser,
+      },
+      {
+        id: 2,
+        createdAt: new Date(),
+        updatedAt: new Date(),
+        name: '쇼핑리스트',
+        slug: '쇼핑리스트',
+        userId: 1,
+        collections: [],
+        contents: [],
+        user: fakeUser,
+      },
+      {
+        id: 3,
+        createdAt: new Date(),
+        updatedAt: new Date(),
+        name: 'ts',
+        slug: 'ts',
+        userId: 1,
+        collections: [],
+        contents: [],
+        user: fakeUser,
+        parentId: 1,
+      },
+      {
+        id: 4,
+        createdAt: new Date(),
+        updatedAt: new Date(),
+        name: 'js',
+        slug: 'js',
+        userId: 1,
+        collections: [],
+        contents: [],
+        user: fakeUser,
+        parentId: 1,
+      },
+      {
+        id: 5,
+        createdAt: new Date(),
+        updatedAt: new Date(),
+        name: 'pick type',
+        slug: 'pick_type',
+        userId: 1,
+        collections: [],
+        contents: [],
+        user: fakeUser,
+        parentId: 3,
+      },
+    ];
+
+    fakeUser.categories = [...fakeCategories];
+
+    beforeEach(async () => {});
+
+    describe('내부 콘텐츠 삭제 flag가 true인 경우', () => {
+      it('삭제할 카테고리에 하위 카테고리가 있는 경우', async () => {});
+      it('삭제할 카테고리에 하위 카테고리가 없는 경우', async () => {});
+      it('삭제할 카테고리에 상위 카테고리가 없는 경우', async () => {});
+      it('삭제할 카테고리에 상위 카테고리가 있는 경우', async () => {});
+    });
+
+    describe('내부 콘텐츠 삭제 flag가 false인 경우', () => {
+      it('삭제할 카테고리에 하위 카테고리가 있는 경우', async () => {});
+      it('삭제할 카테고리에 하위 카테고리가 없는 경우', async () => {});
+      it('삭제할 카테고리에 상위 카테고리가 없는 경우', async () => {});
+      it('삭제할 카테고리에 상위 카테고리가 있는 경우', async () => {});
+    });
   });
 
   describe('loadRecentCategories', () => {

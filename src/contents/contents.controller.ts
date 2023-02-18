@@ -9,6 +9,8 @@ import {
   Patch,
   Get,
   UseInterceptors,
+  ParseBoolPipe,
+  Query,
 } from '@nestjs/common';
 import {
   ApiBadRequestResponse,
@@ -358,11 +360,13 @@ export class CategoryController {
   async deleteCategory(
     @AuthUser() user: User,
     @Param('categoryId', new ParseIntPipe()) categoryId: number,
+    @Query('deleteContentFlag', new ParseBoolPipe()) deleteContentFlag: boolean,
     @TransactionManager() queryRunnerManager: EntityManager,
   ): Promise<DeleteCategoryOutput> {
     return await this.categoryService.deleteCategory(
       user,
       categoryId,
+      deleteContentFlag,
       queryRunnerManager,
     );
   }

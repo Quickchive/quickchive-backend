@@ -20,6 +20,7 @@ import {
   ApiNotFoundResponse,
   ApiOkResponse,
   ApiOperation,
+  ApiQuery,
   ApiTags,
 } from '@nestjs/swagger';
 import { AuthUser } from '../auth/auth-user.decorator';
@@ -53,6 +54,10 @@ import {
   LoadRecentCategoriesOutput,
 } from './dtos/load-personal-categories.dto';
 import { ErrorOutput } from '../common/dtos/output.dto';
+import {
+  LoadFavoritesOutput,
+  LoadPersonalContentsOutput,
+} from './dtos/load-personal-contents.dto';
 
 @Controller('contents')
 @ApiTags('Contents')
@@ -213,6 +218,46 @@ export class ContentsController {
       contentId,
       queryRunnerManager,
     );
+  }
+
+  @ApiOperation({
+    summary: '자신의 아티클 조회',
+    description: '자신의 아티클을 조회하는 메서드',
+  })
+  @ApiQuery({
+    name: 'categoryId',
+    description: '카테고리 아이디(기입하지 않을 시 전체를 불러온다.)',
+    type: Number,
+    required: false,
+  })
+  @ApiOkResponse({
+    description: `아티클 목록을 반환한다. 만약 categoryId가 없을 시 전부를 반환한다.`,
+    type: LoadPersonalContentsOutput,
+  })
+  @ApiBearerAuth('Authorization')
+  @UseGuards(JwtAuthGuard)
+  @Get('load-contents')
+  async loadPersonalContents(
+    @AuthUser() user: User,
+    @Query('categoryId') categoryId?: number,
+  ): Promise<LoadPersonalContentsOutput> {
+    if (categoryId) categoryId = +categoryId;
+    return await this.contentsService.loadPersonalContents(user, categoryId);
+  }
+
+  @ApiOperation({
+    summary: '자신의 즐겨찾기 조회',
+    description: '자신의 즐겨찾기를 조회하는 메서드',
+  })
+  @ApiOkResponse({
+    description: '즐겨찾기 목록을 반환한다.',
+    type: LoadFavoritesOutput,
+  })
+  @ApiBearerAuth('Authorization')
+  @UseGuards(JwtAuthGuard)
+  @Get('load-favorites')
+  async loadFavorites(@AuthUser() user: User): Promise<LoadFavoritesOutput> {
+    return await this.contentsService.loadFavorites(user);
   }
 
   @ApiOperation({

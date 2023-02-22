@@ -6,13 +6,8 @@ import {
   UnauthorizedException,
 } from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
-import { Content } from 'src/contents/entities/content.entity';
 import { EntityManager, Repository } from 'typeorm';
 import { EditProfileInput, EditProfileOutput } from './dtos/edit-profile.dto';
-import {
-  LoadFavoritesOutput,
-  LoadPersonalContentsOutput,
-} from './dtos/load-personal-contents.dto';
 import {
   ResetPasswordInput,
   ResetPasswordOutput,
@@ -92,91 +87,4 @@ export class UsersService {
       throw e;
     }
   }
-
-  async loadPersonalContents(
-    user: User,
-    categoryId: number | undefined,
-  ): Promise<LoadPersonalContentsOutput> {
-    try {
-      let { contents }: User = await this.users.findOneOrFail({
-        where: { id: user.id },
-        relations: {
-          contents: {
-            category: true,
-          },
-        },
-      });
-      if (categoryId && contents) {
-        contents = contents.filter(
-          (content) => content?.category?.id === categoryId,
-        );
-      }
-
-      return {
-        contents,
-      };
-    } catch (e) {
-      throw e;
-    }
-  }
-
-  async loadFavorites(user: User): Promise<LoadFavoritesOutput> {
-    try {
-      const { contents /*collections*/ } = await this.users.findOneOrFail({
-        where: { id: user.id },
-        relations: {
-          contents: {
-            category: true,
-          },
-          // collections: {
-          //   // category: true,
-          //   contents: true,
-          // },
-        },
-      });
-
-      const favoriteContents: Content[] | undefined = contents?.filter(
-        (content) => content.favorite,
-      );
-
-      // const favoriteCollections: Collection[] = collections.filter(
-      //   (collection) => collection.favorite,
-      // );
-
-      return {
-        favorite_contents: favoriteContents,
-        // favorite_collections: favoriteCollections,
-      };
-    } catch (e) {
-      throw e;
-    }
-  }
-
-  // async loadPersonalCollections(
-  //   user: User,
-  //   categoryId: number,
-  // ): Promise<LoadPersonalCollectionsOutput> {
-  //   try {
-  //     let { collections } = await this.users.findOne({
-  //       where: { id: user.id },
-  //       relations: {
-  //         collections: {
-  //           category: true,
-  //           contents: true,
-  //         },
-  //       },
-  //     });
-  //     if (categoryId) {
-  //       collections = collections.filter(
-  //         (collection) => collection?.category?.id === categoryId,
-  //       );
-  //     }
-
-  //     return {
-  //       collections,
-  //     };
-  //   } catch (e) {
-  //     throw e;
-  //   }
-  // }
 }

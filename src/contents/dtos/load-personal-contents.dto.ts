@@ -1,6 +1,6 @@
 import { ApiProperty } from '@nestjs/swagger';
 import { CoreOutput } from '../../common/dtos/output.dto';
-import { Content } from '../../contents/entities/content.entity';
+import { Content } from '../entities/content.entity';
 
 export class LoadPersonalContentsOutput extends CoreOutput {
   @ApiProperty({

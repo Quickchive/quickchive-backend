@@ -3,7 +3,7 @@ import { getRepositoryToken } from '@nestjs/typeorm';
 import { CONFIG_OPTIONS } from '../common/common.constants';
 import { SummaryService } from '../summary/summary.service';
 import { User, UserRole } from '../users/entities/user.entity';
-import { DataSource, ObjectLiteral, Repository } from 'typeorm';
+import { DataSource, EntityManager, ObjectLiteral, Repository } from 'typeorm';
 import { CategoryService, ContentsService } from './contents.service';
 import { Content } from './entities/content.entity';
 import { Category } from './entities/category.entity';
@@ -12,11 +12,13 @@ import {
   customCategoryRepositoryMethods,
 } from './repository/category.repository';
 import { RecentCategoryList } from './dtos/category.dto';
+import { not } from 'joi';
 
 const mockRepository = () => ({
   // make as a function type that returns Object.
   // fake for Unit Test
   findOne: jest.fn(), // create Mock Func
+  findOneOrFail: jest.fn(),
   save: jest.fn(),
   create: jest.fn(),
   delete: jest.fn(),
@@ -24,6 +26,7 @@ const mockRepository = () => ({
 
 const mockCategoryRepository = () => ({
   findOne: jest.fn(), // create Mock Func
+  findOneOrFail: jest.fn(),
   save: jest.fn(),
   create: jest.fn(),
   delete: jest.fn(),
@@ -146,6 +149,7 @@ describe('CategoryService', () => {
   let service: CategoryService;
   let categoryRepository: MockRepository<CategoryRepository>;
   let usersRepository: MockRepository<User>;
+  let queryRunnerManager: EntityManager;
 
   beforeEach(async () => {
     const module: TestingModule = await Test.createTestingModule({
@@ -169,10 +173,258 @@ describe('CategoryService', () => {
     service = module.get<CategoryService>(CategoryService);
     categoryRepository = module.get(getRepositoryToken(Category));
     usersRepository = module.get(getRepositoryToken(User));
+
+    queryRunnerManager = {
+      find: {},
+      findOne: {},
+      findOneOrFail: {},
+      save: {},
+      delete: {},
+      createQueryBuilder: {},
+    } as EntityManager;
   });
 
   it('should be defined', () => {
     expect(service).toBeDefined();
+  });
+
+  describe('deleteCategory', () => {
+    let fakeCategories: Category[];
+    let fakeContents: Content[];
+
+    let resultCategories: Category[];
+    let resultContents: Content[];
+
+    beforeEach(async () => {
+      fakeCategories = [
+        {
+          id: 1,
+          createdAt: new Date(),
+          updatedAt: new Date(),
+          name: 'Dev',
+          slug: 'Dev',
+          userId: 1,
+          collections: [],
+          contents: [],
+          user: fakeUser,
+        },
+        {
+          id: 2,
+          createdAt: new Date(),
+          updatedAt: new Date(),
+          name: '쇼핑리스트',
+          slug: '쇼핑리스트',
+          userId: 1,
+          collections: [],
+          contents: [],
+          user: fakeUser,
+        },
+        {
+          id: 3,
+          createdAt: new Date(),
+          updatedAt: new Date(),
+          name: 'ts',
+          slug: 'ts',
+          userId: 1,
+          collections: [],
+          contents: [],
+          user: fakeUser,
+          parentId: 1,
+        },
+        {
+          id: 4,
+          createdAt: new Date(),
+          updatedAt: new Date(),
+          name: 'js',
+          slug: 'js',
+          userId: 1,
+          collections: [],
+          contents: [],
+          user: fakeUser,
+          parentId: 1,
+        },
+        {
+          id: 5,
+          createdAt: new Date(),
+          updatedAt: new Date(),
+          name: 'pick type',
+          slug: 'pick_type',
+          userId: 1,
+          collections: [],
+          contents: [],
+          user: fakeUser,
+          parentId: 3,
+        },
+      ];
+
+      fakeContents = [
+        {
+          id: 1,
+          link: 'https://brunch.co.kr/@icaryus/15',
+          title: '타입스크립트의 Pick과 Omit',
+          createdAt: new Date(),
+          updatedAt: new Date(),
+          favorite: false,
+          readFlag: false,
+          userId: 1,
+          user: fakeUser,
+          category: fakeCategories[4],
+        },
+        {
+          id: 2,
+          link: 'https://typescript.fake.com/overview',
+          title: '타입스크립트의 시작',
+          createdAt: new Date(),
+          updatedAt: new Date(),
+          favorite: false,
+          readFlag: false,
+          userId: 1,
+          user: fakeUser,
+          category: fakeCategories[2],
+        },
+      ];
+
+      fakeUser.categories = [...fakeCategories];
+
+      queryRunnerManager.find = jest
+        .fn()
+        .mockImplementation((_, { where: { parentId } }) => {
+          return fakeCategories.filter(
+            (category) => category.parentId === parentId,
+          );
+        });
+      queryRunnerManager.findOne = jest.fn().mockImplementation(() => {
+        return fakeUser;
+      });
+      queryRunnerManager.findOneOrFail = jest
+        .fn()
+        .mockImplementation((_, { where: { id } }) => {
+          return fakeCategories.find((category) => category.id === id);
+        });
+      queryRunnerManager.save = jest.fn().mockImplementation((objects) => {
+        if (objects[0].link) {
+          resultContents = [...new Set([...fakeContents, ...objects])];
+        } else if (objects[0].name) {
+          resultCategories = [...new Set([...fakeCategories, ...objects])];
+        }
+      });
+      queryRunnerManager.delete = jest
+        .fn()
+        .mockImplementation((entity, whereOption) => {
+          if (entity.name === 'Category') {
+            resultCategories = resultCategories.filter(
+              (category) => category.id !== whereOption.id,
+            );
+          } else if (entity.name === 'Content') {
+            resultContents = fakeContents.filter(
+              (content) => content.category?.id !== whereOption.categoryId,
+            );
+          }
+        });
+
+      const createQueryBuilder: any = jest.fn(() => ({
+        categoryId: undefined,
+        where(_: any, { categoryId }: any) {
+          this.categoryId = categoryId;
+          return this;
+        },
+        getMany() {
+          const contents = fakeContents.filter(
+            (content) => content.category?.id === this.categoryId,
+          );
+          return contents;
+        },
+      }));
+      queryRunnerManager.createQueryBuilder = createQueryBuilder;
+    });
+
+    it('내부 콘텐츠 삭제 flag가 true인 경우', () => {
+      // given
+      const categoryToBeDeleted = fakeCategories[2];
+
+      // when
+      service
+        .deleteCategory(
+          fakeUser,
+          categoryToBeDeleted.id,
+          true,
+          queryRunnerManager,
+        )
+        .then(() => {
+          // then
+          expect(resultCategories.length).toBe(fakeCategories.length - 1);
+          expect(
+            resultCategories.find(
+              (category) => category.id === categoryToBeDeleted.id,
+            ),
+          ).toBe(undefined);
+          const childrenCategories = fakeCategories.filter((category) => {
+            return category.parentId === categoryToBeDeleted.id;
+          });
+          childrenCategories.forEach((childCategory) => {
+            expect(
+              resultCategories.find(
+                (category) => category.id === childCategory.id,
+              ),
+            ).toBe(categoryToBeDeleted.parentId);
+          });
+
+          const contents = fakeContents.filter((content) => {
+            return content.category?.id === categoryToBeDeleted.id;
+          });
+          contents.forEach((content) => {
+            expect(
+              resultContents.find(
+                (resultContent) => resultContent.id === content.id,
+              ),
+            ).toBe(undefined);
+          });
+        });
+    });
+
+    it('내부 콘텐츠 삭제 flag가 false인 경우', () => {
+      // given
+      const categoryToBeDeleted = fakeCategories[2];
+
+      // when
+      service
+        .deleteCategory(
+          fakeUser,
+          categoryToBeDeleted.id,
+          false,
+          queryRunnerManager,
+        )
+        .then(() => {
+          // then
+          expect(resultCategories.length).toBe(fakeCategories.length - 1);
+          expect(
+            resultCategories.find(
+              (category) => category.id === categoryToBeDeleted.id,
+            ),
+          ).toBe(undefined);
+          const childrenCategories = fakeCategories.filter((category) => {
+            return category.parentId === categoryToBeDeleted.id;
+          });
+          childrenCategories.forEach((childCategory) => {
+            expect(
+              resultCategories.find(
+                (category) => category.id === childCategory.id,
+              ),
+            ).toBe(categoryToBeDeleted.parentId);
+          });
+
+          const contents = fakeContents.filter((content) => {
+            return content.category?.id === categoryToBeDeleted.id;
+          });
+          contents.forEach((content) => {
+            expect(
+              resultContents.find(
+                (resultContent) => resultContent.id === content.id,
+              ),
+            ).toBe(undefined);
+          });
+        });
+    });
   });
 
   describe('loadRecentCategories', () => {

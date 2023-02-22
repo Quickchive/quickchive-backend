@@ -617,15 +617,79 @@ export class CategoryService {
   async deleteCategory(
     user: User,
     categoryId: number,
+    deleteContentFlag: boolean,
     queryRunnerManager: EntityManager,
   ): Promise<DeleteCategoryOutput> {
     try {
-      const category = await queryRunnerManager.findOne(Category, {
-        where: { id: categoryId, userId: user.id },
+      const userInDb = await queryRunnerManager.findOne(User, {
+        where: { id: user.id },
+        relations: {
+          contents: {
+            category: true,
+          },
+          categories: true,
+        },
       });
+      // Check if user exists
+      if (!userInDb) {
+        throw new NotFoundException('User not found.');
+      }
+
+      const category = userInDb.categories?.find(
+        (category) => category.id === categoryId,
+      );
 
       if (!category) {
         throw new NotFoundException('Category not found.');
+      }
+
+      /**
+       * 자식 카테고리가 있는 경우, 부모 카테고리와 연결
+       */
+
+      // find parent category
+      const parentCategory = category.parentId
+        ? await queryRunnerManager.findOneOrFail(Category, {
+            where: { id: category.parentId },
+          })
+        : undefined;
+
+      // find children categories
+      const childrenCategories = await queryRunnerManager.find(Category, {
+        where: { parentId: categoryId },
+      });
+
+      // set children categories' parent to parent category
+      await queryRunnerManager.save(
+        childrenCategories.map((childrenCategory) => {
+          childrenCategory.parentId = parentCategory?.id;
+          return childrenCategory;
+        }),
+      );
+
+      /**
+       * delete content flag에 따른 분기처리
+       */
+
+      // if deleteContentFlag is true, delete all contents in category
+      if (deleteContentFlag) {
+        await queryRunnerManager.delete(Content, { categoryId });
+      }
+      // if deleteContentFlag is false, set all contents in category to parent category
+      else {
+        // find all contents in category with query builder
+        const contents = await queryRunnerManager
+          .createQueryBuilder(Content, 'content')
+          .where('content.categoryId = :categoryId', { categoryId })
+          .getMany();
+
+        // set content's category to parent category
+        await queryRunnerManager.save(
+          contents.map((content) => {
+            content.category = parentCategory;
+            return content;
+          }),
+        );
       }
 
       await queryRunnerManager.delete(Category, { id: categoryId });

@@ -13,10 +13,10 @@ import {
   ApiOperation,
   ApiTags,
 } from '@nestjs/swagger';
-import { AuthUser } from 'src/auth/auth-user.decorator';
-import { JwtAuthGuard } from 'src/auth/jwt/jwt.guard';
-import { TransactionInterceptor } from 'src/common/interceptors/transaction.interceptor';
-import { TransactionManager } from 'src/common/transaction.decorator';
+import { AuthUser } from '../auth/auth-user.decorator';
+import { JwtAuthGuard } from '../auth/jwt/jwt.guard';
+import { TransactionInterceptor } from '../common/interceptors/transaction.interceptor';
+import { TransactionManager } from '../common/transaction.decorator';
 import { EntityManager } from 'typeorm';
 import { EditProfileInput, EditProfileOutput } from './dtos/edit-profile.dto';
 import { meOutput } from './dtos/me.dto';

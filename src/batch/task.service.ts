@@ -1,9 +1,9 @@
 import { Injectable } from '@nestjs/common';
 import { Cron } from '@nestjs/schedule';
 import { InjectRepository } from '@nestjs/typeorm';
-import { getKoreaTime, logger } from 'src/common/logger';
-import { Content } from 'src/contents/entities/content.entity';
-import { MailService } from 'src/mail/mail.service';
+import { getKoreaTime, logger } from '../common/logger';
+import { Content } from '../contents/entities/content.entity';
+import { MailService } from '../mail/mail.service';
 import { Repository } from 'typeorm';
 
 @Injectable() // Only support SINGLETON scope

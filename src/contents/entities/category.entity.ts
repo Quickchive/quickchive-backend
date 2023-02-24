@@ -25,6 +25,7 @@ export class Category extends CoreEntity {
   @OneToMany((type) => Collection, (collection) => collection.category)
   collections!: Collection[];
 
+  @ApiProperty({ description: 'Category Parent ID' })
   @Column({ nullable: true })
   parentId?: number;
 

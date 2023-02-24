@@ -751,12 +751,6 @@ export class CategoryService {
     user: User,
   ): Promise<LoadPersonalCategoriesOutput> {
     try {
-      // const { categories } = await this.users.findOneOrFail({
-      //   where: { id: user.id },
-      //   relations: {
-      //     categories: true,
-      //   },
-      // });
       const { categories } = await this.users
         .createQueryBuilder('user')
         .leftJoinAndSelect('user.categories', 'categories')

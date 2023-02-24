@@ -292,9 +292,9 @@ describe('CategoryService', () => {
             (category) => category.parentId === parentId,
           );
         });
-      queryRunnerManager.findOne = jest.fn().mockImplementation(() => {
-        return fakeUser;
-      });
+      // queryRunnerManager.findOne = jest.fn().mockImplementation(() => {
+      //   return fakeUser;
+      // });
       queryRunnerManager.findOneOrFail = jest
         .fn()
         .mockImplementation((_, { where: { id } }) => {
@@ -327,11 +327,17 @@ describe('CategoryService', () => {
           this.categoryId = categoryId;
           return this;
         },
+        leftJoinAndSelect() {
+          return this;
+        },
         getMany() {
           const contents = fakeContents.filter(
             (content) => content.category?.id === this.categoryId,
           );
           return contents;
+        },
+        getOne() {
+          return fakeUser;
         },
       }));
       queryRunnerManager.createQueryBuilder = createQueryBuilder;

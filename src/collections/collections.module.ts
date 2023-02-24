@@ -4,9 +4,9 @@ import {
   getRepositoryToken,
   TypeOrmModule,
 } from '@nestjs/typeorm';
-import { ContentsModule } from 'src/contents/contents.module';
-import { Category } from 'src/contents/entities/category.entity';
-import { customCategoryRepositoryMethods } from 'src/contents/repository/category.repository';
+import { ContentsModule } from '../contents/contents.module';
+import { Category } from '../contents/entities/category.entity';
+import { customCategoryRepositoryMethods } from '../contents/repository/category.repository';
 import { DataSource } from 'typeorm';
 import { CollectionsController } from './collections.controller';
 import { CollectionsService } from './collections.service';

@@ -9,6 +9,7 @@ import { EntityManager, Repository } from 'typeorm';
 import * as cheerio from 'cheerio';
 import axios from 'axios';
 import * as fs from 'fs';
+
 import {
   AddCategoryBodyDto,
   AddCategoryOutput,
@@ -33,6 +34,10 @@ import {
   LoadPersonalCategoriesOutput,
   LoadRecentCategoriesOutput,
 } from './dtos/load-personal-categories.dto';
+import {
+  LoadFavoritesOutput,
+  LoadPersonalContentsOutput,
+} from './dtos/load-personal-contents.dto';
 import { SummaryService } from '../summary/summary.service';
 import { User } from '../users/entities/user.entity';
 import { Category } from './entities/category.entity';
@@ -394,6 +399,48 @@ export class ContentsService {
     };
   }
 
+  async loadPersonalContents(
+    user: User,
+    categoryId: number | undefined,
+  ): Promise<LoadPersonalContentsOutput> {
+    try {
+      let contents = await this.contents
+        .createQueryBuilder('content')
+        .where('content.userId = :userId', { userId: user.id })
+        .leftJoinAndSelect('content.category', 'category')
+        .getMany();
+
+      if (categoryId && contents) {
+        contents = contents.filter(
+          (content) => content?.category?.id === categoryId,
+        );
+      }
+
+      return {
+        contents,
+      };
+    } catch (e) {
+      throw e;
+    }
+  }
+
+  async loadFavorites(user: User): Promise<LoadFavoritesOutput> {
+    try {
+      const favoriteContents = await this.contents
+        .createQueryBuilder('content')
+        .where('content.userId = :userId', { userId: user.id })
+        .andWhere('content.favorite = :favorite', { favorite: true })
+        .leftJoinAndSelect('content.category', 'category')
+        .getMany();
+
+      return {
+        favorite_contents: favoriteContents,
+      };
+    } catch (e) {
+      throw e;
+    }
+  }
+
   async summarizeContent(
     user: User,
     contentId: number,
@@ -704,12 +751,17 @@ export class CategoryService {
     user: User,
   ): Promise<LoadPersonalCategoriesOutput> {
     try {
-      const { categories } = await this.users.findOneOrFail({
-        where: { id: user.id },
-        relations: {
-          categories: true,
-        },
-      });
+      // const { categories } = await this.users.findOneOrFail({
+      //   where: { id: user.id },
+      //   relations: {
+      //     categories: true,
+      //   },
+      // });
+      const { categories } = await this.users
+        .createQueryBuilder('user')
+        .leftJoinAndSelect('user.categories', 'categories')
+        .where('user.id = :id', { id: user.id })
+        .getOneOrFail();
 
       if (!categories) {
         throw new NotFoundException('Categories not found.');

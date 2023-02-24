@@ -2,9 +2,7 @@ import {
   Body,
   Controller,
   Get,
-  ParseIntPipe,
   Post,
-  Query,
   UseGuards,
   UseInterceptors,
 } from '@nestjs/common';
@@ -13,19 +11,14 @@ import {
   ApiCreatedResponse,
   ApiOkResponse,
   ApiOperation,
-  ApiQuery,
   ApiTags,
 } from '@nestjs/swagger';
-import { AuthUser } from 'src/auth/auth-user.decorator';
-import { JwtAuthGuard } from 'src/auth/jwt/jwt.guard';
-import { TransactionInterceptor } from 'src/common/interceptors/transaction.interceptor';
-import { TransactionManager } from 'src/common/transaction.decorator';
+import { AuthUser } from '../auth/auth-user.decorator';
+import { JwtAuthGuard } from '../auth/jwt/jwt.guard';
+import { TransactionInterceptor } from '../common/interceptors/transaction.interceptor';
+import { TransactionManager } from '../common/transaction.decorator';
 import { EntityManager } from 'typeorm';
 import { EditProfileInput, EditProfileOutput } from './dtos/edit-profile.dto';
-import {
-  LoadFavoritesOutput,
-  LoadPersonalContentsOutput,
-} from './dtos/load-personal-contents.dto';
 import { meOutput } from './dtos/me.dto';
 import {
   ResetPasswordInput,
@@ -90,46 +83,6 @@ export class UsersController {
   @Get('me')
   me(@AuthUser() user: User): meOutput {
     return user;
-  }
-
-  @ApiOperation({
-    summary: '자신의 아티클 조회',
-    description: '자신의 아티클을 조회하는 메서드',
-  })
-  @ApiQuery({
-    name: 'categoryId',
-    description: '카테고리 아이디(기입하지 않을 시 전체를 불러온다.)',
-    type: Number,
-    required: false,
-  })
-  @ApiOkResponse({
-    description: `아티클 목록을 반환한다. 만약 categoryId가 없을 시 전부를 반환한다.`,
-    type: LoadPersonalContentsOutput,
-  })
-  @ApiBearerAuth('Authorization')
-  @UseGuards(JwtAuthGuard)
-  @Get('load-contents')
-  async loadPersonalContents(
-    @AuthUser() user: User,
-    @Query('categoryId') categoryId?: number,
-  ): Promise<LoadPersonalContentsOutput> {
-    if (categoryId) categoryId = +categoryId;
-    return await this.usersService.loadPersonalContents(user, categoryId);
-  }
-
-  @ApiOperation({
-    summary: '자신의 즐겨찾기 조회',
-    description: '자신의 즐겨찾기를 조회하는 메서드',
-  })
-  @ApiOkResponse({
-    description: '즐겨찾기 목록을 반환한다.',
-    type: LoadFavoritesOutput,
-  })
-  @ApiBearerAuth('Authorization')
-  @UseGuards(JwtAuthGuard)
-  @Get('load-favorites')
-  async loadFavorites(@AuthUser() user: User): Promise<LoadFavoritesOutput> {
-    return await this.usersService.loadFavorites(user);
   }
 
   // @ApiOperation({

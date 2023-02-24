@@ -1,13 +1,10 @@
 import { ValidationPipe } from '@nestjs/common';
 import { NestFactory } from '@nestjs/core';
 import { DocumentBuilder, SwaggerModule } from '@nestjs/swagger';
-import * as winston from 'winston';
-import * as DailyRotateFile from 'winston-daily-rotate-file';
 import { AppModule } from './app.module';
 import { HttpExceptionFilter } from './common/exceptions/http-exception.filter';
 import { SuccessInterceptor } from './common/interceptors/success.interceptor';
 import { TimeoutInterceptor } from './common/interceptors/timeout.interceptor';
-import { logger } from './common/logger';
 
 async function bootstrap() {
   const app = await NestFactory.create(AppModule, {

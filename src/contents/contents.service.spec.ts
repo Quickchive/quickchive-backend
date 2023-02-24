@@ -12,7 +12,6 @@ import {
   customCategoryRepositoryMethods,
 } from './repository/category.repository';
 import { RecentCategoryList } from './dtos/category.dto';
-import { not } from 'joi';
 
 const mockRepository = () => ({
   // make as a function type that returns Object.

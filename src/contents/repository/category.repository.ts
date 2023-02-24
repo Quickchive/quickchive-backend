@@ -83,10 +83,11 @@ export const customCategoryRepositoryMethods: CustomCategoryRepository = {
       let currentParentId: number | undefined = parentId;
       let parentCategory: Category | null;
       for (let i = 0; i < 2; i++) {
+        if (currentParentId === null) break;
         parentCategory = await queryRunnerManager.findOne(Category, {
           where: { id: currentParentId },
         });
-        if (i == 1 && parentCategory?.parentId != null) {
+        if (i === 1 && parentCategory?.parentId !== null) {
           throw new ConflictException('Category depth should be 3');
         }
         currentParentId = parentCategory?.parentId;

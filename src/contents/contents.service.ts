@@ -611,7 +611,7 @@ export class CategoryService {
 
   async updateCategory(
     user: User,
-    { categoryId, name: categoryName }: UpdateCategoryBodyDto,
+    { categoryId, name: categoryName, parentId }: UpdateCategoryBodyDto,
     queryRunnerManager: EntityManager,
   ): Promise<UpdateCategoryOutput> {
     try {
@@ -634,21 +634,43 @@ export class CategoryService {
 
       if (category) {
         // Check if user has category with same slug
-        const { categorySlug } = this.categories.generateSlug(categoryName);
-        if (
-          userInDb.categories?.filter(
-            (category) =>
-              category.slug === categorySlug && category.id !== categoryId,
-          )[0]
-        ) {
-          throw new NotFoundException(
-            'Category with that name already exists in current user.',
-          );
+        if (categoryName) {
+          const { categorySlug } = this.categories.generateSlug(categoryName);
+          if (
+            userInDb.categories?.filter(
+              (category) =>
+                category.slug === categorySlug && category.id !== categoryId,
+            )[0]
+          ) {
+            throw new NotFoundException(
+              'Category with that name already exists in current user.',
+            );
+          }
+
+          // Update category
+          category.name = categoryName;
+          category.slug = categorySlug;
         }
 
-        // Update category
-        category.name = categoryName;
-        category.slug = categorySlug;
+        if (parentId) {
+          // category depth should be 3
+          let parentCategory = await this.categories.findOne({
+            where: { id: parentId },
+          });
+          if (!parentCategory) {
+            throw new NotFoundException('Parent category not found.');
+          } else if (parentCategory?.parentId !== null) {
+            parentCategory = await this.categories.findOne({
+              where: { id: parentCategory.parentId },
+            });
+            if (parentCategory?.parentId !== null) {
+              throw new ConflictException('Category depth should be 3');
+            }
+          }
+
+          category.parentId = parentId;
+        }
+
         await queryRunnerManager.save(category);
       } else {
         throw new NotFoundException('Category not found.');

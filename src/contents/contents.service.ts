@@ -542,12 +542,12 @@ export class CategoryService {
     queryRunnerManager: EntityManager,
   ): Promise<AddCategoryOutput> {
     try {
-      const userInDb = await queryRunnerManager.findOne(User, {
-        where: { id: user.id },
-        relations: {
-          categories: true,
-        },
-      });
+      const userInDb = await queryRunnerManager
+        .createQueryBuilder(User, 'user')
+        .leftJoinAndSelect('user.categories', 'category')
+        .where('user.id = :id', { id: user.id })
+        .getOne();
+
       if (!userInDb) {
         throw new NotFoundException('User not found');
       }
@@ -615,15 +615,14 @@ export class CategoryService {
     queryRunnerManager: EntityManager,
   ): Promise<UpdateCategoryOutput> {
     try {
-      const userInDb = await queryRunnerManager.findOne(User, {
-        where: { id: user.id },
-        relations: {
-          contents: {
-            category: true,
-          },
-          categories: true,
-        },
-      });
+      const userInDb = await queryRunnerManager
+        .createQueryBuilder(User, 'user')
+        .leftJoinAndSelect('user.contents', 'content')
+        .leftJoinAndSelect('content.category', 'content_category')
+        .leftJoinAndSelect('user.categories', 'category')
+        .where('user.id = :id', { id: user.id })
+        .getOne();
+
       // Check if user exists
       if (!userInDb) {
         throw new NotFoundException('User not found.');

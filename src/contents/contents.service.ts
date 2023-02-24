@@ -70,15 +70,13 @@ export class ContentsService {
     queryRunnerManager: EntityManager,
   ): Promise<AddContentOutput> {
     try {
-      const userInDb = await this.users.findOne({
-        where: { id: user.id },
-        relations: {
-          contents: {
-            category: true,
-          },
-          categories: true,
-        },
-      });
+      const userInDb = await this.users
+        .createQueryBuilder('user')
+        .leftJoinAndSelect('user.contents', 'content')
+        .leftJoinAndSelect('content.category', 'content_category')
+        .leftJoinAndSelect('user.categories', 'category')
+        .where('user.id = :id', { id: user.id })
+        .getOne();
       if (!userInDb) {
         throw new NotFoundException('User not found');
       }
@@ -134,13 +132,16 @@ export class ContentsService {
     queryRunnerManager: EntityManager,
   ): Promise<AddContentOutput> {
     try {
-      const userInDb = await queryRunnerManager.findOneOrFail(User, {
-        where: { id: user.id },
-        relations: {
-          contents: true,
-          categories: true,
-        },
-      });
+      const userInDb = await queryRunnerManager
+        .createQueryBuilder(User, 'user')
+        .leftJoinAndSelect('user.contents', 'content')
+        .leftJoinAndSelect('user.categories', 'category')
+        .where('user.id = :id', { id: user.id })
+        .getOne();
+
+      if (!userInDb) {
+        throw new NotFoundException('User not found');
+      }
 
       if (contentLinks.length > 0) {
         for (const link of contentLinks) {
@@ -200,15 +201,13 @@ export class ContentsService {
       favorite,
     };
     try {
-      const userInDb = await queryRunnerManager.findOne(User, {
-        where: { id: user.id },
-        relations: {
-          contents: {
-            category: true,
-          },
-          categories: true,
-        },
-      });
+      const userInDb = await queryRunnerManager
+        .createQueryBuilder(User, 'user')
+        .leftJoinAndSelect('user.contents', 'content')
+        .leftJoinAndSelect('content.category', 'content_category')
+        .leftJoinAndSelect('user.categories', 'category')
+        .where('user.id = :id', { id: user.id })
+        .getOne();
       if (!userInDb) {
         throw new NotFoundException('User not found');
       }
@@ -252,12 +251,12 @@ export class ContentsService {
     queryRunnerManager: EntityManager,
   ): Promise<toggleFavoriteOutput> {
     try {
-      const userInDb = await queryRunnerManager.findOne(User, {
-        where: { id: user.id },
-        relations: {
-          contents: true,
-        },
-      });
+      const userInDb = await queryRunnerManager
+        .createQueryBuilder(User, 'user')
+        .leftJoinAndSelect('user.contents', 'content')
+        .where('user.id = :id', { id: user.id })
+        .getOne();
+
       if (!userInDb) {
         throw new NotFoundException('User not found');
       }
@@ -284,12 +283,11 @@ export class ContentsService {
     contentId: number,
   ): Promise<checkReadFlagOutput> {
     try {
-      const userInDb = await this.users.findOne({
-        where: { id: user.id },
-        relations: {
-          contents: true,
-        },
-      });
+      const userInDb = await this.users
+        .createQueryBuilder('user')
+        .leftJoinAndSelect('user.contents', 'content')
+        .where('user.id = :id', { id: user.id })
+        .getOne();
       if (!userInDb) {
         throw new NotFoundException('User not found');
       }
@@ -318,13 +316,12 @@ export class ContentsService {
     queryRunnerManager: EntityManager,
   ): Promise<DeleteContentOutput> {
     try {
-      const userInDb = await queryRunnerManager.findOne(User, {
-        where: { id: user.id },
-        relations: {
-          contents: true,
-          categories: true,
-        },
-      });
+      const userInDb = await queryRunnerManager
+        .createQueryBuilder(User, 'user')
+        .leftJoinAndSelect('user.contents', 'content')
+        .leftJoinAndSelect('user.categories', 'category')
+        .where('user.id = :id', { id: user.id })
+        .getOne();
       if (!userInDb) {
         throw new NotFoundException('User not found');
       }
@@ -446,12 +443,11 @@ export class ContentsService {
     contentId: number,
   ): Promise<SummarizeContentOutput> {
     try {
-      const userInDb = await this.users.findOne({
-        where: { id: user.id },
-        relations: {
-          contents: true,
-        },
-      });
+      const userInDb = await this.users
+        .createQueryBuilder('user')
+        .leftJoinAndSelect('user.contents', 'content')
+        .where('user.id = :id', { id: user.id })
+        .getOne();
       if (!userInDb) {
         throw new NotFoundException('User not found');
       }
@@ -542,12 +538,12 @@ export class CategoryService {
     queryRunnerManager: EntityManager,
   ): Promise<AddCategoryOutput> {
     try {
-      const userInDb = await queryRunnerManager.findOne(User, {
-        where: { id: user.id },
-        relations: {
-          categories: true,
-        },
-      });
+      const userInDb = await queryRunnerManager
+        .createQueryBuilder(User, 'user')
+        .leftJoinAndSelect('user.categories', 'category')
+        .where('user.id = :id', { id: user.id })
+        .getOne();
+
       if (!userInDb) {
         throw new NotFoundException('User not found');
       }
@@ -611,19 +607,18 @@ export class CategoryService {
 
   async updateCategory(
     user: User,
-    { categoryId, name: categoryName }: UpdateCategoryBodyDto,
+    { categoryId, name: categoryName, parentId }: UpdateCategoryBodyDto,
     queryRunnerManager: EntityManager,
   ): Promise<UpdateCategoryOutput> {
     try {
-      const userInDb = await queryRunnerManager.findOne(User, {
-        where: { id: user.id },
-        relations: {
-          contents: {
-            category: true,
-          },
-          categories: true,
-        },
-      });
+      const userInDb = await queryRunnerManager
+        .createQueryBuilder(User, 'user')
+        .leftJoinAndSelect('user.contents', 'content')
+        .leftJoinAndSelect('content.category', 'content_category')
+        .leftJoinAndSelect('user.categories', 'category')
+        .where('user.id = :id', { id: user.id })
+        .getOne();
+
       // Check if user exists
       if (!userInDb) {
         throw new NotFoundException('User not found.');
@@ -635,21 +630,43 @@ export class CategoryService {
 
       if (category) {
         // Check if user has category with same slug
-        const { categorySlug } = this.categories.generateSlug(categoryName);
-        if (
-          userInDb.categories?.filter(
-            (category) =>
-              category.slug === categorySlug && category.id !== categoryId,
-          )[0]
-        ) {
-          throw new NotFoundException(
-            'Category with that name already exists in current user.',
-          );
+        if (categoryName) {
+          const { categorySlug } = this.categories.generateSlug(categoryName);
+          if (
+            userInDb.categories?.filter(
+              (category) =>
+                category.slug === categorySlug && category.id !== categoryId,
+            )[0]
+          ) {
+            throw new NotFoundException(
+              'Category with that name already exists in current user.',
+            );
+          }
+
+          // Update category
+          category.name = categoryName;
+          category.slug = categorySlug;
         }
 
-        // Update category
-        category.name = categoryName;
-        category.slug = categorySlug;
+        if (parentId) {
+          // category depth should be 3
+          let parentCategory = await this.categories.findOne({
+            where: { id: parentId },
+          });
+          if (!parentCategory) {
+            throw new NotFoundException('Parent category not found.');
+          } else if (parentCategory?.parentId !== null) {
+            parentCategory = await this.categories.findOne({
+              where: { id: parentCategory.parentId },
+            });
+            if (parentCategory?.parentId !== null) {
+              throw new ConflictException('Category depth should be 3');
+            }
+          }
+
+          category.parentId = parentId;
+        }
+
         await queryRunnerManager.save(category);
       } else {
         throw new NotFoundException('Category not found.');
@@ -668,15 +685,14 @@ export class CategoryService {
     queryRunnerManager: EntityManager,
   ): Promise<DeleteCategoryOutput> {
     try {
-      const userInDb = await queryRunnerManager.findOne(User, {
-        where: { id: user.id },
-        relations: {
-          contents: {
-            category: true,
-          },
-          categories: true,
-        },
-      });
+      const userInDb = await queryRunnerManager
+        .createQueryBuilder(User, 'user')
+        .leftJoinAndSelect('user.contents', 'content')
+        .leftJoinAndSelect('content.category', 'content_category')
+        .leftJoinAndSelect('user.categories', 'category')
+        .where('user.id = :id', { id: user.id })
+        .getOne();
+
       // Check if user exists
       if (!userInDb) {
         throw new NotFoundException('User not found.');
@@ -751,12 +767,6 @@ export class CategoryService {
     user: User,
   ): Promise<LoadPersonalCategoriesOutput> {
     try {
-      // const { categories } = await this.users.findOneOrFail({
-      //   where: { id: user.id },
-      //   relations: {
-      //     categories: true,
-      //   },
-      // });
       const { categories } = await this.users
         .createQueryBuilder('user')
         .leftJoinAndSelect('user.categories', 'categories')

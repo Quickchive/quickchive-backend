@@ -1,4 +1,4 @@
-import { ApiProperty, PickType } from '@nestjs/swagger';
+import { ApiProperty, PartialType, PickType } from '@nestjs/swagger';
 import { IsNumber, IsOptional, IsString } from 'class-validator';
 import { CoreOutput } from '../../common/dtos/output.dto';
 import { Category } from '../entities/category.entity';
@@ -22,12 +22,9 @@ export class AddCategoryBodyDto {
 }
 export class AddCategoryOutput extends CoreOutput {}
 
-// export class UpdateCategoryBodyDto extends PickType(Category, ['name']) {
-//   @ApiProperty({ description: '기존 카테고리 이름' })
-//   @IsString()
-//   originalName: string;
-// }
-export class UpdateCategoryBodyDto extends PickType(Category, ['name']) {
+export class UpdateCategoryBodyDto extends PartialType(
+  PickType(Category, ['name', 'parentId']),
+) {
   @ApiProperty({ description: '수정할 카테고리 id' })
   @IsNumber()
   categoryId!: number;

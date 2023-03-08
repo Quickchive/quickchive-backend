@@ -128,13 +128,14 @@ export class ContentsService {
 
   async addMultipleContents(
     user: User,
-    { contentLinks }: AddMultipleContentsBodyDto,
+    { contentLinks, categoryName, parentId }: AddMultipleContentsBodyDto,
     queryRunnerManager: EntityManager,
   ): Promise<AddContentOutput> {
     try {
       const userInDb = await queryRunnerManager
         .createQueryBuilder(User, 'user')
         .leftJoinAndSelect('user.contents', 'content')
+        .leftJoinAndSelect('content.category', 'content_category')
         .leftJoinAndSelect('user.categories', 'category')
         .where('user.id = :id', { id: user.id })
         .getOne();
@@ -144,18 +145,24 @@ export class ContentsService {
       }
 
       if (contentLinks.length > 0) {
+        let category: Category | null = null;
+        if (categoryName) {
+          category = await this.categories.getOrCreateCategory(
+            categoryName,
+            parentId,
+            userInDb,
+            queryRunnerManager,
+          );
+        }
         for (const link of contentLinks) {
           const { title, description, coverImg, siteName } =
             await this.getLinkInfo(link);
 
-          // Check if content already exists in same category
-          if (
-            userInDb?.contents?.filter(
-              (content) => content.link === link && !content.category,
-            )[0]
-          ) {
-            throw new ConflictException(
-              `Content with ${link} already exists in same category.`,
+          if (category) {
+            await this.categories.checkContentDuplicateAndAddCategorySaveLog(
+              link,
+              category,
+              userInDb,
             );
           }
 
@@ -164,10 +171,14 @@ export class ContentsService {
             title,
             siteName,
             coverImg,
+            ...(category && { category }),
             description,
             user: userInDb,
           });
           await queryRunnerManager.save(newContent);
+
+          // 각 링크마다 처리 후 transaction commit
+          await queryRunnerManager.query('COMMIT');
         }
       }
 

@@ -137,7 +137,7 @@ export const customCategoryRepositoryMethods: CustomCategoryRepository = {
    * @param userInDb
    */
   async checkContentDuplicateAndAddCategorySaveLog(
-    link: string | undefined,
+    link: string,
     category: Category,
     userInDb: User,
   ): Promise<void> {
@@ -151,14 +151,7 @@ export const customCategoryRepositoryMethods: CustomCategoryRepository = {
      * 카테고리의 중복을 체크하고, 중복이 없다면 최상위 카테고리의 count를 증가시킴
      */
 
-    // flat categoryFamily with children
-    // categoryFamily.reduce((acc: CategoryTreeNode[], cur) => {
-    //   acc.push(cur);
-    //   if (cur.children) {
-    //     acc.push(cur.children.reduce);
-    //   }
-    //   return acc;
-    // }, []);
+    // 카테고리 그룹을 flat 시킴
     const flatDeep = (
       arr: CategoryTreeNode[],
       d: number,
@@ -180,18 +173,21 @@ export const customCategoryRepositoryMethods: CustomCategoryRepository = {
       Infinity,
     );
 
-    const contentThatSameLinkAndCategory = userInDb.contents?.find(
-      (contentInFilter) =>
-        contentInFilter.link === link &&
-        flatCategoryFamily.filter(
-          (categoryInFamily) =>
-            categoryInFamily.id === contentInFilter.category?.id,
-        ).length > 0,
-    );
-    if (contentThatSameLinkAndCategory) {
-      throw new ConflictException(
-        'Content with that link already exists in same category family.',
-      );
+    // 유저의 대 category 내에 같은 link로 된 content가 있는지 체크
+    if (userInDb.contents) {
+      for (const contentInFilter of userInDb.contents) {
+        if (
+          contentInFilter.link === link &&
+          flatCategoryFamily.filter(
+            (categoryInFamily) =>
+              categoryInFamily.id === contentInFilter.category?.id,
+          ).length > 0
+        ) {
+          throw new ConflictException(
+            'Content with that link already exists in same category family.',
+          );
+        }
+      }
     }
 
     /*

@@ -42,6 +42,20 @@ export class AddMultipleContentsBodyDto {
   })
   @IsString({ each: true })
   contentLinks!: string[];
+
+  @ApiProperty({ description: 'Category Name', required: false })
+  @IsString()
+  @IsOptional()
+  categoryName?: string;
+
+  @ApiProperty({
+    description: '부모 카테고리 id',
+    example: 1,
+    required: false,
+  })
+  @IsNumber()
+  @IsOptional()
+  parentId?: number;
 }
 
 class ContentBody extends PartialType(AddContentBodyDto) {}

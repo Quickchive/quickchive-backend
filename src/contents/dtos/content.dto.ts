@@ -9,7 +9,7 @@ import { CoreOutput } from '../../common/dtos/output.dto';
 import { Content } from '../entities/content.entity';
 
 class ContentBodyExceptLink extends PartialType(
-  PickType(Content, ['title', 'comment', 'deadline', 'favorite']),
+  PickType(Content, ['title', 'comment', 'reminder', 'favorite']),
 ) {
   @ApiProperty({ description: 'Category Name', required: false })
   @IsString()

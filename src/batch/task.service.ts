@@ -37,7 +37,7 @@ export class TaskService {
     });
     const contents = await this.contents.find({
       where: {
-        deadline: utcToday,
+        reminder: utcToday,
       },
       relations: {
         user: true,

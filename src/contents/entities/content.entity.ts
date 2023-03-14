@@ -50,14 +50,14 @@ export class Content extends CoreEntity {
 
   @ApiProperty({
     example: '2022-08-20',
-    description: 'Article Deadline(YYYY-MM-DD HH:mm:ss)',
+    description: 'Article Reminder Date(YYYY-MM-DD HH:mm:ss)',
     required: false,
   })
   @Column({ nullable: true })
   @IsDate()
   @IsOptional()
   @Transform(({ value }) => new Date(value))
-  deadline?: Date;
+  reminder?: Date;
 
   @ApiProperty({ description: 'Favorite' })
   @Column({ default: false })

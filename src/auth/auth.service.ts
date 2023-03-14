@@ -32,7 +32,7 @@ import { sendPasswordResetEmailOutput } from './dtos/send-password-reset-email.d
 import { RefreshTokenDto, RefreshTokenOutput } from './dtos/token.dto';
 import { ValidateUserDto, ValidateUserOutput } from './dtos/validate-user.dto';
 import { VerifyEmailOutput } from './dtos/verify-email.dto';
-import { ONEMONTH, Payload } from './jwt/jwt.payload';
+import { ONEYEAR, Payload } from './jwt/jwt.payload';
 import { Cache } from 'cache-manager';
 import { v4 as uuidv4 } from 'uuid';
 import axios from 'axios';
@@ -169,7 +169,7 @@ export class AuthService {
     }
 
     const user = await this.users.findOneBy({ id: decoded.sub });
-    const auto_login: boolean = decoded.period === ONEMONTH;
+    const auto_login: boolean = decoded.period === ONEYEAR;
 
     if (!user) {
       throw new NotFoundException('User not found');

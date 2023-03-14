@@ -4,5 +4,6 @@ export class Payload {
   sub!: number; // userId
 }
 
-export const ONEMONTH = '30d';
+export const ONEYEAR = '1y';
+export const ONEDAY = '1d';
 export const TWOHOUR = '2h';

@@ -35,14 +35,11 @@ export class TaskService {
       level: 'notice',
       message: "Check article's deadline : " + utcToday,
     });
-    const contents = await this.contents.find({
-      where: {
-        reminder: utcToday,
-      },
-      relations: {
-        user: true,
-      },
-    });
+    const contents = await this.contents
+      .createQueryBuilder('content')
+      .leftJoinAndSelect('content.user', 'user')
+      .where('content.reminder = :reminder', { reminder: utcToday })
+      .getMany();
     if (contents.length > 0) {
       // 알림
       for (const content of contents) {

@@ -43,6 +43,7 @@ import { User } from '../users/entities/user.entity';
 import { Category } from './entities/category.entity';
 import { Content } from './entities/content.entity';
 import { CategoryRepository } from './repository/category.repository';
+import { LoadReminderCountOutput } from './dtos/load-personal-remider-count.dto';
 
 @Injectable()
 export class ContentsService {
@@ -443,6 +444,22 @@ export class ContentsService {
 
       return {
         favorite_contents: favoriteContents,
+      };
+    } catch (e) {
+      throw e;
+    }
+  }
+
+  async loadReminderCount(user: User): Promise<LoadReminderCountOutput> {
+    try {
+      const reminderCount = await this.contents
+        .createQueryBuilder('content')
+        .where('content.userId = :userId', { userId: user.id })
+        .andWhere('content.reminder IS NULL')
+        .getCount();
+
+      return {
+        count: reminderCount,
       };
     } catch (e) {
       throw e;

@@ -58,6 +58,7 @@ import {
   LoadFavoritesOutput,
   LoadPersonalContentsOutput,
 } from './dtos/load-personal-contents.dto';
+import { LoadReminderCountOutput } from './dtos/load-personal-remider-count.dto';
 
 @Controller('contents')
 @ApiTags('Contents')
@@ -258,6 +259,23 @@ export class ContentsController {
   @Get('load-favorites')
   async loadFavorites(@AuthUser() user: User): Promise<LoadFavoritesOutput> {
     return await this.contentsService.loadFavorites(user);
+  }
+
+  @ApiOperation({
+    summary: '자신의 리마인더 개수 조회',
+    description: '자신의 리마인더 개수를 조회하는 메서드',
+  })
+  @ApiOkResponse({
+    description: '설정되어있는 리마인더 개수를 반환한다.',
+    type: LoadReminderCountOutput,
+  })
+  @ApiBearerAuth('Authorization')
+  @UseGuards(JwtAuthGuard)
+  @Get('load-reminder-count')
+  async loadReminderCount(
+    @AuthUser() user: User,
+  ): Promise<LoadReminderCountOutput> {
+    return await this.contentsService.loadReminderCount(user);
   }
 
   @ApiOperation({

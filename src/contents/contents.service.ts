@@ -452,11 +452,31 @@ export class ContentsService {
 
   async loadReminderCount(user: User): Promise<LoadReminderCountOutput> {
     try {
-      const reminderCount = await this.contents
+      const reminderCountThatIsNotNull = await this.contents
         .createQueryBuilder('content')
         .where('content.userId = :userId', { userId: user.id })
         .andWhere('content.reminder IS NOT NULL')
         .getCount();
+
+      // get reminder not null
+      const reminderContents = await this.contents
+        .createQueryBuilder('content')
+        .where('content.userId = :userId', { userId: user.id })
+        .andWhere('content.reminder IS NOT NULL')
+        .getOne();
+
+      // get reminder is past
+      const reminderDate = new Date();
+      const reminderCountThatIsPast = await this.contents
+        .createQueryBuilder('content')
+        .where('content.userId = :userId', { userId: user.id })
+        .andWhere('content.reminder IS NOT NULL')
+        .andWhere('content.reminder < :reminderDate', { reminderDate })
+        .getCount();
+
+      // minus reminderCountThatIsPast from reminderCount
+      const reminderCount =
+        reminderCountThatIsNotNull - reminderCountThatIsPast;
 
       return {
         count: reminderCount,

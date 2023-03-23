@@ -455,7 +455,7 @@ export class ContentsService {
       const reminderCount = await this.contents
         .createQueryBuilder('content')
         .where('content.userId = :userId', { userId: user.id })
-        .andWhere('content.reminder IS NULL')
+        .andWhere('content.reminder IS NOT NULL')
         .getCount();
 
       return {

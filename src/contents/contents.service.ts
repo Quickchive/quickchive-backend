@@ -452,18 +452,12 @@ export class ContentsService {
 
   async loadReminderCount(user: User): Promise<LoadReminderCountOutput> {
     try {
+      // get reminder not null
       const reminderCountThatIsNotNull = await this.contents
         .createQueryBuilder('content')
         .where('content.userId = :userId', { userId: user.id })
         .andWhere('content.reminder IS NOT NULL')
         .getCount();
-
-      // get reminder not null
-      const reminderContents = await this.contents
-        .createQueryBuilder('content')
-        .where('content.userId = :userId', { userId: user.id })
-        .andWhere('content.reminder IS NOT NULL')
-        .getOne();
 
       // get reminder is past
       const reminderDate = new Date();

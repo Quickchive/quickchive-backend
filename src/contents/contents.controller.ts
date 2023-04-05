@@ -50,16 +50,17 @@ import {
   UpdateContentOutput,
 } from './dtos/content.dto';
 import {
+  LoadFrequentCategoriesOutput,
   LoadPersonalCategoriesOutput,
-  LoadRecentCategoriesOutput,
 } from './dtos/load-personal-categories.dto';
 import { ErrorOutput } from '../common/dtos/output.dto';
 import {
   LoadFavoritesOutput,
   LoadPersonalContentsOutput,
 } from './dtos/load-personal-contents.dto';
+import { LoadReminderCountOutput } from './dtos/load-personal-remider-count.dto';
 
-@Controller('contents')
+@Controller('content')
 @ApiTags('Contents')
 @ApiBearerAuth('Authorization')
 @UseGuards(JwtAuthGuard)
@@ -78,7 +79,7 @@ export class ContentsController {
     description: '같은 카테고리 내에 동일한 링크의 콘텐츠가 존재할 경우',
     type: ErrorOutput,
   })
-  @Post('add')
+  @Post()
   @UseInterceptors(TransactionInterceptor)
   async addContent(
     @AuthUser() user: User,
@@ -104,7 +105,7 @@ export class ContentsController {
     description: '같은 카테고리 내에 동일한 링크의 콘텐츠가 존재할 경우',
     type: ErrorOutput,
   })
-  @Post('addMultiple')
+  @Post('multiple')
   @UseInterceptors(TransactionInterceptor)
   async addMultipleContents(
     @AuthUser() user: User,
@@ -134,7 +135,7 @@ export class ContentsController {
     description: '존재하지 않는 콘텐츠 또는 유저인 경우',
     type: ErrorOutput,
   })
-  @Post('update')
+  @Patch()
   @UseInterceptors(TransactionInterceptor)
   async updateContent(
     @AuthUser() user: User,
@@ -160,7 +161,7 @@ export class ContentsController {
     description: '존재하지 않는 콘텐츠 또는 유저인 경우',
     type: ErrorOutput,
   })
-  @Patch('favorite/:contentId')
+  @Patch(':contentId/favorite')
   @UseInterceptors(TransactionInterceptor)
   async toggleFavorite(
     @AuthUser() user: User,
@@ -186,7 +187,7 @@ export class ContentsController {
     description: '존재하지 않는 콘텐츠 또는 유저인 경우',
     type: ErrorOutput,
   })
-  @Patch('read/:contentId')
+  @Patch(':contentId/read')
   async readContent(
     @AuthUser() user: User,
     @Param('contentId', new ParseIntPipe()) contentId: number,
@@ -206,7 +207,7 @@ export class ContentsController {
     description: '존재하지 않는 콘텐츠 또는 유저인 경우',
     type: ErrorOutput,
   })
-  @Delete('delete/:contentId')
+  @Delete(':contentId')
   @UseInterceptors(TransactionInterceptor)
   async deleteContent(
     @AuthUser() user: User,
@@ -236,7 +237,7 @@ export class ContentsController {
   })
   @ApiBearerAuth('Authorization')
   @UseGuards(JwtAuthGuard)
-  @Get('load-contents')
+  @Get()
   async loadPersonalContents(
     @AuthUser() user: User,
     @Query('categoryId') categoryId?: number,
@@ -255,9 +256,26 @@ export class ContentsController {
   })
   @ApiBearerAuth('Authorization')
   @UseGuards(JwtAuthGuard)
-  @Get('load-favorites')
+  @Get('favorite')
   async loadFavorites(@AuthUser() user: User): Promise<LoadFavoritesOutput> {
     return await this.contentsService.loadFavorites(user);
+  }
+
+  @ApiOperation({
+    summary: '자신의 리마인더 개수 조회',
+    description: '자신의 리마인더 개수를 조회하는 메서드',
+  })
+  @ApiOkResponse({
+    description: '설정되어있는 리마인더 개수를 반환한다.',
+    type: LoadReminderCountOutput,
+  })
+  @ApiBearerAuth('Authorization')
+  @UseGuards(JwtAuthGuard)
+  @Get('reminder-count')
+  async loadReminderCount(
+    @AuthUser() user: User,
+  ): Promise<LoadReminderCountOutput> {
+    return await this.contentsService.loadReminderCount(user);
   }
 
   @ApiOperation({
@@ -277,7 +295,7 @@ export class ContentsController {
     description: '잘못된 요청을 보냈을 경우',
     type: ErrorOutput,
   })
-  @Get('summarize/:contentId')
+  @Get(':contentId/summarize')
   async summarizeContent(
     @AuthUser() user: User,
     @Param('contentId', new ParseIntPipe()) contentId: number,
@@ -352,7 +370,7 @@ export class CategoryController {
     description: '존재하지 않는 것일 경우',
     type: ErrorOutput,
   })
-  @Post('add')
+  @Post()
   @UseInterceptors(TransactionInterceptor)
   async addCategory(
     @AuthUser() user: User,
@@ -374,7 +392,7 @@ export class CategoryController {
     description: '카테고리 수정 성공 여부를 반환한다.',
     type: UpdateCategoryOutput,
   })
-  @Post('update')
+  @Patch()
   @UseInterceptors(TransactionInterceptor)
   async updateCategory(
     @AuthUser() user: User,
@@ -400,7 +418,7 @@ export class CategoryController {
     description: '존재하지 않는 카테고리를 삭제하려고 할 경우',
     type: ErrorOutput,
   })
-  @Delete('delete/:categoryId')
+  @Delete(':categoryId')
   @UseInterceptors(TransactionInterceptor)
   async deleteCategory(
     @AuthUser() user: User,
@@ -426,7 +444,7 @@ export class CategoryController {
   })
   @ApiBearerAuth('Authorization')
   @UseGuards(JwtAuthGuard)
-  @Get('load-categories')
+  @Get()
   async loadPersonalCategories(
     @AuthUser() user: User,
   ): Promise<LoadPersonalCategoriesOutput> {
@@ -434,19 +452,19 @@ export class CategoryController {
   }
 
   @ApiOperation({
-    summary: '최근 저장한 카테고리 조회',
-    description: '최근 저장한 카테고리를 3개까지 조회하는 메서드',
+    summary: '자주 저장한 카테고리 조회',
+    description: '자주 저장한 카테고리를 3개까지 조회하는 메서드',
   })
   @ApiOkResponse({
-    description: '최근 저장한 카테고리를 최대 3개까지 반환한다.',
-    type: LoadRecentCategoriesOutput,
+    description: '자주 저장한 카테고리를 최대 3개까지 반환한다.',
+    type: LoadFrequentCategoriesOutput,
   })
   @ApiBearerAuth('Authorization')
   @UseGuards(JwtAuthGuard)
-  @Get('load-recent-categories')
-  async loadRecentCategories(
+  @Get('frequent')
+  async loadFrequentCategories(
     @AuthUser() user: User,
-  ): Promise<LoadRecentCategoriesOutput> {
-    return await this.categoryService.loadRecentCategories(user);
+  ): Promise<LoadFrequentCategoriesOutput> {
+    return await this.categoryService.loadFrequentCategories(user);
   }
 }

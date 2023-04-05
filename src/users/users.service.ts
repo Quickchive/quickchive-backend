@@ -14,6 +14,7 @@ import {
 } from './dtos/reset-password.dto';
 import { User } from './entities/user.entity';
 import { Cache } from 'cache-manager';
+import { DeleteAccountOutput } from './dtos/delete-account.dto';
 
 @Injectable()
 export class UsersService {
@@ -85,6 +86,16 @@ export class UsersService {
       }
     } catch (e) {
       throw e;
+    }
+  }
+
+  async deleteAccount(userId: number): Promise<DeleteAccountOutput> {
+    const { affected } = await this.users.delete(userId);
+
+    if (affected === 1) {
+      return {};
+    } else {
+      throw new NotFoundException('User not found');
     }
   }
 }

@@ -31,7 +31,6 @@ import {
   CreateAccountBodyDto,
   CreateAccountOutput,
 } from './dtos/create-account.dto';
-import { DeleteAccountOutput } from './dtos/delete-account.dto';
 import { googleUserInfo } from './dtos/google.dto';
 import {
   LoginBodyDto,
@@ -104,22 +103,6 @@ export class AuthController {
     @Body() logoutBody: LogoutBodyDto,
   ): Promise<LogoutOutput> {
     return await this.authService.logout(user.id, logoutBody);
-  }
-
-  @ApiOperation({ summary: '회원탈퇴', description: '회원탈퇴 메서드' })
-  @ApiOkResponse({
-    description: '회원탈퇴 성공 여부를 알려준다.',
-    type: DeleteAccountOutput,
-  })
-  @ApiNotFoundResponse({
-    description: '유저가 존재하지 않는다.',
-    type: ErrorOutput,
-  })
-  @ApiBearerAuth('Authorization')
-  @UseGuards(JwtAuthGuard)
-  @Delete('delete')
-  async deleteAccount(@AuthUser() user: User): Promise<DeleteAccountOutput> {
-    return await this.authService.deleteAccount(user.id);
   }
 
   @ApiOperation({

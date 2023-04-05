@@ -21,7 +21,6 @@ import {
   CreateAccountBodyDto,
   CreateAccountOutput,
 } from './dtos/create-account.dto';
-import { DeleteAccountOutput } from './dtos/delete-account.dto';
 import {
   LoginBodyDto,
   LoginOutput,
@@ -135,16 +134,6 @@ export class AuthService {
       } else {
         throw new BadRequestException('Invalid refresh token');
       }
-    } else {
-      throw new NotFoundException('User not found');
-    }
-  }
-
-  async deleteAccount(userId: number): Promise<DeleteAccountOutput> {
-    const { affected } = await this.users.delete(userId);
-
-    if (affected === 1) {
-      return {};
     } else {
       throw new NotFoundException('User not found');
     }

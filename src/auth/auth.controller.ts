@@ -121,7 +121,7 @@ export class AuthController {
     description: 'refresh token이 유효하지 않다.',
     type: ErrorOutput,
   })
-  @Post('reissue')
+  @Post('token')
   async reissueToken(
     @Body() regenerateBody: RefreshTokenDto,
   ): Promise<RefreshTokenOutput> {
@@ -141,7 +141,7 @@ export class AuthController {
       '해당 이메일이 이미 인증됐다고 알려준다.(이미 회원가입이 된 경우와 메일만 인증된 경우가 존재한다.)',
     type: ErrorOutput,
   })
-  @Get('send-verify-email/:email')
+  @Post('/send-verification-email/:email')
   async sendVerifyEmail(
     @Param('email') email: string,
   ): Promise<VerifyEmailOutput> {
@@ -164,7 +164,7 @@ export class AuthController {
     description: '이메일이 인증되지 않은 경우에 응답한다.',
     type: ErrorOutput,
   })
-  @Get('send-password-reset-email/:email')
+  @Post('send-password-reset-email/:email')
   async sendPasswordResetEmail(
     @Param('email') email: string,
   ): Promise<sendPasswordResetEmailOutput> {

@@ -50,8 +50,8 @@ import {
   UpdateContentOutput,
 } from './dtos/content.dto';
 import {
+  LoadFrequentCategoriesOutput,
   LoadPersonalCategoriesOutput,
-  LoadRecentCategoriesOutput,
 } from './dtos/load-personal-categories.dto';
 import { ErrorOutput } from '../common/dtos/output.dto';
 import {
@@ -370,7 +370,7 @@ export class CategoryController {
     description: '존재하지 않는 것일 경우',
     type: ErrorOutput,
   })
-  @Post('add')
+  @Post()
   @UseInterceptors(TransactionInterceptor)
   async addCategory(
     @AuthUser() user: User,
@@ -392,7 +392,7 @@ export class CategoryController {
     description: '카테고리 수정 성공 여부를 반환한다.',
     type: UpdateCategoryOutput,
   })
-  @Post('update')
+  @Patch()
   @UseInterceptors(TransactionInterceptor)
   async updateCategory(
     @AuthUser() user: User,
@@ -418,7 +418,7 @@ export class CategoryController {
     description: '존재하지 않는 카테고리를 삭제하려고 할 경우',
     type: ErrorOutput,
   })
-  @Delete('delete/:categoryId')
+  @Delete(':categoryId')
   @UseInterceptors(TransactionInterceptor)
   async deleteCategory(
     @AuthUser() user: User,
@@ -444,7 +444,7 @@ export class CategoryController {
   })
   @ApiBearerAuth('Authorization')
   @UseGuards(JwtAuthGuard)
-  @Get('load-categories')
+  @Get()
   async loadPersonalCategories(
     @AuthUser() user: User,
   ): Promise<LoadPersonalCategoriesOutput> {
@@ -452,19 +452,19 @@ export class CategoryController {
   }
 
   @ApiOperation({
-    summary: '최근 저장한 카테고리 조회',
-    description: '최근 저장한 카테고리를 3개까지 조회하는 메서드',
+    summary: '자주 저장한 카테고리 조회',
+    description: '자주 저장한 카테고리를 3개까지 조회하는 메서드',
   })
   @ApiOkResponse({
-    description: '최근 저장한 카테고리를 최대 3개까지 반환한다.',
-    type: LoadRecentCategoriesOutput,
+    description: '자주 저장한 카테고리를 최대 3개까지 반환한다.',
+    type: LoadFrequentCategoriesOutput,
   })
   @ApiBearerAuth('Authorization')
   @UseGuards(JwtAuthGuard)
-  @Get('load-recent-categories')
-  async loadRecentCategories(
+  @Get('frequent')
+  async loadFrequentCategories(
     @AuthUser() user: User,
-  ): Promise<LoadRecentCategoriesOutput> {
-    return await this.categoryService.loadRecentCategories(user);
+  ): Promise<LoadFrequentCategoriesOutput> {
+    return await this.categoryService.loadFrequentCategories(user);
   }
 }

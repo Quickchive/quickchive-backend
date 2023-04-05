@@ -31,8 +31,8 @@ import {
   UpdateContentBodyDto,
 } from './dtos/content.dto';
 import {
+  LoadFrequentCategoriesOutput,
   LoadPersonalCategoriesOutput,
-  LoadRecentCategoriesOutput,
 } from './dtos/load-personal-categories.dto';
 import {
   LoadFavoritesOutput,
@@ -830,7 +830,9 @@ export class CategoryService {
     }
   }
 
-  async loadRecentCategories(user: User): Promise<LoadRecentCategoriesOutput> {
+  async loadFrequentCategories(
+    user: User,
+  ): Promise<LoadFrequentCategoriesOutput> {
     try {
       // 로그 파일 내의 기록을 불러온다.
       const recentCategoryList: RecentCategoryList[] = this.loadLogs(user.id);
@@ -838,14 +840,14 @@ export class CategoryService {
       // 캐시 내의 카테고리 리스트를 최신 순으로 정렬하고, 동시에 저장된 횟수를 추가한다.
 
       let recentCategoriesWithSaveCount: RecentCategoryListWithSaveCount[] = [];
-      const recentCategories: Category[] = [];
+      const frequentCategories: Category[] = [];
 
       // 3번째 카테고리까지 선정되거나, 더 이상 로그가 없을 때까지 매번 10개의 로그씩 확인한다.
       let remainLogCount = recentCategoryList.length,
         i = 0;
       while (remainLogCount > 0) {
         // 3개의 카테고리가 선정되었으면 루프를 종료한다.
-        if (recentCategories.length >= 3) {
+        if (frequentCategories.length >= 3) {
           break;
         }
 
@@ -865,7 +867,7 @@ export class CategoryService {
          */
         recentCategoriesWithSaveCount = recentCategoriesWithSaveCount.filter(
           (category) =>
-            !recentCategories.find(
+            !frequentCategories.find(
               (recentCategory) => recentCategory.id === category.categoryId,
             ),
         );
@@ -899,7 +901,7 @@ export class CategoryService {
             );
 
             if (category) {
-              recentCategories.push(category);
+              frequentCategories.push(category);
             }
           }
         }
@@ -908,7 +910,7 @@ export class CategoryService {
          * 나머지 3-n 개 선정 기준
          * 1. 최근 저장 순
          */
-        const N = 3 - recentCategories.length;
+        const N = 3 - frequentCategories.length;
         for (let i = 0; i < N; i++) {
           if (i < orderByDate.length) {
             const category = await this.categories.findOne({
@@ -916,14 +918,14 @@ export class CategoryService {
             });
 
             if (category) {
-              recentCategories.push(category);
+              frequentCategories.push(category);
             }
           }
         }
       }
 
       return {
-        recentCategories,
+        frequentCategories,
       };
     } catch (e) {
       throw e;

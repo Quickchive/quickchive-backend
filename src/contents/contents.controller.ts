@@ -60,7 +60,7 @@ import {
 } from './dtos/load-personal-contents.dto';
 import { LoadReminderCountOutput } from './dtos/load-personal-remider-count.dto';
 
-@Controller('contents')
+@Controller('content')
 @ApiTags('Contents')
 @ApiBearerAuth('Authorization')
 @UseGuards(JwtAuthGuard)
@@ -79,7 +79,7 @@ export class ContentsController {
     description: '같은 카테고리 내에 동일한 링크의 콘텐츠가 존재할 경우',
     type: ErrorOutput,
   })
-  @Post('add')
+  @Post()
   @UseInterceptors(TransactionInterceptor)
   async addContent(
     @AuthUser() user: User,
@@ -105,7 +105,7 @@ export class ContentsController {
     description: '같은 카테고리 내에 동일한 링크의 콘텐츠가 존재할 경우',
     type: ErrorOutput,
   })
-  @Post('addMultiple')
+  @Post('multiple')
   @UseInterceptors(TransactionInterceptor)
   async addMultipleContents(
     @AuthUser() user: User,
@@ -135,7 +135,7 @@ export class ContentsController {
     description: '존재하지 않는 콘텐츠 또는 유저인 경우',
     type: ErrorOutput,
   })
-  @Post('update')
+  @Patch()
   @UseInterceptors(TransactionInterceptor)
   async updateContent(
     @AuthUser() user: User,
@@ -161,7 +161,7 @@ export class ContentsController {
     description: '존재하지 않는 콘텐츠 또는 유저인 경우',
     type: ErrorOutput,
   })
-  @Patch('favorite/:contentId')
+  @Patch(':contentId/favorite')
   @UseInterceptors(TransactionInterceptor)
   async toggleFavorite(
     @AuthUser() user: User,
@@ -187,7 +187,7 @@ export class ContentsController {
     description: '존재하지 않는 콘텐츠 또는 유저인 경우',
     type: ErrorOutput,
   })
-  @Patch('read/:contentId')
+  @Patch(':contentId/read')
   async readContent(
     @AuthUser() user: User,
     @Param('contentId', new ParseIntPipe()) contentId: number,
@@ -207,7 +207,7 @@ export class ContentsController {
     description: '존재하지 않는 콘텐츠 또는 유저인 경우',
     type: ErrorOutput,
   })
-  @Delete('delete/:contentId')
+  @Delete(':contentId')
   @UseInterceptors(TransactionInterceptor)
   async deleteContent(
     @AuthUser() user: User,
@@ -237,7 +237,7 @@ export class ContentsController {
   })
   @ApiBearerAuth('Authorization')
   @UseGuards(JwtAuthGuard)
-  @Get('load-contents')
+  @Get()
   async loadPersonalContents(
     @AuthUser() user: User,
     @Query('categoryId') categoryId?: number,
@@ -256,7 +256,7 @@ export class ContentsController {
   })
   @ApiBearerAuth('Authorization')
   @UseGuards(JwtAuthGuard)
-  @Get('load-favorites')
+  @Get('favorite')
   async loadFavorites(@AuthUser() user: User): Promise<LoadFavoritesOutput> {
     return await this.contentsService.loadFavorites(user);
   }
@@ -271,7 +271,7 @@ export class ContentsController {
   })
   @ApiBearerAuth('Authorization')
   @UseGuards(JwtAuthGuard)
-  @Get('load-reminder-count')
+  @Get('reminder-count')
   async loadReminderCount(
     @AuthUser() user: User,
   ): Promise<LoadReminderCountOutput> {
@@ -295,7 +295,7 @@ export class ContentsController {
     description: '잘못된 요청을 보냈을 경우',
     type: ErrorOutput,
   })
-  @Get('summarize/:contentId')
+  @Get(':contentId/summarize')
   async summarizeContent(
     @AuthUser() user: User,
     @Param('contentId', new ParseIntPipe()) contentId: number,

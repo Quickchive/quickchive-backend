@@ -89,13 +89,13 @@
 
 ### Category API
 
-| URL                             | method | Usage                     | Authorization Needed |
-| ------------------------------- | ------ | ------------------------- | -------------------- |
-| /api/category                   | POST   | 카테고리 추가             | O                    |
-| /api/category                   | PATCH  | 카테고리 수정             | O                    |
-| /api/category/\<int:categoryId> | DELETE | 카테고리 삭제             | O                    |
-| /api/category                   | GET    | 카테고리 조회             | O                    |
-| /api/category/frequent          | GET    | 자주 저장한 카테고리 조회 | O                    |
+| URL                               | method | Usage                     | Authorization Needed |
+| --------------------------------- | ------ | ------------------------- | -------------------- |
+| /api/categories                   | POST   | 카테고리 추가             | O                    |
+| /api/categories                   | PATCH  | 카테고리 수정             | O                    |
+| /api/categories/\<int:categoryId> | DELETE | 카테고리 삭제             | O                    |
+| /api/categories                   | GET    | 카테고리 조회             | O                    |
+| /api/categories/frequent          | GET    | 자주 저장한 카테고리 조회 | O                    |
 
 ## License
 

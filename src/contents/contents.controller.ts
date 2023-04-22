@@ -347,7 +347,7 @@ export class TestController {
   }
 }
 
-@Controller('category')
+@Controller('categories')
 @ApiTags('Category')
 @ApiBearerAuth('Authorization')
 @UseGuards(JwtAuthGuard)

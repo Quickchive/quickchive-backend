@@ -60,7 +60,7 @@ import {
 } from './dtos/load-personal-contents.dto';
 import { LoadReminderCountOutput } from './dtos/load-personal-remider-count.dto';
 
-@Controller('content')
+@Controller('contents')
 @ApiTags('Contents')
 @ApiBearerAuth('Authorization')
 @UseGuards(JwtAuthGuard)

@@ -53,10 +53,6 @@
 | /api/user          | GET    | 유저 정보 조회       | O                    |
 | /api/user          | DELETE | 유저 삭제(회원 탈퇴) | O                    |
 
-| /api/user/load-contents | GET | 유저의 콘텐츠 조회 | O |
-| /api/user/load-favorites | GET | 유저의 즐겨찾기 조회 | O |
-| /api/user/load-categories | GET | 유저의 카테고리 조회 | O |
-
 ### Auth API
 
 | URL                                               | method | Usage                              | Authorization Needed |
@@ -80,16 +76,16 @@
 
 ### Content API
 
-| URL                                     | method | Usage                   | Authorization Needed |
-| --------------------------------------- | ------ | ----------------------- | -------------------- |
-| /api/content                            | POST   | 콘텐츠 추가             | O                    |
-| /api/content/multiple                   | POST   | 다수의 콘텐츠 일괄 추가 | O                    |
-| /api/content                            | PATCH  | 콘텐츠 정보 수정        | O                    |
-| /api/content/\<int:contentId>/favorite  | PATCH  | 즐겨찾기 등록 및 해제   | O                    |
-| /api/content/\<int:contentId>           | DELETE | 콘텐츠 삭제             | O                    |
-| /api/content                            | GET    | 콘텐츠 조회             | O                    |
-| /api/content/favorite                   | GET    | 콘텐츠 삭제             | O                    |
-| /api/content/\<int:contentId>/summarize | GET    | 콘텐츠 문서 요약        | O                    |
+| URL                                      | method | Usage                   | Authorization Needed |
+| ---------------------------------------- | ------ | ----------------------- | -------------------- |
+| /api/contents                            | POST   | 콘텐츠 추가             | O                    |
+| /api/contents/multiple                   | POST   | 다수의 콘텐츠 일괄 추가 | O                    |
+| /api/contents                            | PATCH  | 콘텐츠 정보 수정        | O                    |
+| /api/contents/\<int:contentsId>/favorite | PATCH  | 즐겨찾기 등록 및 해제   | O                    |
+| /api/contents/\<int:contentsId>          | DELETE | 콘텐츠 삭제             | O                    |
+| /api/contents                            | GET    | 콘텐츠 조회             | O                    |
+| /api/contents/favorite                   | GET    | 콘텐츠 삭제             | O                    |
+| /api/contents/\<int:contentId>/summarize | GET    | 콘텐츠 문서 요약        | O                    |
 
 ### Category API
 

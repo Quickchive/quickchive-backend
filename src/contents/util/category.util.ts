@@ -73,7 +73,7 @@ export class CategoryUtil {
    * @param userInDb
    */
   async checkContentDuplicateAndAddCategorySaveLog(
-    link: string,
+    link: string | undefined,
     category: Category,
     userInDb: User,
   ): Promise<void> {

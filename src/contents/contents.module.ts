@@ -17,6 +17,8 @@ import { Content } from './entities/content.entity';
 import { customCategoryRepositoryMethods } from './repository/category.old.repository';
 import { UserRepository } from '../users/repository/user.repository';
 import { ContentRepository } from './repository/content.repository';
+import { CategoryUtil } from './util/category.util';
+import { CategoryRepository } from './repository/category.repository';
 
 @Module({
   imports: [TypeOrmModule.forFeature([User, Content, Category])],
@@ -36,6 +38,8 @@ import { ContentRepository } from './repository/content.repository';
     },
     UserRepository,
     ContentRepository,
+    CategoryRepository,
+    CategoryUtil,
   ],
   exports: [ContentsService],
 })

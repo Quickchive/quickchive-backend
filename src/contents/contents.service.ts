@@ -4,7 +4,6 @@ import {
   Injectable,
   NotFoundException,
 } from '@nestjs/common';
-import { InjectRepository } from '@nestjs/typeorm';
 import { EntityManager } from 'typeorm';
 import * as cheerio from 'cheerio';
 import axios from 'axios';
@@ -42,10 +41,11 @@ import { SummaryService } from '../summary/summary.service';
 import { User } from '../users/entities/user.entity';
 import { Category } from './entities/category.entity';
 import { Content } from './entities/content.entity';
-import { CategoryRepository } from './repository/category.old.repository';
 import { LoadReminderCountOutput } from './dtos/load-personal-remider-count.dto';
 import { UserRepository } from '../users/repository/user.repository';
 import { ContentRepository } from './repository/content.repository';
+import { CategoryUtil } from './util/category.util';
+import { CategoryRepository } from './repository/category.repository';
 
 @Injectable()
 export class ContentsService {
@@ -53,8 +53,8 @@ export class ContentsService {
     private readonly userRepository: UserRepository,
     private readonly contentRepository: ContentRepository,
     private readonly summaryService: SummaryService,
-    @InjectRepository(Category)
-    private readonly categories: CategoryRepository,
+    private readonly categoryRepository: CategoryRepository,
+    private readonly categoryUtil: CategoryUtil,
   ) {}
 
   async addContent(
@@ -88,14 +88,14 @@ export class ContentsService {
 
       let category: Category | null = null;
       if (categoryName) {
-        category = await this.categories.getOrCreateCategory(
+        category = await this.categoryRepository.getOrCreateCategory(
           categoryName,
           parentId,
           userInDb,
           queryRunnerManager,
         );
 
-        await this.categories.checkContentDuplicateAndAddCategorySaveLog(
+        await this.categoryUtil.checkContentDuplicateAndAddCategorySaveLog(
           link,
           category,
           userInDb,
@@ -143,7 +143,7 @@ export class ContentsService {
       if (contentLinks.length > 0) {
         let category: Category | null = null;
         if (categoryName) {
-          category = await this.categories.getOrCreateCategory(
+          category = await this.categoryRepository.getOrCreateCategory(
             categoryName,
             parentId,
             userInDb,
@@ -155,7 +155,7 @@ export class ContentsService {
             await this.getLinkInfo(link);
 
           if (category) {
-            await this.categories.checkContentDuplicateAndAddCategorySaveLog(
+            await this.categoryUtil.checkContentDuplicateAndAddCategorySaveLog(
               link,
               category,
               userInDb,
@@ -228,14 +228,14 @@ export class ContentsService {
 
       let category: Category | null = null;
       if (categoryName) {
-        category = await this.categories.getOrCreateCategory(
+        category = await this.categoryRepository.getOrCreateCategory(
           categoryName,
           parentId,
           userInDb,
           queryRunnerManager,
         );
 
-        await this.categories.checkContentDuplicateAndAddCategorySaveLog(
+        await this.categoryUtil.checkContentDuplicateAndAddCategorySaveLog(
           link,
           category,
           userInDb,
@@ -540,8 +540,8 @@ export class ContentsService {
 @Injectable()
 export class CategoryService {
   constructor(
-    @InjectRepository(Category)
-    private readonly categories: CategoryRepository,
+    private readonly categoryRepository: CategoryRepository,
+    private readonly categoryUtil: CategoryUtil,
     private readonly userRepository: UserRepository,
   ) {}
 
@@ -561,7 +561,7 @@ export class CategoryService {
         throw new NotFoundException('User not found');
       }
 
-      const { categorySlug } = this.categories.generateSlug(categoryName);
+      const { categorySlug } = this.categoryUtil.generateSlug(categoryName);
 
       if (parentId) {
         // category depth should be 3
@@ -644,7 +644,7 @@ export class CategoryService {
       if (category) {
         // Check if user has category with same slug
         if (categoryName) {
-          const { categorySlug } = this.categories.generateSlug(categoryName);
+          const { categorySlug } = this.categoryUtil.generateSlug(categoryName);
           if (
             userInDb.categories?.filter(
               (category) =>
@@ -663,13 +663,13 @@ export class CategoryService {
 
         if (parentId) {
           // category depth should be 3
-          let parentCategory = await this.categories.findOne({
+          let parentCategory = await this.categoryRepository.findOne({
             where: { id: parentId },
           });
           if (!parentCategory) {
             throw new NotFoundException('Parent category not found.');
           } else if (parentCategory?.parentId !== null) {
-            parentCategory = await this.categories.findOne({
+            parentCategory = await this.categoryRepository.findOne({
               where: { id: parentCategory.parentId },
             });
             if (parentCategory?.parentId !== null) {
@@ -788,7 +788,8 @@ export class CategoryService {
       }
 
       // make categories tree by parentid
-      const categoriesTree = this.categories.generateCategoriesTree(categories);
+      const categoriesTree =
+        this.categoryUtil.generateCategoriesTree(categories);
 
       return {
         categoriesTree,
@@ -856,7 +857,7 @@ export class CategoryService {
          */
         for (let i = 0; i < 2; i++) {
           if (i < orderBySaveCount.length) {
-            const category = await this.categories.findOne({
+            const category = await this.categoryRepository.findOne({
               where: { id: orderBySaveCount[i].categoryId },
             });
 
@@ -881,7 +882,7 @@ export class CategoryService {
         const N = 3 - frequentCategories.length;
         for (let i = 0; i < N; i++) {
           if (i < orderByDate.length) {
-            const category = await this.categories.findOne({
+            const category = await this.categoryRepository.findOne({
               where: { id: orderByDate[i] },
             });
 

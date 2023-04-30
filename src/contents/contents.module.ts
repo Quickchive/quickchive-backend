@@ -14,7 +14,7 @@ import {
 import { CategoryService, ContentsService } from './contents.service';
 import { Category } from './entities/category.entity';
 import { Content } from './entities/content.entity';
-import { customCategoryRepositoryMethods } from './repository/category.repository';
+import { customCategoryRepositoryMethods } from './repository/category.old.repository';
 import { UserRepository } from '../users/repository/user.repository';
 import { ContentRepository } from './repository/content.repository';
 

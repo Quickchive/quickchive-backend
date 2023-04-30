@@ -6,7 +6,7 @@ import {
 } from '@nestjs/typeorm';
 import { ContentsModule } from '../contents/contents.module';
 import { Category } from '../contents/entities/category.entity';
-import { customCategoryRepositoryMethods } from '../contents/repository/category.repository';
+import { customCategoryRepositoryMethods } from '../contents/repository/category.old.repository';
 import { DataSource } from 'typeorm';
 import { CollectionsController } from './collections.controller';
 import { CollectionsService } from './collections.service';

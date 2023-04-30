@@ -10,7 +10,7 @@ import { Category } from './entities/category.entity';
 import {
   CategoryRepository,
   customCategoryRepositoryMethods,
-} from './repository/category.repository';
+} from './repository/category.old.repository';
 import { RecentCategoryList } from './dtos/category.dto';
 
 const mockRepository = () => ({

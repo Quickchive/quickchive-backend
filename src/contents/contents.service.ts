@@ -42,7 +42,7 @@ import { SummaryService } from '../summary/summary.service';
 import { User } from '../users/entities/user.entity';
 import { Category } from './entities/category.entity';
 import { Content } from './entities/content.entity';
-import { CategoryRepository } from './repository/category.repository';
+import { CategoryRepository } from './repository/category.old.repository';
 import { LoadReminderCountOutput } from './dtos/load-personal-remider-count.dto';
 import { UserRepository } from '../users/repository/user.repository';
 import { ContentRepository } from './repository/content.repository';

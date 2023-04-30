@@ -22,14 +22,13 @@ import {
 } from './dtos/nested-content.dto';
 import { toggleFavoriteOutput } from 'src/contents/dtos/content.dto';
 import { Category } from '../contents/entities/category.entity';
-import { CategoryRepository } from '../contents/repository/category.old.repository';
 import { ContentsService } from '../contents/contents.service';
 
 @Injectable()
 export class CollectionsService {
   constructor(
-    @InjectRepository(Category)
-    private readonly categories: CategoryRepository,
+    // @InjectRepository(Category)
+    // private readonly categories: CategoryRepository,
     private readonly contentsService: ContentsService,
   ) {}
 

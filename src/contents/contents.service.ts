@@ -5,7 +5,7 @@ import {
   NotFoundException,
 } from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
-import { EntityManager, Repository } from 'typeorm';
+import { EntityManager } from 'typeorm';
 import * as cheerio from 'cheerio';
 import axios from 'axios';
 import * as fs from 'fs';
@@ -45,13 +45,13 @@ import { Content } from './entities/content.entity';
 import { CategoryRepository } from './repository/category.repository';
 import { LoadReminderCountOutput } from './dtos/load-personal-remider-count.dto';
 import { UserRepository } from '../users/repository/user.repository';
+import { ContentRepository } from './repository/content.repository';
 
 @Injectable()
 export class ContentsService {
   constructor(
     private readonly userRepository: UserRepository,
-    @InjectRepository(Content)
-    private readonly contents: Repository<Content>,
+    private readonly contentRepository: ContentRepository,
     private readonly summaryService: SummaryService,
     @InjectRepository(Category)
     private readonly categories: CategoryRepository,
@@ -305,7 +305,7 @@ export class ContentsService {
 
       content.readFlag = true;
 
-      await this.contents.save(content);
+      await this.contentRepository.save(content);
 
       return {};
     } catch (e) {
@@ -404,11 +404,7 @@ export class ContentsService {
     categoryId: number | undefined,
   ): Promise<LoadPersonalContentsOutput> {
     try {
-      let contents = await this.contents
-        .createQueryBuilder('content')
-        .where('content.userId = :userId', { userId: user.id })
-        .leftJoinAndSelect('content.category', 'category')
-        .getMany();
+      let contents = await this.contentRepository.findWithCategories(user.id);
 
       if (categoryId && contents) {
         contents = contents.filter(
@@ -426,12 +422,8 @@ export class ContentsService {
 
   async loadFavorites(user: User): Promise<LoadFavoritesOutput> {
     try {
-      const favoriteContents = await this.contents
-        .createQueryBuilder('content')
-        .where('content.userId = :userId', { userId: user.id })
-        .andWhere('content.favorite = :favorite', { favorite: true })
-        .leftJoinAndSelect('content.category', 'category')
-        .getMany();
+      const favoriteContents =
+        await this.contentRepository.findWhereFavoriteWithCategories(user.id);
 
       return {
         favorite_contents: favoriteContents,
@@ -444,20 +436,13 @@ export class ContentsService {
   async loadReminderCount(user: User): Promise<LoadReminderCountOutput> {
     try {
       // get reminder not null
-      const reminderCountThatIsNotNull = await this.contents
-        .createQueryBuilder('content')
-        .where('content.userId = :userId', { userId: user.id })
-        .andWhere('content.reminder IS NOT NULL')
-        .getCount();
+      const reminderCountThatIsNotNull =
+        await this.contentRepository.GetCountWhereReminderIsNotNull(user.id);
 
       // get reminder is past
       const reminderDate = new Date();
-      const reminderCountThatIsPast = await this.contents
-        .createQueryBuilder('content')
-        .where('content.userId = :userId', { userId: user.id })
-        .andWhere('content.reminder IS NOT NULL')
-        .andWhere('content.reminder < :reminderDate', { reminderDate })
-        .getCount();
+      const reminderCountThatIsPast =
+        await this.contentRepository.GetCountWhereReminderIsPast(user.id);
 
       // minus reminderCountThatIsPast from reminderCount
       const reminderCount =

@@ -5,8 +5,7 @@ import {
   NotFoundException,
   UnauthorizedException,
 } from '@nestjs/common';
-import { InjectRepository } from '@nestjs/typeorm';
-import { EntityManager, Repository } from 'typeorm';
+import { EntityManager } from 'typeorm';
 import { EditProfileInput, EditProfileOutput } from './dtos/edit-profile.dto';
 import {
   ResetPasswordInput,
@@ -15,11 +14,12 @@ import {
 import { User } from './entities/user.entity';
 import { Cache } from 'cache-manager';
 import { DeleteAccountOutput } from './dtos/delete-account.dto';
+import { UserRepository } from './repository/user.repository';
 
 @Injectable()
 export class UsersService {
   constructor(
-    @InjectRepository(User) private readonly users: Repository<User>,
+    private readonly userRepository: UserRepository,
     @Inject(CACHE_MANAGER) private readonly cacheManager: Cache,
   ) {}
 
@@ -90,7 +90,7 @@ export class UsersService {
   }
 
   async deleteAccount(userId: number): Promise<DeleteAccountOutput> {
-    const { affected } = await this.users.delete(userId);
+    const { affected } = await this.userRepository.delete(userId);
 
     if (affected === 1) {
       return {};

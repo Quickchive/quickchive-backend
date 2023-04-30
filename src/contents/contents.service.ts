@@ -44,12 +44,12 @@ import { Category } from './entities/category.entity';
 import { Content } from './entities/content.entity';
 import { CategoryRepository } from './repository/category.repository';
 import { LoadReminderCountOutput } from './dtos/load-personal-remider-count.dto';
+import { UserRepository } from '../users/repository/user.repository';
 
 @Injectable()
 export class ContentsService {
   constructor(
-    @InjectRepository(User)
-    private readonly users: Repository<User>,
+    private readonly userRepository: UserRepository,
     @InjectRepository(Content)
     private readonly contents: Repository<Content>,
     private readonly summaryService: SummaryService,
@@ -71,13 +71,8 @@ export class ContentsService {
     queryRunnerManager: EntityManager,
   ): Promise<AddContentOutput> {
     try {
-      const userInDb = await this.users
-        .createQueryBuilder('user')
-        .leftJoinAndSelect('user.contents', 'content')
-        .leftJoinAndSelect('content.category', 'content_category')
-        .leftJoinAndSelect('user.categories', 'category')
-        .where('user.id = :id', { id: user.id })
-        .getOne();
+      const userInDb =
+        await this.userRepository.findOneWithContentsAndCategories(user.id);
       if (!userInDb) {
         throw new NotFoundException('User not found');
       }
@@ -295,11 +290,7 @@ export class ContentsService {
     contentId: number,
   ): Promise<checkReadFlagOutput> {
     try {
-      const userInDb = await this.users
-        .createQueryBuilder('user')
-        .leftJoinAndSelect('user.contents', 'content')
-        .where('user.id = :id', { id: user.id })
-        .getOne();
+      const userInDb = await this.userRepository.findOneWithContents(user.id);
       if (!userInDb) {
         throw new NotFoundException('User not found');
       }
@@ -485,11 +476,7 @@ export class ContentsService {
     contentId: number,
   ): Promise<SummarizeContentOutput> {
     try {
-      const userInDb = await this.users
-        .createQueryBuilder('user')
-        .leftJoinAndSelect('user.contents', 'content')
-        .where('user.id = :id', { id: user.id })
-        .getOne();
+      const userInDb = await this.userRepository.findOneWithContents(user.id);
       if (!userInDb) {
         throw new NotFoundException('User not found');
       }
@@ -570,8 +557,7 @@ export class CategoryService {
   constructor(
     @InjectRepository(Category)
     private readonly categories: CategoryRepository,
-    @InjectRepository(User)
-    private readonly users: Repository<User>,
+    private readonly userRepository: UserRepository,
   ) {}
 
   async addCategory(
@@ -809,11 +795,8 @@ export class CategoryService {
     user: User,
   ): Promise<LoadPersonalCategoriesOutput> {
     try {
-      const { categories } = await this.users
-        .createQueryBuilder('user')
-        .leftJoinAndSelect('user.categories', 'categories')
-        .where('user.id = :id', { id: user.id })
-        .getOneOrFail();
+      const { categories } =
+        await this.userRepository.findOneWithCategoriesOrFail(user.id);
 
       if (!categories) {
         throw new NotFoundException('Categories not found.');

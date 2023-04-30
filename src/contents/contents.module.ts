@@ -15,6 +15,7 @@ import { CategoryService, ContentsService } from './contents.service';
 import { Category } from './entities/category.entity';
 import { Content } from './entities/content.entity';
 import { customCategoryRepositoryMethods } from './repository/category.repository';
+import { UserRepository } from '../users/repository/user.repository';
 
 @Module({
   imports: [TypeOrmModule.forFeature([User, Content, Category])],
@@ -32,6 +33,7 @@ import { customCategoryRepositoryMethods } from './repository/category.repositor
           .extend(customCategoryRepositoryMethods);
       },
     },
+    UserRepository,
   ],
   exports: [ContentsService],
 })

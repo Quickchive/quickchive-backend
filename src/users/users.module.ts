@@ -4,6 +4,7 @@ import { User } from './entities/user.entity';
 import { UsersController } from './users.controller';
 import { UsersService } from './users.service';
 import * as redisStore from 'cache-manager-redis-store';
+import { UserRepository } from './repository/user.repository';
 
 @Module({
   imports: [
@@ -15,6 +16,6 @@ import * as redisStore from 'cache-manager-redis-store';
     }),
   ],
   controllers: [UsersController],
-  providers: [UsersService],
+  providers: [UsersService, UserRepository],
 })
 export class UsersModule {}

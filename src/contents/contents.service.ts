@@ -4,8 +4,7 @@ import {
   Injectable,
   NotFoundException,
 } from '@nestjs/common';
-import { InjectRepository } from '@nestjs/typeorm';
-import { EntityManager, Repository } from 'typeorm';
+import { EntityManager } from 'typeorm';
 import * as cheerio from 'cheerio';
 import axios from 'axios';
 import * as fs from 'fs';
@@ -42,19 +41,20 @@ import { SummaryService } from '../summary/summary.service';
 import { User } from '../users/entities/user.entity';
 import { Category } from './entities/category.entity';
 import { Content } from './entities/content.entity';
-import { CategoryRepository } from './repository/category.repository';
 import { LoadReminderCountOutput } from './dtos/load-personal-remider-count.dto';
+import { UserRepository } from '../users/repository/user.repository';
+import { ContentRepository } from './repository/content.repository';
+import { CategoryUtil } from './util/category.util';
+import { CategoryRepository } from './repository/category.repository';
 
 @Injectable()
 export class ContentsService {
   constructor(
-    @InjectRepository(User)
-    private readonly users: Repository<User>,
-    @InjectRepository(Content)
-    private readonly contents: Repository<Content>,
+    private readonly userRepository: UserRepository,
+    private readonly contentRepository: ContentRepository,
     private readonly summaryService: SummaryService,
-    @InjectRepository(Category)
-    private readonly categories: CategoryRepository,
+    private readonly categoryRepository: CategoryRepository,
+    private readonly categoryUtil: CategoryUtil,
   ) {}
 
   async addContent(
@@ -71,13 +71,8 @@ export class ContentsService {
     queryRunnerManager: EntityManager,
   ): Promise<AddContentOutput> {
     try {
-      const userInDb = await this.users
-        .createQueryBuilder('user')
-        .leftJoinAndSelect('user.contents', 'content')
-        .leftJoinAndSelect('content.category', 'content_category')
-        .leftJoinAndSelect('user.categories', 'category')
-        .where('user.id = :id', { id: user.id })
-        .getOne();
+      const userInDb =
+        await this.userRepository.findOneWithContentsAndCategories(user.id);
       if (!userInDb) {
         throw new NotFoundException('User not found');
       }
@@ -93,14 +88,14 @@ export class ContentsService {
 
       let category: Category | null = null;
       if (categoryName) {
-        category = await this.categories.getOrCreateCategory(
+        category = await this.categoryRepository.getOrCreateCategory(
           categoryName,
           parentId,
           userInDb,
           queryRunnerManager,
         );
 
-        await this.categories.checkContentDuplicateAndAddCategorySaveLog(
+        await this.categoryUtil.checkContentDuplicateAndAddCategorySaveLog(
           link,
           category,
           userInDb,
@@ -148,7 +143,7 @@ export class ContentsService {
       if (contentLinks.length > 0) {
         let category: Category | null = null;
         if (categoryName) {
-          category = await this.categories.getOrCreateCategory(
+          category = await this.categoryRepository.getOrCreateCategory(
             categoryName,
             parentId,
             userInDb,
@@ -160,7 +155,7 @@ export class ContentsService {
             await this.getLinkInfo(link);
 
           if (category) {
-            await this.categories.checkContentDuplicateAndAddCategorySaveLog(
+            await this.categoryUtil.checkContentDuplicateAndAddCategorySaveLog(
               link,
               category,
               userInDb,
@@ -233,14 +228,14 @@ export class ContentsService {
 
       let category: Category | null = null;
       if (categoryName) {
-        category = await this.categories.getOrCreateCategory(
+        category = await this.categoryRepository.getOrCreateCategory(
           categoryName,
           parentId,
           userInDb,
           queryRunnerManager,
         );
 
-        await this.categories.checkContentDuplicateAndAddCategorySaveLog(
+        await this.categoryUtil.checkContentDuplicateAndAddCategorySaveLog(
           link,
           category,
           userInDb,
@@ -295,11 +290,7 @@ export class ContentsService {
     contentId: number,
   ): Promise<checkReadFlagOutput> {
     try {
-      const userInDb = await this.users
-        .createQueryBuilder('user')
-        .leftJoinAndSelect('user.contents', 'content')
-        .where('user.id = :id', { id: user.id })
-        .getOne();
+      const userInDb = await this.userRepository.findOneWithContents(user.id);
       if (!userInDb) {
         throw new NotFoundException('User not found');
       }
@@ -314,7 +305,7 @@ export class ContentsService {
 
       content.readFlag = true;
 
-      await this.contents.save(content);
+      await this.contentRepository.save(content);
 
       return {};
     } catch (e) {
@@ -413,11 +404,7 @@ export class ContentsService {
     categoryId: number | undefined,
   ): Promise<LoadPersonalContentsOutput> {
     try {
-      let contents = await this.contents
-        .createQueryBuilder('content')
-        .where('content.userId = :userId', { userId: user.id })
-        .leftJoinAndSelect('content.category', 'category')
-        .getMany();
+      let contents = await this.contentRepository.findWithCategories(user.id);
 
       if (categoryId && contents) {
         contents = contents.filter(
@@ -435,12 +422,8 @@ export class ContentsService {
 
   async loadFavorites(user: User): Promise<LoadFavoritesOutput> {
     try {
-      const favoriteContents = await this.contents
-        .createQueryBuilder('content')
-        .where('content.userId = :userId', { userId: user.id })
-        .andWhere('content.favorite = :favorite', { favorite: true })
-        .leftJoinAndSelect('content.category', 'category')
-        .getMany();
+      const favoriteContents =
+        await this.contentRepository.findWhereFavoriteWithCategories(user.id);
 
       return {
         favorite_contents: favoriteContents,
@@ -453,20 +436,13 @@ export class ContentsService {
   async loadReminderCount(user: User): Promise<LoadReminderCountOutput> {
     try {
       // get reminder not null
-      const reminderCountThatIsNotNull = await this.contents
-        .createQueryBuilder('content')
-        .where('content.userId = :userId', { userId: user.id })
-        .andWhere('content.reminder IS NOT NULL')
-        .getCount();
+      const reminderCountThatIsNotNull =
+        await this.contentRepository.GetCountWhereReminderIsNotNull(user.id);
 
       // get reminder is past
       const reminderDate = new Date();
-      const reminderCountThatIsPast = await this.contents
-        .createQueryBuilder('content')
-        .where('content.userId = :userId', { userId: user.id })
-        .andWhere('content.reminder IS NOT NULL')
-        .andWhere('content.reminder < :reminderDate', { reminderDate })
-        .getCount();
+      const reminderCountThatIsPast =
+        await this.contentRepository.GetCountWhereReminderIsPast(user.id);
 
       // minus reminderCountThatIsPast from reminderCount
       const reminderCount =
@@ -485,11 +461,7 @@ export class ContentsService {
     contentId: number,
   ): Promise<SummarizeContentOutput> {
     try {
-      const userInDb = await this.users
-        .createQueryBuilder('user')
-        .leftJoinAndSelect('user.contents', 'content')
-        .where('user.id = :id', { id: user.id })
-        .getOne();
+      const userInDb = await this.userRepository.findOneWithContents(user.id);
       if (!userInDb) {
         throw new NotFoundException('User not found');
       }
@@ -568,10 +540,9 @@ export class ContentsService {
 @Injectable()
 export class CategoryService {
   constructor(
-    @InjectRepository(Category)
-    private readonly categories: CategoryRepository,
-    @InjectRepository(User)
-    private readonly users: Repository<User>,
+    private readonly categoryRepository: CategoryRepository,
+    private readonly categoryUtil: CategoryUtil,
+    private readonly userRepository: UserRepository,
   ) {}
 
   async addCategory(
@@ -590,7 +561,7 @@ export class CategoryService {
         throw new NotFoundException('User not found');
       }
 
-      const { categorySlug } = this.categories.generateSlug(categoryName);
+      const { categorySlug } = this.categoryUtil.generateSlug(categoryName);
 
       if (parentId) {
         // category depth should be 3
@@ -673,7 +644,7 @@ export class CategoryService {
       if (category) {
         // Check if user has category with same slug
         if (categoryName) {
-          const { categorySlug } = this.categories.generateSlug(categoryName);
+          const { categorySlug } = this.categoryUtil.generateSlug(categoryName);
           if (
             userInDb.categories?.filter(
               (category) =>
@@ -692,13 +663,13 @@ export class CategoryService {
 
         if (parentId) {
           // category depth should be 3
-          let parentCategory = await this.categories.findOne({
+          let parentCategory = await this.categoryRepository.findOne({
             where: { id: parentId },
           });
           if (!parentCategory) {
             throw new NotFoundException('Parent category not found.');
           } else if (parentCategory?.parentId !== null) {
-            parentCategory = await this.categories.findOne({
+            parentCategory = await this.categoryRepository.findOne({
               where: { id: parentCategory.parentId },
             });
             if (parentCategory?.parentId !== null) {
@@ -809,18 +780,16 @@ export class CategoryService {
     user: User,
   ): Promise<LoadPersonalCategoriesOutput> {
     try {
-      const { categories } = await this.users
-        .createQueryBuilder('user')
-        .leftJoinAndSelect('user.categories', 'categories')
-        .where('user.id = :id', { id: user.id })
-        .getOneOrFail();
+      const { categories } =
+        await this.userRepository.findOneWithCategoriesOrFail(user.id);
 
       if (!categories) {
         throw new NotFoundException('Categories not found.');
       }
 
       // make categories tree by parentid
-      const categoriesTree = this.categories.generateCategoriesTree(categories);
+      const categoriesTree =
+        this.categoryUtil.generateCategoriesTree(categories);
 
       return {
         categoriesTree,
@@ -888,7 +857,7 @@ export class CategoryService {
          */
         for (let i = 0; i < 2; i++) {
           if (i < orderBySaveCount.length) {
-            const category = await this.categories.findOne({
+            const category = await this.categoryRepository.findOne({
               where: { id: orderBySaveCount[i].categoryId },
             });
 
@@ -913,7 +882,7 @@ export class CategoryService {
         const N = 3 - frequentCategories.length;
         for (let i = 0; i < N; i++) {
           if (i < orderByDate.length) {
-            const category = await this.categories.findOne({
+            const category = await this.categoryRepository.findOne({
               where: { id: orderByDate[i] },
             });
 

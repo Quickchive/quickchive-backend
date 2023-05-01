@@ -2,16 +2,13 @@ import {
   BadRequestException,
   CACHE_MANAGER,
   ConflictException,
-  HttpException,
   Inject,
   Injectable,
   NotFoundException,
   UnauthorizedException,
 } from '@nestjs/common';
-import { InjectRepository } from '@nestjs/typeorm';
 import { MailService } from '../mail/mail.service';
 import { User } from '../users/entities/user.entity';
-import { Repository } from 'typeorm';
 import {
   refreshTokenExpirationInCache,
   refreshTokenExpirationInCacheShortVersion,
@@ -47,13 +44,13 @@ import {
 } from './dtos/kakao.dto';
 import { googleUserInfo } from './dtos/google.dto';
 import { customJwtService } from './jwt/jwt.service';
+import { UserRepository } from '../users/repository/user.repository';
 
 @Injectable()
 export class AuthService {
   constructor(
     private readonly jwtService: customJwtService,
-    @InjectRepository(User)
-    private readonly users: Repository<User>,
+    private readonly userRepository: UserRepository,
     private readonly mailService: MailService,
     @Inject(CACHE_MANAGER)
     private readonly cacheManager: Cache,
@@ -93,14 +90,14 @@ export class AuthService {
     password,
   }: CreateAccountBodyDto): Promise<CreateAccountOutput> {
     try {
-      const user = await this.users.findOneBy({ email });
+      const user = await this.userRepository.findOneBy({ email });
 
       if (!user) {
         throw new NotFoundException('User Not Found');
       } else if (user.verified) {
         user.name = name;
         user.password = password;
-        await this.users.save(user);
+        await this.userRepository.save(user);
 
         return {};
       } else {
@@ -115,7 +112,7 @@ export class AuthService {
     userId: number,
     { refresh_token: refreshToken }: LogoutBodyDto,
   ): Promise<LogoutOutput> {
-    const user = await this.users.findOneBy({ id: userId });
+    const user = await this.userRepository.findOneBy({ id: userId });
     if (user) {
       if (refreshToken && typeof refreshToken === 'string') {
         const refreshTokenInCache: number | undefined =
@@ -157,7 +154,7 @@ export class AuthService {
       throw new NotFoundException('There is no refresh token');
     }
 
-    const user = await this.users.findOneBy({ id: decoded.sub });
+    const user = await this.userRepository.findOneBy({ id: decoded.sub });
     const auto_login: boolean = decoded.period === ONEYEAR;
 
     if (!user) {
@@ -186,7 +183,7 @@ export class AuthService {
   }
 
   async sendVerifyEmail(email: string): Promise<VerifyEmailOutput> {
-    const user = await this.users.findOneBy({ email });
+    const user = await this.userRepository.findOneBy({ email });
     let newUser: User;
     if (user && user.verified === true) {
       if (!user.name) {
@@ -199,8 +196,8 @@ export class AuthService {
     } else if (user && user.verified === false) {
       newUser = user;
     } else {
-      newUser = await this.users.save(
-        this.users.create({
+      newUser = await this.userRepository.save(
+        this.userRepository.create({
           name: 'unverified',
           email,
           password: 'unverified0',
@@ -222,7 +219,7 @@ export class AuthService {
   async sendPasswordResetEmail(
     email: string,
   ): Promise<sendPasswordResetEmailOutput> {
-    const user = await this.users.findOneBy({ email });
+    const user = await this.userRepository.findOneBy({ email });
     if (user) {
       if (!user.verified) {
         throw new UnauthorizedException('User not verified');
@@ -246,9 +243,9 @@ export class AuthService {
     const userId: number | undefined = await this.cacheManager.get(code);
 
     if (userId) {
-      const user = await this.users.findOneByOrFail({ id: userId });
+      const user = await this.userRepository.findOneByOrFail({ id: userId });
       user.verified = true;
-      await this.users.save(user); // verify
+      await this.userRepository.save(user); // verify
       await this.cacheManager.del(code); // delete verification value
 
       return { email: user.email };
@@ -262,7 +259,7 @@ export class AuthService {
     password,
   }: ValidateUserDto): Promise<ValidateUserOutput> {
     try {
-      const user = await this.users.findOne({
+      const user = await this.userRepository.findOne({
         where: { email },
         select: { id: true, password: true },
       });
@@ -287,8 +284,7 @@ export class AuthService {
 export class OauthService {
   constructor(
     private readonly jwtService: customJwtService,
-    @InjectRepository(User)
-    private readonly users: Repository<User>,
+    private readonly userRepository: UserRepository,
     @Inject(CACHE_MANAGER)
     private readonly cacheManager: Cache,
   ) {}
@@ -359,12 +355,14 @@ export class OauthService {
     userInfo: CreateKakaoAccountBodyDto,
   ): Promise<CreateKakaoAccountOutput> {
     try {
-      const userInDb = await this.users.findOneBy({ email: userInfo.email });
+      const userInDb = await this.userRepository.findOneBy({
+        email: userInfo.email,
+      });
       if (userInDb) {
         return { user: userInDb };
       } else {
-        const newUser = await this.users.save(
-          this.users.create({
+        const newUser = await this.userRepository.save(
+          this.userRepository.create({
             email: userInfo.email,
             name: userInfo.name,
             password: userInfo.password,
@@ -406,7 +404,7 @@ export class OauthService {
   // OAuth Login
   async oauthLogin(email: string): Promise<LoginOutput> {
     try {
-      const user: User = await this.users.findOneByOrFail({ email });
+      const user: User = await this.userRepository.findOneByOrFail({ email });
       if (user) {
         const payload: Payload = this.jwtService.createPayload(
           user.email,
@@ -446,7 +444,7 @@ export class OauthService {
       }
 
       // check user exist with email
-      const userInDb = await this.users.findOne({
+      const userInDb = await this.userRepository.findOne({
         where: { email },
         select: { id: true, email: true, password: true },
       });
@@ -464,7 +462,7 @@ export class OauthService {
         });
       }
 
-      return await this.oauthLogin(email);
+      return this.oauthLogin(email);
     } catch (e) {
       throw e;
     }
@@ -474,7 +472,7 @@ export class OauthService {
   async googleOauth({ email, name }: googleUserInfo): Promise<LoginOutput> {
     try {
       // check user exist with email
-      const userInDb = await this.users.findOne({
+      const userInDb = await this.userRepository.findOne({
         where: { email },
         select: { id: true, email: true, password: true },
       });
@@ -491,7 +489,7 @@ export class OauthService {
         });
       }
 
-      return await this.oauthLogin(email);
+      return this.oauthLogin(email);
     } catch (e) {
       throw e;
     }

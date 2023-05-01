@@ -51,7 +51,7 @@ export class UsersController {
     @Body() editProfileBody: EditProfileInput,
     @TransactionManager() queryRunnerManager: EntityManager,
   ): Promise<EditProfileOutput> {
-    return await this.usersService.editProfile(
+    return this.usersService.editProfile(
       user.id,
       editProfileBody,
       queryRunnerManager,
@@ -72,7 +72,7 @@ export class UsersController {
     @Body() resetPasswordBody: ResetPasswordInput,
     @TransactionManager() queryRunnerManager: EntityManager,
   ): Promise<ResetPasswordOutput> {
-    return await this.usersService.resetPassword(
+    return this.usersService.resetPassword(
       resetPasswordBody,
       queryRunnerManager,
     );
@@ -103,6 +103,6 @@ export class UsersController {
   @UseGuards(JwtAuthGuard)
   @Delete()
   async deleteAccount(@AuthUser() user: User): Promise<DeleteAccountOutput> {
-    return await this.usersService.deleteAccount(user.id);
+    return this.usersService.deleteAccount(user.id);
   }
 }

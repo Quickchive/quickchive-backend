@@ -14,7 +14,10 @@ import {
 import { CategoryService, ContentsService } from './contents.service';
 import { Category } from './entities/category.entity';
 import { Content } from './entities/content.entity';
-import { customCategoryRepositoryMethods } from './repository/category.repository';
+import { UserRepository } from '../users/repository/user.repository';
+import { ContentRepository } from './repository/content.repository';
+import { CategoryUtil } from './util/category.util';
+import { CategoryRepository } from './repository/category.repository';
 
 @Module({
   imports: [TypeOrmModule.forFeature([User, Content, Category])],
@@ -22,16 +25,10 @@ import { customCategoryRepositoryMethods } from './repository/category.repositor
   providers: [
     ContentsService,
     CategoryService,
-    {
-      provide: getRepositoryToken(Category),
-      inject: [getDataSourceToken()],
-      useFactory(dataSource: DataSource) {
-        // Override default repository for Category with a custom one
-        return dataSource
-          .getRepository(Category)
-          .extend(customCategoryRepositoryMethods);
-      },
-    },
+    UserRepository,
+    ContentRepository,
+    CategoryRepository,
+    CategoryUtil,
   ],
   exports: [ContentsService],
 })

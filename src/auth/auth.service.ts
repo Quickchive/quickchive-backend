@@ -462,7 +462,7 @@ export class OauthService {
         });
       }
 
-      return await this.oauthLogin(email);
+      return this.oauthLogin(email);
     } catch (e) {
       throw e;
     }
@@ -489,7 +489,7 @@ export class OauthService {
         });
       }
 
-      return await this.oauthLogin(email);
+      return this.oauthLogin(email);
     } catch (e) {
       throw e;
     }

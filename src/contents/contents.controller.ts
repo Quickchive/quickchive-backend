@@ -86,11 +86,7 @@ export class ContentsController {
     @Body() content: AddContentBodyDto,
     @TransactionManager() queryRunnerManager: EntityManager,
   ): Promise<AddContentOutput> {
-    return await this.contentsService.addContent(
-      user,
-      content,
-      queryRunnerManager,
-    );
+    return this.contentsService.addContent(user, content, queryRunnerManager);
   }
 
   @ApiOperation({
@@ -112,7 +108,7 @@ export class ContentsController {
     @Body() contentLinks: AddMultipleContentsBodyDto,
     @TransactionManager() queryRunnerManager: EntityManager,
   ): Promise<AddContentOutput> {
-    return await this.contentsService.addMultipleContents(
+    return this.contentsService.addMultipleContents(
       user,
       contentLinks,
       queryRunnerManager,
@@ -142,7 +138,7 @@ export class ContentsController {
     @Body() content: UpdateContentBodyDto,
     @TransactionManager() queryRunnerManager: EntityManager,
   ): Promise<UpdateContentOutput> {
-    return await this.contentsService.updateContent(
+    return this.contentsService.updateContent(
       user,
       content,
       queryRunnerManager,
@@ -168,7 +164,7 @@ export class ContentsController {
     @Param('contentId', new ParseIntPipe()) contentId: number,
     @TransactionManager() queryRunnerManager: EntityManager,
   ): Promise<toggleFavoriteOutput> {
-    return await this.contentsService.toggleFavorite(
+    return this.contentsService.toggleFavorite(
       user,
       contentId,
       queryRunnerManager,
@@ -192,7 +188,7 @@ export class ContentsController {
     @AuthUser() user: User,
     @Param('contentId', new ParseIntPipe()) contentId: number,
   ): Promise<checkReadFlagOutput> {
-    return await this.contentsService.readContent(user, contentId);
+    return this.contentsService.readContent(user, contentId);
   }
 
   @ApiOperation({
@@ -214,7 +210,7 @@ export class ContentsController {
     @Param('contentId', new ParseIntPipe()) contentId: number,
     @TransactionManager() queryRunnerManager: EntityManager,
   ): Promise<DeleteContentOutput> {
-    return await this.contentsService.deleteContent(
+    return this.contentsService.deleteContent(
       user,
       contentId,
       queryRunnerManager,
@@ -243,7 +239,7 @@ export class ContentsController {
     @Query('categoryId') categoryId?: number,
   ): Promise<LoadPersonalContentsOutput> {
     if (categoryId) categoryId = +categoryId;
-    return await this.contentsService.loadPersonalContents(user, categoryId);
+    return this.contentsService.loadPersonalContents(user, categoryId);
   }
 
   @ApiOperation({
@@ -258,7 +254,7 @@ export class ContentsController {
   @UseGuards(JwtAuthGuard)
   @Get('favorite')
   async loadFavorites(@AuthUser() user: User): Promise<LoadFavoritesOutput> {
-    return await this.contentsService.loadFavorites(user);
+    return this.contentsService.loadFavorites(user);
   }
 
   @ApiOperation({
@@ -275,7 +271,7 @@ export class ContentsController {
   async loadReminderCount(
     @AuthUser() user: User,
   ): Promise<LoadReminderCountOutput> {
-    return await this.contentsService.loadReminderCount(user);
+    return this.contentsService.loadReminderCount(user);
   }
 
   @ApiOperation({
@@ -300,7 +296,7 @@ export class ContentsController {
     @AuthUser() user: User,
     @Param('contentId', new ParseIntPipe()) contentId: number,
   ): Promise<SummarizeContentOutput> {
-    return await this.contentsService.summarizeContent(user, contentId);
+    return this.contentsService.summarizeContent(user, contentId);
   }
 
   // @ApiOperation({
@@ -318,7 +314,7 @@ export class ContentsController {
   // async testSummarizeContent(
   //   @Body() content: SummarizeContentBodyDto,
   // ): Promise<SummarizeContentOutput> {
-  //   return await this.contentsService.testSummarizeContent(content);
+  //   return this.contentsService.testSummarizeContent(content);
   // }
 }
 
@@ -343,7 +339,7 @@ export class TestController {
   async testSummarizeContent(
     @Body() content: SummarizeContentBodyDto,
   ): Promise<SummarizeContentOutput> {
-    return await this.contentsService.testSummarizeContent(content);
+    return this.contentsService.testSummarizeContent(content);
   }
 }
 
@@ -377,7 +373,7 @@ export class CategoryController {
     @Body() addCategoryBody: AddCategoryBodyDto,
     @TransactionManager() queryRunnerManager: EntityManager,
   ): Promise<AddCategoryOutput> {
-    return await this.categoryService.addCategory(
+    return this.categoryService.addCategory(
       user,
       addCategoryBody,
       queryRunnerManager,
@@ -399,7 +395,7 @@ export class CategoryController {
     @Body() updateCategoryBody: UpdateCategoryBodyDto,
     @TransactionManager() queryRunnerManager: EntityManager,
   ): Promise<UpdateCategoryOutput> {
-    return await this.categoryService.updateCategory(
+    return this.categoryService.updateCategory(
       user,
       updateCategoryBody,
       queryRunnerManager,
@@ -426,7 +422,7 @@ export class CategoryController {
     @Query('deleteContentFlag', new ParseBoolPipe()) deleteContentFlag: boolean,
     @TransactionManager() queryRunnerManager: EntityManager,
   ): Promise<DeleteCategoryOutput> {
-    return await this.categoryService.deleteCategory(
+    return this.categoryService.deleteCategory(
       user,
       categoryId,
       deleteContentFlag,
@@ -448,7 +444,7 @@ export class CategoryController {
   async loadPersonalCategories(
     @AuthUser() user: User,
   ): Promise<LoadPersonalCategoriesOutput> {
-    return await this.categoryService.loadPersonalCategories(user);
+    return this.categoryService.loadPersonalCategories(user);
   }
 
   @ApiOperation({
@@ -465,6 +461,6 @@ export class CategoryController {
   async loadFrequentCategories(
     @AuthUser() user: User,
   ): Promise<LoadFrequentCategoriesOutput> {
-    return await this.categoryService.loadFrequentCategories(user);
+    return this.categoryService.loadFrequentCategories(user);
   }
 }

@@ -61,7 +61,7 @@ export class AuthController {
   async register(
     @Body() createAccountBody: CreateAccountBodyDto,
   ): Promise<CreateAccountOutput> {
-    return await this.authService.register(createAccountBody);
+    return this.authService.register(createAccountBody);
   }
 
   @ApiOperation({ summary: '로그인', description: '로그인 메서드' })
@@ -79,7 +79,7 @@ export class AuthController {
   })
   @Post('login')
   async login(@Body() loginBody: LoginBodyDto): Promise<LoginOutput> {
-    return await this.authService.jwtLogin(loginBody);
+    return this.authService.jwtLogin(loginBody);
   }
 
   @ApiOperation({ summary: '로그아웃', description: '로그아웃 메서드' })
@@ -102,7 +102,7 @@ export class AuthController {
     @AuthUser() user: User,
     @Body() logoutBody: LogoutBodyDto,
   ): Promise<LogoutOutput> {
-    return await this.authService.logout(user.id, logoutBody);
+    return this.authService.logout(user.id, logoutBody);
   }
 
   @ApiOperation({
@@ -125,7 +125,7 @@ export class AuthController {
   async reissueToken(
     @Body() regenerateBody: RefreshTokenDto,
   ): Promise<RefreshTokenOutput> {
-    return await this.authService.reissueToken(regenerateBody);
+    return this.authService.reissueToken(regenerateBody);
   }
 
   @ApiOperation({
@@ -145,7 +145,7 @@ export class AuthController {
   async sendVerifyEmail(
     @Param('email') email: string,
   ): Promise<VerifyEmailOutput> {
-    return await this.authService.sendVerifyEmail(email);
+    return this.authService.sendVerifyEmail(email);
   }
 
   @ApiOperation({
@@ -168,7 +168,7 @@ export class AuthController {
   async sendPasswordResetEmail(
     @Param('email') email: string,
   ): Promise<sendPasswordResetEmailOutput> {
-    return await this.authService.sendPasswordResetEmail(email);
+    return this.authService.sendPasswordResetEmail(email);
   }
 
   @ApiOperation({
@@ -185,7 +185,7 @@ export class AuthController {
   })
   @Get('verify-email')
   async verifyEmail(@Query('code') code: string): Promise<VerifyEmailOutput> {
-    return await this.authService.verifyEmail(code);
+    return this.authService.verifyEmail(code);
   }
 }
 
@@ -229,7 +229,7 @@ export class OauthController {
   @Get('kakao-login')
   async kakaoOauth(@Query('code') code: string): Promise<LoginOutput> {
     console.log(code);
-    return await this.oauthService.kakaoOauth({ code });
+    return this.oauthService.kakaoOauth({ code });
   }
 
   @ApiOperation({
@@ -263,6 +263,6 @@ export class OauthController {
     @AuthUser() user: googleUserInfo,
   ): Promise<LoginOutput> {
     console.log(user);
-    return await this.oauthService.googleOauth(user);
+    return this.oauthService.googleOauth(user);
   }
 }

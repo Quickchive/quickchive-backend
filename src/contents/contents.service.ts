@@ -1,6 +1,7 @@
 import {
   BadRequestException,
   ConflictException,
+  ForbiddenException,
   Injectable,
   NotFoundException,
 } from '@nestjs/common';
@@ -127,13 +128,8 @@ export class ContentsService {
     queryRunnerManager: EntityManager,
   ): Promise<AddContentOutput> {
     try {
-      const userInDb = await queryRunnerManager
-        .createQueryBuilder(User, 'user')
-        .leftJoinAndSelect('user.contents', 'content')
-        .leftJoinAndSelect('content.category', 'content_category')
-        .leftJoinAndSelect('user.categories', 'category')
-        .where('user.id = :id', { id: user.id })
-        .getOne();
+      const userInDb =
+        await this.userRepository.findOneWithContentsAndCategories(user.id);
 
       if (!userInDb) {
         throw new NotFoundException('User not found');
@@ -207,13 +203,8 @@ export class ContentsService {
       favorite,
     };
     try {
-      const userInDb = await queryRunnerManager
-        .createQueryBuilder(User, 'user')
-        .leftJoinAndSelect('user.contents', 'content')
-        .leftJoinAndSelect('content.category', 'content_category')
-        .leftJoinAndSelect('user.categories', 'category')
-        .where('user.id = :id', { id: user.id })
-        .getOne();
+      const userInDb =
+        await this.userRepository.findOneWithContentsAndCategories(user.id);
       if (!userInDb) {
         throw new NotFoundException('User not found');
       }
@@ -257,11 +248,7 @@ export class ContentsService {
     queryRunnerManager: EntityManager,
   ): Promise<toggleFavoriteOutput> {
     try {
-      const userInDb = await queryRunnerManager
-        .createQueryBuilder(User, 'user')
-        .leftJoinAndSelect('user.contents', 'content')
-        .where('user.id = :id', { id: user.id })
-        .getOne();
+      const userInDb = await this.userRepository.findOneWithContents(user.id);
 
       if (!userInDb) {
         throw new NotFoundException('User not found');
@@ -318,22 +305,15 @@ export class ContentsService {
     queryRunnerManager: EntityManager,
   ): Promise<DeleteContentOutput> {
     try {
-      const userInDb = await queryRunnerManager
-        .createQueryBuilder(User, 'user')
-        .leftJoinAndSelect('user.contents', 'content')
-        .leftJoinAndSelect('user.categories', 'category')
-        .where('user.id = :id', { id: user.id })
-        .getOne();
-      if (!userInDb) {
-        throw new NotFoundException('User not found');
-      }
-
-      const content = userInDb?.contents?.filter(
-        (content) => content.id === contentId,
-      )[0];
+      const content = await this.contentRepository.findOneBy({ id: contentId });
 
       if (!content) {
         throw new NotFoundException('Content not found.');
+      }
+      if (content.userId !== user.id) {
+        throw new ForbiddenException(
+          'You are not allowed to delete this content',
+        );
       }
 
       // delete content
@@ -386,7 +366,6 @@ export class ContentsService {
         await this.contentRepository.GetCountWhereReminderIsNotNull(user.id);
 
       // get reminder is past
-      const reminderDate = new Date();
       const reminderCountThatIsPast =
         await this.contentRepository.GetCountWhereReminderIsPast(user.id);
 
@@ -486,6 +465,7 @@ export class ContentsService {
 @Injectable()
 export class CategoryService {
   constructor(
+    private readonly contentRepository: ContentRepository,
     private readonly categoryRepository: CategoryRepository,
     private readonly categoryUtil: CategoryUtil,
     private readonly userRepository: UserRepository,
@@ -497,11 +477,7 @@ export class CategoryService {
     queryRunnerManager: EntityManager,
   ): Promise<AddCategoryOutput> {
     try {
-      const userInDb = await queryRunnerManager
-        .createQueryBuilder(User, 'user')
-        .leftJoinAndSelect('user.categories', 'category')
-        .where('user.id = :id', { id: user.id })
-        .getOne();
+      const userInDb = await this.userRepository.findOneWithCategories(user.id);
 
       if (!userInDb) {
         throw new NotFoundException('User not found');
@@ -570,13 +546,8 @@ export class CategoryService {
     queryRunnerManager: EntityManager,
   ): Promise<UpdateCategoryOutput> {
     try {
-      const userInDb = await queryRunnerManager
-        .createQueryBuilder(User, 'user')
-        .leftJoinAndSelect('user.contents', 'content')
-        .leftJoinAndSelect('content.category', 'content_category')
-        .leftJoinAndSelect('user.categories', 'category')
-        .where('user.id = :id', { id: user.id })
-        .getOne();
+      const userInDb =
+        await this.userRepository.findOneWithContentsAndCategories(user.id);
 
       // Check if user exists
       if (!userInDb) {
@@ -644,13 +615,8 @@ export class CategoryService {
     queryRunnerManager: EntityManager,
   ): Promise<DeleteCategoryOutput> {
     try {
-      const userInDb = await queryRunnerManager
-        .createQueryBuilder(User, 'user')
-        .leftJoinAndSelect('user.contents', 'content')
-        .leftJoinAndSelect('content.category', 'content_category')
-        .leftJoinAndSelect('user.categories', 'category')
-        .where('user.id = :id', { id: user.id })
-        .getOne();
+      const userInDb =
+        await this.userRepository.findOneWithContentsAndCategories(user.id);
 
       // Check if user exists
       if (!userInDb) {
@@ -695,15 +661,15 @@ export class CategoryService {
 
       // if deleteContentFlag is true, delete all contents in category
       if (deleteContentFlag) {
-        await queryRunnerManager.delete(Content, { categoryId });
+        await queryRunnerManager.delete(Content, { category });
       }
+
       // if deleteContentFlag is false, set all contents in category to parent category
       else {
         // find all contents in category with query builder
-        const contents = await queryRunnerManager
-          .createQueryBuilder(Content, 'content')
-          .where('content.categoryId = :categoryId', { categoryId })
-          .getMany();
+        const contents = await this.contentRepository.findByCategoryId(
+          categoryId,
+        );
 
         // set content's category to parent category
         await queryRunnerManager.save(

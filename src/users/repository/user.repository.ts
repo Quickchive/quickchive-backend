@@ -15,6 +15,13 @@ export class UserRepository extends Repository<User> {
       .getOne();
   }
 
+  async findOneWithCategories(id: number): Promise<User | null> {
+    return await this.createQueryBuilder('user')
+      .leftJoinAndSelect('user.categories', 'categories')
+      .where('user.id = :id', { id })
+      .getOne();
+  }
+
   async findOneWithCategoriesOrFail(id: number): Promise<User> {
     return await this.createQueryBuilder('user')
       .leftJoinAndSelect('user.categories', 'categories')

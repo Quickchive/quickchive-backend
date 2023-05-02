@@ -285,34 +285,6 @@ export class ContentsService {
     }
   }
 
-  // async readContent(
-  //   user: User,
-  //   contentId: number,
-  // ): Promise<checkReadFlagOutput> {
-  //   try {
-  //     const userInDb = await this.userRepository.findOneWithContents(user.id);
-  //     if (!userInDb) {
-  //       throw new NotFoundException('User not found');
-  //     }
-
-  //     const content = userInDb?.contents?.filter(
-  //       (content) => content.id === contentId,
-  //     )[0];
-
-  //     if (!content) {
-  //       throw new NotFoundException('Content not found.');
-  //     }
-
-  //     content.readFlag = true;
-
-  //     await this.contentRepository.save(content);
-
-  //     return {};
-  //   } catch (e) {
-  //     throw e;
-  //   }
-  // }
-
   async deleteContent(
     user: User,
     contentId: number,

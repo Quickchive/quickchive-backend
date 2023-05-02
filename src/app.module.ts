@@ -102,6 +102,4 @@ import { TypeOrmConfigService } from './database/typerom-config.service';
   controllers: [],
   providers: [],
 })
-export class AppModule {
-  constructor(private dataSource: DataSource) {}
-}
+export class AppModule {}

@@ -4,8 +4,14 @@ import { Injectable } from '@nestjs/common';
 
 @Injectable()
 export class ContentRepository extends Repository<Content> {
-  constructor(private dataSource: DataSource) {
+  constructor(private readonly dataSource: DataSource) {
     super(Content, dataSource.createEntityManager());
+  }
+
+  async findByCategoryId(id: number): Promise<Content[]> {
+    return this.createQueryBuilder('content')
+      .where('content.categoryId = :categoryId', { categoryId: id })
+      .getMany();
   }
 
   async findWithCategories(id: number): Promise<Content[]> {

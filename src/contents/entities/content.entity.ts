@@ -5,9 +5,7 @@ import {
   IsString,
   IsUrl,
 } from 'class-validator';
-// import { CoreEntity } from 'src/common/entities/core.entity';
 import { CoreEntity } from '../../common/entities/core.entity';
-// import { User } from 'src/users/entities/user.entity';
 import { User } from '../../users/entities/user.entity';
 import { Column, Entity, ManyToOne, RelationId } from 'typeorm';
 import { ApiProperty } from '@nestjs/swagger';
@@ -63,11 +61,6 @@ export class Content extends CoreEntity {
   @Column({ default: false })
   @IsBoolean()
   favorite!: boolean;
-
-  @ApiProperty({ description: 'Flag indicating read' })
-  @Column({ default: false })
-  @IsBoolean()
-  readFlag!: boolean;
 
   @ApiProperty({ description: 'Article Category', required: false })
   @ManyToOne((type) => Category, (category) => category.contents, {

@@ -1,8 +1,6 @@
 import { CacheModule, Module } from '@nestjs/common';
 import { JwtModule } from '@nestjs/jwt';
 import { PassportModule } from '@nestjs/passport';
-import { TypeOrmModule } from '@nestjs/typeorm';
-import { User } from '../users/entities/user.entity';
 import { AuthController, OauthController } from './auth.controller';
 import { AuthService, OauthService } from './auth.service';
 import { JwtStrategy } from './jwt/jwt.strategy';
@@ -10,7 +8,7 @@ import * as redisStore from 'cache-manager-redis-store';
 import { GoogleStrategy } from './passport/google/google.strategy';
 import { customJwtService } from './jwt/jwt.service';
 import { TWOHOUR } from './jwt/jwt.payload';
-import { UserRepository } from '../users/repository/user.repository';
+import { UsersModule } from '../users/users.module';
 
 const accessTokenExpiration = TWOHOUR;
 export const refreshTokenExpirationInCache = 60 * 60 * 24 * 30;
@@ -26,7 +24,7 @@ export const verifyEmailExpiration = 60 * 5;
         signOptions: { expiresIn: accessTokenExpiration },
       }),
     }),
-    TypeOrmModule.forFeature([User]),
+    UsersModule,
     CacheModule.register({
       store: redisStore,
       host: process.env.REDIS_HOST,
@@ -40,7 +38,6 @@ export const verifyEmailExpiration = 60 * 5;
     OauthService,
     GoogleStrategy,
     customJwtService,
-    UserRepository,
   ],
   exports: [AuthService],
 })

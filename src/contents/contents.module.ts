@@ -12,6 +12,7 @@ import { CategoryUtil } from './util/category.util';
 import { ContentRepository } from './repository/content.repository';
 import { CategoryRepository } from './repository/category.repository';
 import { UsersModule } from '../users/users.module';
+import { ContentUtil } from './util/content.util';
 
 @Module({
   imports: [TypeOrmModule.forFeature([Content, Category]), UsersModule],
@@ -22,6 +23,7 @@ import { UsersModule } from '../users/users.module';
     ContentRepository,
     CategoryRepository,
     CategoryUtil,
+    ContentUtil,
   ],
   exports: [ContentsService],
 })

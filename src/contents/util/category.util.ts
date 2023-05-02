@@ -1,5 +1,10 @@
 import { Category } from '../entities/category.entity';
-import { CategorySlug, CategoryTreeNode } from '../dtos/category.dto';
+import {
+  CategorySlug,
+  CategoryTreeNode,
+  RecentCategoryList,
+  RecentCategoryListWithSaveCount,
+} from '../dtos/category.dto';
 import { User } from '../../users/entities/user.entity';
 import { ConflictException, Injectable } from '@nestjs/common';
 
@@ -144,6 +149,63 @@ export class CategoryUtil {
       `${__dirname}/../../../user_logs/${userInDb.id}.txt`,
       log,
     );
+  }
+
+  /**
+   * 파일에서 로그를 불러오는 함수
+   * @param id
+   * @returns RecentCategoryList[]
+   */
+  loadLogs(id: number): RecentCategoryList[] {
+    const logList: string[] = fs
+      .readFileSync(`${__dirname}/../../user_logs/${id}.txt`)
+      .toString()
+      .split('\n');
+    logList.pop(); // 마지막 줄은 빈 줄이므로 제거
+
+    // logList를 RecentCategoryList[]로 변환
+    const recentCategoryList: RecentCategoryList[] = logList.map((str) => {
+      const categoryId = +str.split('"categoryId": ')[1].split(',')[0];
+      const savedAt = +str.split('"savedAt": ')[1].split('}')[0];
+      return {
+        categoryId,
+        savedAt,
+      };
+    });
+
+    // 최신 순으로 정렬 후 반환
+    return recentCategoryList.reverse();
+  }
+
+  /**
+   * 불러온 로그를 바탕으로 카테고리당 저장된 카운트와 함께 배열을 만드는 함수(매번 10개씩 조회한다.)
+   * @param recentCategoryList
+   * @param recentCategoriesWithSaveCount
+   * @param till
+   * @returns
+   */
+  makeCategoryListWithSaveCount(
+    recentCategoryList: RecentCategoryList[],
+    recentCategoriesWithSaveCount: RecentCategoryListWithSaveCount[],
+    till: number,
+  ): RecentCategoryListWithSaveCount[] {
+    const start: number = till - 10;
+    const end: number = till;
+    for (let i = start; i < end && i < recentCategoryList.length; i++) {
+      const inNewList = recentCategoriesWithSaveCount.find(
+        (category) => category.categoryId === recentCategoryList[i].categoryId,
+      );
+      if (inNewList) {
+        inNewList.saveCount++;
+      } else {
+        recentCategoriesWithSaveCount.push({
+          ...recentCategoryList[i],
+          saveCount: 1,
+        });
+      }
+    }
+
+    return recentCategoriesWithSaveCount;
   }
 }
 

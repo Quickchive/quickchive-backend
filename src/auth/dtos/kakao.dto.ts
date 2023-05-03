@@ -1,7 +1,6 @@
-import { ApiProperty, PickType } from '@nestjs/swagger';
-import { IsOptional, IsString } from 'class-validator';
+import { ApiProperty } from '@nestjs/swagger';
+import { IsString } from 'class-validator';
 import { CoreOutput } from '../../common/dtos/output.dto';
-import { User } from '../../users/entities/user.entity';
 
 export class LoginWithKakaoDto {
   @ApiProperty({ description: 'kakao authorize code' })
@@ -18,16 +17,6 @@ export class KakaoAuthorizeOutput extends CoreOutput {
   })
   @IsString()
   url!: string;
-}
-
-export class CreateKakaoAccountBodyDto extends PickType(User, [
-  'email',
-  'name',
-  'password',
-]) {}
-export class CreateKakaoAccountOutput extends CoreOutput {
-  @ApiProperty({ description: 'user', required: false })
-  user?: User;
 }
 
 export class GetKakaoAccessTokenOutput extends CoreOutput {

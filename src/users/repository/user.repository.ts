@@ -1,6 +1,7 @@
 import { DataSource, Repository } from 'typeorm';
 import { User } from '../entities/user.entity';
 import { Injectable } from '@nestjs/common';
+import { GetOrCreateAccountBodyDto } from '../dtos/get-or-create-account.dto';
 
 @Injectable()
 export class UserRepository extends Repository<User> {
@@ -36,5 +37,29 @@ export class UserRepository extends Repository<User> {
       .leftJoinAndSelect('user.categories', 'category')
       .where('user.id = :id', { id })
       .getOne();
+  }
+
+  // Create Account By Kakao User Info
+  async getOrCreateAccount(userInfo: GetOrCreateAccountBodyDto): Promise<User> {
+    try {
+      const { email, name, password } = userInfo;
+      let user = await this.findOneBy({
+        email,
+      });
+      if (!user) {
+        user = await this.save(
+          this.create({
+            email,
+            name,
+            password,
+            verified: true,
+          }),
+        );
+      }
+
+      return user;
+    } catch (e) {
+      throw e;
+    }
   }
 }

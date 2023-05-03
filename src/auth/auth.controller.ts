@@ -1,7 +1,6 @@
 import {
   Body,
   Controller,
-  Delete,
   Get,
   Param,
   Post,
@@ -13,7 +12,6 @@ import { AuthGuard } from '@nestjs/passport';
 import {
   ApiBadRequestResponse,
   ApiBearerAuth,
-  ApiConflictResponse,
   ApiCreatedResponse,
   ApiNotFoundResponse,
   ApiOkResponse,
@@ -27,10 +25,6 @@ import { ErrorOutput } from '../common/dtos/output.dto';
 import { User } from '../users/entities/user.entity';
 import { AuthUser } from './auth-user.decorator';
 import { AuthService, OauthService } from './auth.service';
-import {
-  CreateAccountBodyDto,
-  CreateAccountOutput,
-} from './dtos/create-account.dto';
 import { googleUserInfo } from './dtos/google.dto';
 import {
   LoginBodyDto,
@@ -40,7 +34,6 @@ import {
 } from './dtos/login.dto';
 import { sendPasswordResetEmailOutput } from './dtos/send-password-reset-email.dto';
 import { RefreshTokenDto, RefreshTokenOutput } from './dtos/token.dto';
-import { VerifyEmailOutput } from './dtos/verify-email.dto';
 import { JwtAuthGuard } from './jwt/jwt.guard';
 
 @Controller('auth')
@@ -48,21 +41,21 @@ import { JwtAuthGuard } from './jwt/jwt.guard';
 export class AuthController {
   constructor(private readonly authService: AuthService) {}
 
-  @ApiOperation({ summary: '회원가입', description: '회원가입 메서드' })
-  @ApiCreatedResponse({
-    description: '회원가입 성공 여부를 알려준다.',
-    type: CreateAccountOutput,
-  })
-  @ApiNotFoundResponse({
-    description: '메일 인증된 유저가 존재하지 않는다.',
-    type: ErrorOutput,
-  })
-  @Post('register')
-  async register(
-    @Body() createAccountBody: CreateAccountBodyDto,
-  ): Promise<CreateAccountOutput> {
-    return this.authService.register(createAccountBody);
-  }
+  // @ApiOperation({ summary: '회원가입', description: '회원가입 메서드' })
+  // @ApiCreatedResponse({
+  //   description: '회원가입 성공 여부를 알려준다.',
+  //   type: CreateAccountOutput,
+  // })
+  // @ApiNotFoundResponse({
+  //   description: '메일 인증된 유저가 존재하지 않는다.',
+  //   type: ErrorOutput,
+  // })
+  // @Post('register')
+  // async register(
+  //   @Body() createAccountBody: CreateAccountBodyDto,
+  // ): Promise<CreateAccountOutput> {
+  //   return this.authService.register(createAccountBody);
+  // }
 
   @ApiOperation({ summary: '로그인', description: '로그인 메서드' })
   @ApiCreatedResponse({
@@ -128,25 +121,25 @@ export class AuthController {
     return this.authService.reissueToken(regenerateBody);
   }
 
-  @ApiOperation({
-    summary: '새 유저 인증을 위한 메일 전송',
-    description: '유저 인증 메일 전송 메서드',
-  })
-  @ApiOkResponse({
-    description: '새 유저 인증을 위한 메일 전송 성공 여부를 알려준다.',
-    type: VerifyEmailOutput,
-  })
-  @ApiConflictResponse({
-    description:
-      '해당 이메일이 이미 인증됐다고 알려준다.(이미 회원가입이 된 경우와 메일만 인증된 경우가 존재한다.)',
-    type: ErrorOutput,
-  })
-  @Post('/send-verification-email/:email')
-  async sendVerifyEmail(
-    @Param('email') email: string,
-  ): Promise<VerifyEmailOutput> {
-    return this.authService.sendVerifyEmail(email);
-  }
+  // @ApiOperation({
+  //   summary: '새 유저 인증을 위한 메일 전송',
+  //   description: '유저 인증 메일 전송 메서드',
+  // })
+  // @ApiOkResponse({
+  //   description: '새 유저 인증을 위한 메일 전송 성공 여부를 알려준다.',
+  //   type: VerifyEmailOutput,
+  // })
+  // @ApiConflictResponse({
+  //   description:
+  //     '해당 이메일이 이미 인증됐다고 알려준다.(이미 회원가입이 된 경우와 메일만 인증된 경우가 존재한다.)',
+  //   type: ErrorOutput,
+  // })
+  // @Post('/send-verification-email/:email')
+  // async sendVerifyEmail(
+  //   @Param('email') email: string,
+  // ): Promise<VerifyEmailOutput> {
+  //   return this.authService.sendVerifyEmail(email);
+  // }
 
   @ApiOperation({
     summary: '비밀번호 재설정을 위한 메일 전송',
@@ -171,22 +164,22 @@ export class AuthController {
     return this.authService.sendPasswordResetEmail(email);
   }
 
-  @ApiOperation({
-    summary: '이메일 인증',
-    description: '이메일 인증 메서드',
-  })
-  @ApiOkResponse({
-    description: '이메일 인증 성공 여부와 해당 이메일을 반환한다.',
-    type: VerifyEmailOutput,
-  })
-  @ApiNotFoundResponse({
-    description: '이메일 인증 코드가 존재하지 않음을 알려준다.',
-    type: ErrorOutput,
-  })
-  @Get('verify-email')
-  async verifyEmail(@Query('code') code: string): Promise<VerifyEmailOutput> {
-    return this.authService.verifyEmail(code);
-  }
+  // @ApiOperation({
+  //   summary: '이메일 인증',
+  //   description: '이메일 인증 메서드',
+  // })
+  // @ApiOkResponse({
+  //   description: '이메일 인증 성공 여부와 해당 이메일을 반환한다.',
+  //   type: VerifyEmailOutput,
+  // })
+  // @ApiNotFoundResponse({
+  //   description: '이메일 인증 코드가 존재하지 않음을 알려준다.',
+  //   type: ErrorOutput,
+  // })
+  // @Get('verify-email')
+  // async verifyEmail(@Query('code') code: string): Promise<VerifyEmailOutput> {
+  //   return this.authService.verifyEmail(code);
+  // }
 }
 
 @Controller('oauth')
@@ -262,7 +255,6 @@ export class OauthController {
   async googleAuthRedirect(
     @AuthUser() user: googleUserInfo,
   ): Promise<LoginOutput> {
-    console.log(user);
     return this.oauthService.googleOauth(user);
   }
 }

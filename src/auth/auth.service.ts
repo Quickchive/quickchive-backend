@@ -6,6 +6,11 @@ import {
   NotFoundException,
   UnauthorizedException,
 } from '@nestjs/common';
+import { Cache } from 'cache-manager';
+import { v4 as uuidv4 } from 'uuid';
+import axios from 'axios';
+import * as CryptoJS from 'crypto-js';
+
 import { MailService } from '../mail/mail.service';
 import { User } from '../users/entities/user.entity';
 import {
@@ -23,22 +28,11 @@ import { sendPasswordResetEmailOutput } from './dtos/send-password-reset-email.d
 import { RefreshTokenDto, RefreshTokenOutput } from './dtos/token.dto';
 import { ValidateUserDto, ValidateUserOutput } from './dtos/validate-user.dto';
 import { ONEYEAR, Payload } from './jwt/jwt.payload';
-import { Cache } from 'cache-manager';
-import { v4 as uuidv4 } from 'uuid';
-import axios from 'axios';
-import * as CryptoJS from 'crypto-js';
-import * as qs from 'qs';
-import {
-  CreateKakaoAccountBodyDto,
-  CreateKakaoAccountOutput,
-  GetKakaoAccessTokenOutput,
-  GetKakaoUserInfoOutput,
-  KakaoAuthorizeOutput,
-  LoginWithKakaoDto,
-} from './dtos/kakao.dto';
+import { KakaoAuthorizeOutput, LoginWithKakaoDto } from './dtos/kakao.dto';
 import { googleUserInfo } from './dtos/google.dto';
 import { customJwtService } from './jwt/jwt.service';
 import { UserRepository } from '../users/repository/user.repository';
+import { OAuthUtil } from './util/oauth.util';
 
 @Injectable()
 export class AuthService {
@@ -282,119 +276,8 @@ export class OauthService {
     private readonly userRepository: UserRepository,
     @Inject(CACHE_MANAGER)
     private readonly cacheManager: Cache,
+    private readonly oauthUtil: OAuthUtil,
   ) {}
-
-  /*
-   * Kakao Auth methods
-   */
-
-  // Get access token from Kakao Auth Server
-  async getKakaoAccessToken(code: string): Promise<GetKakaoAccessTokenOutput> {
-    try {
-      const formData = {
-        grant_type: 'authorization_code',
-        client_id: process.env.KAKAO_REST_API_KEY,
-        redirect_uri: process.env.KAKAO_REDIRECT_URI_LOGIN,
-        code,
-        client_secret: process.env.KAKAO_CLIENT_SECRET,
-      };
-      const {
-        data: { access_token },
-      } = await axios
-        .post(`https://kauth.kakao.com/oauth/token?${qs.stringify(formData)}`)
-        .then((res) => {
-          return res;
-        })
-        .catch((e) => {
-          console.log(e.response.data);
-          if (e.response.data.error_description) {
-            throw new UnauthorizedException(e.response.data.error_description);
-          } else {
-            throw new BadRequestException(e.message);
-          }
-        });
-
-      return { access_token };
-    } catch (e) {
-      throw e;
-    }
-  }
-
-  // Get User Info from Kakao Auth Server
-  async getKakaoUserInfo(
-    access_token: String,
-  ): Promise<GetKakaoUserInfoOutput> {
-    try {
-      const { data: userInfo } = await axios
-        .get('https://kapi.kakao.com/v2/user/me', {
-          headers: {
-            Authorization: 'Bearer ' + access_token,
-            'Content-Type': 'application/x-www-form-urlencoded;charset=utf-8',
-          },
-        })
-        .then((res) => {
-          return res;
-        })
-        .catch((e) => {
-          throw new BadRequestException(e.message);
-        });
-
-      return { userInfo };
-    } catch (e) {
-      throw e;
-    }
-  }
-
-  // Create Account By Kakao User Info
-  async createKakaoAccount(
-    userInfo: CreateKakaoAccountBodyDto,
-  ): Promise<CreateKakaoAccountOutput> {
-    try {
-      const userInDb = await this.userRepository.findOneBy({
-        email: userInfo.email,
-      });
-      if (userInDb) {
-        return { user: userInDb };
-      } else {
-        const newUser = await this.userRepository.save(
-          this.userRepository.create({
-            email: userInfo.email,
-            name: userInfo.name,
-            password: userInfo.password,
-            verified: true,
-          }),
-        );
-        return { user: newUser };
-      }
-    } catch (e) {
-      throw e;
-    }
-  }
-
-  /*
-   * end of Kakao Auth methods
-   */
-
-  async kakaoAuthorize(): Promise<KakaoAuthorizeOutput> {
-    try {
-      const kakaoAuthorizeUrl = `https://kauth.kakao.com/oauth/authorize?client_id=${process.env.KAKAO_REST_API_KEY}&redirect_uri=${process.env.KAKAO_REDIRECT_URI_LOGIN}&response_type=code`;
-      const {
-        request: {
-          res: { responseUrl },
-        },
-      } = await axios
-        .get(kakaoAuthorizeUrl)
-        .then((res) => {
-          return res;
-        })
-        .catch((e) => {
-          throw new BadRequestException(e.message);
-        });
-      return { url: responseUrl };
-    } catch (e) {
-      throw e;
-    }
-  }
 
   // OAuth Login
   async oauthLogin(email: string): Promise<LoginOutput> {
@@ -423,41 +306,49 @@ export class OauthService {
     }
   }
 
+  async kakaoAuthorize(): Promise<KakaoAuthorizeOutput> {
+    try {
+      const kakaoAuthorizeUrl = `https://kauth.kakao.com/oauth/authorize?client_id=${process.env.KAKAO_REST_API_KEY}&redirect_uri=${process.env.KAKAO_REDIRECT_URI_LOGIN}&response_type=code`;
+      const {
+        request: {
+          res: { responseUrl },
+        },
+      } = await axios
+        .get(kakaoAuthorizeUrl)
+        .then((res) => {
+          return res;
+        })
+        .catch((e) => {
+          throw new BadRequestException(e.message);
+        });
+      return { url: responseUrl };
+    } catch (e) {
+      throw e;
+    }
+  }
+
   /*
    * Get user info from Kakao Auth Server then create account,
    * login and return access token and refresh token
    */
   async kakaoOauth({ code }: LoginWithKakaoDto): Promise<LoginOutput> {
     try {
-      const { access_token } = await this.getKakaoAccessToken(code);
+      const { access_token } = await this.oauthUtil.getKakaoAccessToken(code);
 
-      const { userInfo } = await this.getKakaoUserInfo(access_token);
+      const { userInfo } = await this.oauthUtil.getKakaoUserInfo(access_token);
 
       const email = userInfo.kakao_account.email;
       if (!email) {
         throw new BadRequestException('Please Agree to share your email');
       }
 
-      // check user exist with email
-      const userInDb = await this.userRepository.findOne({
-        where: { email },
-        select: { id: true, email: true, password: true },
+      const user = await this.userRepository.getOrCreateAccount({
+        email,
+        name: userInfo.properties.nickname,
+        password: CryptoJS.SHA256(email + process.env.KAKAO_JS_KEY).toString(),
       });
 
-      // control user
-      if (!userInDb) {
-        const name = userInfo.properties.nickname;
-        const password = CryptoJS.SHA256(
-          email + process.env.KAKAO_JS_KEY,
-        ).toString();
-        await this.createKakaoAccount({
-          name,
-          email,
-          password,
-        });
-      }
-
-      return this.oauthLogin(email);
+      return this.oauthLogin(user.email);
     } catch (e) {
       throw e;
     }
@@ -466,25 +357,15 @@ export class OauthService {
   // Login with Google account info
   async googleOauth({ email, name }: googleUserInfo): Promise<LoginOutput> {
     try {
-      // check user exist with email
-      const userInDb = await this.userRepository.findOne({
-        where: { email },
-        select: { id: true, email: true, password: true },
+      const user = await this.userRepository.getOrCreateAccount({
+        email,
+        name,
+        password: CryptoJS.SHA256(
+          email + process.env.GOOGLE_CLIENT_ID,
+        ).toString(),
       });
 
-      // control user
-      if (!userInDb) {
-        const password = CryptoJS.SHA256(
-          email + process.env.GOOGLE_CLIENT_ID,
-        ).toString();
-        await this.createKakaoAccount({
-          name,
-          email,
-          password,
-        });
-      }
-
-      return this.oauthLogin(email);
+      return this.oauthLogin(user.email);
     } catch (e) {
       throw e;
     }

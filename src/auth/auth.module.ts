@@ -9,6 +9,7 @@ import { GoogleStrategy } from './passport/google/google.strategy';
 import { customJwtService } from './jwt/jwt.service';
 import { TWOHOUR } from './jwt/jwt.payload';
 import { UsersModule } from '../users/users.module';
+import { OAuthUtil } from './util/oauth.util';
 
 const accessTokenExpiration = TWOHOUR;
 export const refreshTokenExpirationInCache = 60 * 60 * 24 * 30;
@@ -36,6 +37,7 @@ export const verifyEmailExpiration = 60 * 5;
     AuthService,
     JwtStrategy,
     OauthService,
+    OAuthUtil,
     GoogleStrategy,
     customJwtService,
   ],

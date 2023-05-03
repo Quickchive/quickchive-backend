@@ -114,23 +114,24 @@ export class AuthService {
   ): Promise<LogoutOutput> {
     const user = await this.userRepository.findOneBy({ id: userId });
     if (user) {
-      if (refreshToken && typeof refreshToken === 'string') {
-        const refreshTokenInCache: number | undefined =
-          await this.cacheManager.get(refreshToken);
-
-        if (refreshTokenInCache) {
-          if (refreshTokenInCache === userId) {
-            await this.cacheManager.del(refreshToken);
-            return {};
-          } else {
-            throw new BadRequestException('Invalid refresh token');
-          }
-        } else {
-          throw new NotFoundException('Refresh token not found');
-        }
-      } else {
-        throw new BadRequestException('Invalid refresh token');
+      if (!refreshToken) {
+        throw new BadRequestException('Refresh token is required');
       }
+
+      const refreshTokenInCache: number | undefined =
+        await this.cacheManager.get(refreshToken);
+
+      if (refreshTokenInCache === undefined) {
+        throw new NotFoundException('Refresh token not found');
+      }
+
+      if (refreshTokenInCache !== userId) {
+        throw new UnauthorizedException('Invalid refresh token');
+      }
+
+      await this.cacheManager.del(refreshToken);
+
+      return {};
     } else {
       throw new NotFoundException('User not found');
     }

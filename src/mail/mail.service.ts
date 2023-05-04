@@ -40,18 +40,6 @@ export class MailService {
     }
   }
 
-  sendVerificationEmail(email: string, name: string, code: string) {
-    this.sendEmail(
-      email,
-      'Verify Your Email',
-      this.options.templateNameForVerifyEmail,
-      [
-        { key: 'code', value: code },
-        { key: 'username', value: name },
-      ],
-    );
-  }
-
   sendResetPasswordEmail(email: string, name: string, code: string) {
     this.sendEmail(
       email,

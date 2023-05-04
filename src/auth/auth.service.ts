@@ -72,30 +72,6 @@ export class AuthService {
     }
   }
 
-  // async register({
-  //   email,
-  //   name,
-  //   password,
-  // }: CreateAccountBodyDto): Promise<CreateAccountOutput> {
-  //   try {
-  //     const user = await this.userRepository.findOneBy({ email });
-
-  //     if (!user) {
-  //       throw new NotFoundException('User Not Found');
-  //     } else if (user.verified) {
-  //       user.name = name;
-  //       user.password = password;
-  //       await this.userRepository.save(user);
-
-  //       return {};
-  //     } else {
-  //       throw new NotFoundException('User is not verified');
-  //     }
-  //   } catch (e) {
-  //     throw e;
-  //   }
-  // }
-
   async logout(
     userId: number,
     { refresh_token: refreshToken }: LogoutBodyDto,
@@ -171,40 +147,6 @@ export class AuthService {
     };
   }
 
-  // async sendVerifyEmail(email: string): Promise<VerifyEmailOutput> {
-  //   const user = await this.userRepository.findOneBy({ email });
-  //   let newUser: User;
-  //   if (user && user.verified === true) {
-  //     if (!user.name) {
-  //       throw new ConflictException(
-  //         'User is already verified now please register',
-  //       );
-  //     } else {
-  //       throw new ConflictException('User already exist with this email');
-  //     }
-  //   } else if (user && user.verified === false) {
-  //     newUser = user;
-  //   } else {
-  //     newUser = await this.userRepository.save(
-  //       this.userRepository.create({
-  //         name: 'unverified',
-  //         email,
-  //         password: 'unverified0',
-  //       }),
-  //     );
-  //   }
-
-  //   // Email Verification
-  //   const code: string = uuidv4();
-  //   await this.cacheManager.set(code, newUser.id, {
-  //     ttl: verifyEmailExpiration,
-  //   });
-
-  //   this.mailService.sendVerificationEmail(newUser.email, newUser.email, code);
-
-  //   return {};
-  // }
-
   async sendPasswordResetEmail(
     email: string,
   ): Promise<sendPasswordResetEmailOutput> {
@@ -227,21 +169,6 @@ export class AuthService {
       throw new NotFoundException('User not found');
     }
   }
-
-  // async verifyEmail(code: string): Promise<VerifyEmailOutput> {
-  //   const userId: number | undefined = await this.cacheManager.get(code);
-
-  //   if (userId) {
-  //     const user = await this.userRepository.findOneByOrFail({ id: userId });
-  //     user.verified = true;
-  //     await this.userRepository.save(user); // verify
-  //     await this.cacheManager.del(code); // delete verification value
-
-  //     return { email: user.email };
-  //   } else {
-  //     throw new NotFoundException('Verification code not found');
-  //   }
-  // }
 
   async validateUser({
     email,

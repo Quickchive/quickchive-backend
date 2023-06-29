@@ -10,6 +10,10 @@ export class ContentUtil {
     let description: string | undefined = '';
     let siteName: string | undefined;
 
+    if (!link.match(/^(http|https):\/\//)) {
+      link = `http://${link}`;
+    }
+
     await axios
       .get(link)
       .then((res) => {

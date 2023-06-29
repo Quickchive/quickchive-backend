@@ -57,13 +57,10 @@
 
 | URL                                               | method | Usage                              | Authorization Needed |
 | ------------------------------------------------- | ------ | ---------------------------------- | -------------------- |
-| /api/auth/register                                | POST   | 회원가입                           | X                    |
 | /api/auth/login                                   | POST   | 이메일 로그인                      | X                    |
 | /api/auth/logout                                  | POST   | 로그아웃                           | O                    |
 | /api/auth/token                                   | POST   | 토큰 재발행(access, refresh token) | X                    |
-| /api/auth//send-verification-email/\<str:email\>  | POST   | 새 유저 인증을 위한 메일 전송      | X                    |
 | /api/auth/send-password-reset-email/\<str:email\> | POST   | 비밀번호 재설정을 위한 메일 전송   | X                    |
-| /api/auth/verify-email?code=\<str:code\>          | GET    | 이메일 인증                        | X                    |
 
 ### OAuth API
 
@@ -84,8 +81,9 @@
 | /api/contents/\<int:contentsId>/favorite | PATCH  | 즐겨찾기 등록 및 해제   | O                    |
 | /api/contents/\<int:contentsId>          | DELETE | 콘텐츠 삭제             | O                    |
 | /api/contents                            | GET    | 콘텐츠 조회             | O                    |
-| /api/contents/favorite                   | GET    | 콘텐츠 삭제             | O                    |
+| /api/contents/favorite                   | GET    | 즐겨찾기 조회           | O                    |
 | /api/contents/\<int:contentId>/summarize | GET    | 콘텐츠 문서 요약        | O                    |
+| /api/contents/reminder-count             | GET    | 리마인더 개수 조회      | O                    |
 
 ### Category API
 

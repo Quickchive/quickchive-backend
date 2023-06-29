@@ -10,9 +10,8 @@ export class ContentUtil {
     let description: string | undefined = '';
     let siteName: string | undefined;
 
-    // if link starts with 'http://' than replace it with 'https://'
-    if (link.startsWith('http://')) {
-      link = link.replace('http://', 'https://');
+    if (!link.match(/^(http|https):\/\//)) {
+      link = `http://${link}`;
     }
 
     await axios

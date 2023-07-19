@@ -1,14 +1,11 @@
 import {
   BadRequestException,
   ConflictException,
+  ForbiddenException,
   Injectable,
   NotFoundException,
 } from '@nestjs/common';
-import { InjectRepository } from '@nestjs/typeorm';
-import { EntityManager, Repository } from 'typeorm';
-import * as cheerio from 'cheerio';
-import axios from 'axios';
-import * as fs from 'fs';
+import { EntityManager } from 'typeorm';
 
 import {
   AddCategoryBodyDto,
@@ -31,8 +28,8 @@ import {
   UpdateContentBodyDto,
 } from './dtos/content.dto';
 import {
+  LoadFrequentCategoriesOutput,
   LoadPersonalCategoriesOutput,
-  LoadRecentCategoriesOutput,
 } from './dtos/load-personal-categories.dto';
 import {
   LoadFavoritesOutput,
@@ -42,18 +39,22 @@ import { SummaryService } from '../summary/summary.service';
 import { User } from '../users/entities/user.entity';
 import { Category } from './entities/category.entity';
 import { Content } from './entities/content.entity';
+import { LoadReminderCountOutput } from './dtos/load-personal-remider-count.dto';
+import { UserRepository } from '../users/repository/user.repository';
+import { ContentRepository } from './repository/content.repository';
+import { CategoryUtil } from './util/category.util';
 import { CategoryRepository } from './repository/category.repository';
+import { ContentUtil } from './util/content.util';
 
 @Injectable()
 export class ContentsService {
   constructor(
-    @InjectRepository(User)
-    private readonly users: Repository<User>,
-    @InjectRepository(Content)
-    private readonly contents: Repository<Content>,
+    private readonly userRepository: UserRepository,
+    private readonly contentRepository: ContentRepository,
     private readonly summaryService: SummaryService,
-    @InjectRepository(Category)
-    private readonly categories: CategoryRepository,
+    private readonly categoryRepository: CategoryRepository,
+    private readonly categoryUtil: CategoryUtil,
+    private readonly contentUtil: ContentUtil,
   ) {}
 
   async addContent(
@@ -62,7 +63,7 @@ export class ContentsService {
       link,
       title,
       comment,
-      deadline,
+      reminder,
       favorite,
       categoryName,
       parentId,
@@ -70,13 +71,8 @@ export class ContentsService {
     queryRunnerManager: EntityManager,
   ): Promise<AddContentOutput> {
     try {
-      const userInDb = await this.users
-        .createQueryBuilder('user')
-        .leftJoinAndSelect('user.contents', 'content')
-        .leftJoinAndSelect('content.category', 'content_category')
-        .leftJoinAndSelect('user.categories', 'category')
-        .where('user.id = :id', { id: user.id })
-        .getOne();
+      const userInDb =
+        await this.userRepository.findOneWithContentsAndCategories(user.id);
       if (!userInDb) {
         throw new NotFoundException('User not found');
       }
@@ -87,19 +83,19 @@ export class ContentsService {
         siteName,
         description,
         coverImg,
-      } = await this.getLinkInfo(link);
+      } = await this.contentUtil.getLinkInfo(link);
       title = title ? title : linkTitle;
 
       let category: Category | null = null;
       if (categoryName) {
-        category = await this.categories.getOrCreateCategory(
+        category = await this.categoryRepository.getOrCreateCategory(
           categoryName,
           parentId,
           userInDb,
           queryRunnerManager,
         );
 
-        await this.categories.checkContentDuplicateAndAddCategorySaveLog(
+        await this.categoryUtil.checkContentDuplicateAndAddCategorySaveLog(
           link,
           category,
           userInDb,
@@ -113,7 +109,7 @@ export class ContentsService {
         coverImg,
         description,
         comment,
-        deadline,
+        reminder,
         ...(category && { category }),
         user,
         ...(favorite && { favorite }),
@@ -132,13 +128,8 @@ export class ContentsService {
     queryRunnerManager: EntityManager,
   ): Promise<AddContentOutput> {
     try {
-      const userInDb = await queryRunnerManager
-        .createQueryBuilder(User, 'user')
-        .leftJoinAndSelect('user.contents', 'content')
-        .leftJoinAndSelect('content.category', 'content_category')
-        .leftJoinAndSelect('user.categories', 'category')
-        .where('user.id = :id', { id: user.id })
-        .getOne();
+      const userInDb =
+        await this.userRepository.findOneWithContentsAndCategories(user.id);
 
       if (!userInDb) {
         throw new NotFoundException('User not found');
@@ -147,7 +138,7 @@ export class ContentsService {
       if (contentLinks.length > 0) {
         let category: Category | null = null;
         if (categoryName) {
-          category = await this.categories.getOrCreateCategory(
+          category = await this.categoryRepository.getOrCreateCategory(
             categoryName,
             parentId,
             userInDb,
@@ -156,10 +147,10 @@ export class ContentsService {
         }
         for (const link of contentLinks) {
           const { title, description, coverImg, siteName } =
-            await this.getLinkInfo(link);
+            await this.contentUtil.getLinkInfo(link);
 
           if (category) {
-            await this.categories.checkContentDuplicateAndAddCategorySaveLog(
+            await this.categoryUtil.checkContentDuplicateAndAddCategorySaveLog(
               link,
               category,
               userInDb,
@@ -196,7 +187,7 @@ export class ContentsService {
       title,
       description,
       comment,
-      deadline,
+      reminder,
       favorite,
       categoryName,
       parentId,
@@ -208,17 +199,12 @@ export class ContentsService {
       title,
       description,
       comment,
-      deadline,
+      reminder,
       favorite,
     };
     try {
-      const userInDb = await queryRunnerManager
-        .createQueryBuilder(User, 'user')
-        .leftJoinAndSelect('user.contents', 'content')
-        .leftJoinAndSelect('content.category', 'content_category')
-        .leftJoinAndSelect('user.categories', 'category')
-        .where('user.id = :id', { id: user.id })
-        .getOne();
+      const userInDb =
+        await this.userRepository.findOneWithContentsAndCategories(user.id);
       if (!userInDb) {
         throw new NotFoundException('User not found');
       }
@@ -232,14 +218,14 @@ export class ContentsService {
 
       let category: Category | null = null;
       if (categoryName) {
-        category = await this.categories.getOrCreateCategory(
+        category = await this.categoryRepository.getOrCreateCategory(
           categoryName,
           parentId,
           userInDb,
           queryRunnerManager,
         );
 
-        await this.categories.checkContentDuplicateAndAddCategorySaveLog(
+        await this.categoryUtil.checkContentDuplicateAndAddCategorySaveLog(
           link,
           category,
           userInDb,
@@ -262,11 +248,7 @@ export class ContentsService {
     queryRunnerManager: EntityManager,
   ): Promise<toggleFavoriteOutput> {
     try {
-      const userInDb = await queryRunnerManager
-        .createQueryBuilder(User, 'user')
-        .leftJoinAndSelect('user.contents', 'content')
-        .where('user.id = :id', { id: user.id })
-        .getOne();
+      const userInDb = await this.userRepository.findOneWithContents(user.id);
 
       if (!userInDb) {
         throw new NotFoundException('User not found');
@@ -289,60 +271,21 @@ export class ContentsService {
     }
   }
 
-  async readContent(
-    user: User,
-    contentId: number,
-  ): Promise<checkReadFlagOutput> {
-    try {
-      const userInDb = await this.users
-        .createQueryBuilder('user')
-        .leftJoinAndSelect('user.contents', 'content')
-        .where('user.id = :id', { id: user.id })
-        .getOne();
-      if (!userInDb) {
-        throw new NotFoundException('User not found');
-      }
-
-      const content = userInDb?.contents?.filter(
-        (content) => content.id === contentId,
-      )[0];
-
-      if (!content) {
-        throw new NotFoundException('Content not found.');
-      }
-
-      content.readFlag = true;
-
-      await this.contents.save(content);
-
-      return {};
-    } catch (e) {
-      throw e;
-    }
-  }
-
   async deleteContent(
     user: User,
     contentId: number,
     queryRunnerManager: EntityManager,
   ): Promise<DeleteContentOutput> {
     try {
-      const userInDb = await queryRunnerManager
-        .createQueryBuilder(User, 'user')
-        .leftJoinAndSelect('user.contents', 'content')
-        .leftJoinAndSelect('user.categories', 'category')
-        .where('user.id = :id', { id: user.id })
-        .getOne();
-      if (!userInDb) {
-        throw new NotFoundException('User not found');
-      }
-
-      const content = userInDb?.contents?.filter(
-        (content) => content.id === contentId,
-      )[0];
+      const content = await this.contentRepository.findOneBy({ id: contentId });
 
       if (!content) {
         throw new NotFoundException('Content not found.');
+      }
+      if (content.userId !== user.id) {
+        throw new ForbiddenException(
+          'You are not allowed to delete this content',
+        );
       }
 
       // delete content
@@ -354,69 +297,12 @@ export class ContentsService {
     }
   }
 
-  async getLinkInfo(link: string) {
-    let title: string | undefined = '';
-    let coverImg: string | undefined = '';
-    let description: string | undefined = '';
-    let siteName: string | undefined;
-
-    await axios
-      .get(link)
-      .then((res) => {
-        if (res.status !== 200) {
-          throw new BadRequestException('잘못된 링크입니다.');
-        } else {
-          const data = res.data;
-          if (typeof data === 'string') {
-            const $ = cheerio.load(data);
-            title = $('title').text() !== '' ? $('title').text() : 'Untitled';
-            $('meta').each((i, el) => {
-              const meta = $(el);
-              if (meta.attr('property') === 'og:image') {
-                coverImg = meta.attr('content');
-              }
-              if (meta.attr('property') === 'og:description') {
-                description = meta.attr('content');
-              }
-              if (meta.attr('property') === 'og:site_name') {
-                siteName = meta.attr('content');
-              }
-            });
-          }
-        }
-      })
-      .catch((e) => {
-        // Control unreachable link
-        // if(e.message === 'Request failed with status code 403') {
-        // 403 에러가 발생하는 링크는 크롤링이 불가능한 링크이다.
-        // }
-        for (let idx = 1; idx < 3; idx++) {
-          if (link.split('/').at(-idx) !== '') {
-            title = link.split('/').at(-idx);
-            break;
-          }
-        }
-        title = title ? title : 'Untitled';
-      });
-
-    return {
-      title,
-      description,
-      coverImg,
-      siteName,
-    };
-  }
-
   async loadPersonalContents(
     user: User,
     categoryId: number | undefined,
   ): Promise<LoadPersonalContentsOutput> {
     try {
-      let contents = await this.contents
-        .createQueryBuilder('content')
-        .where('content.userId = :userId', { userId: user.id })
-        .leftJoinAndSelect('content.category', 'category')
-        .getMany();
+      let contents = await this.contentRepository.findWithCategories(user.id);
 
       if (categoryId && contents) {
         contents = contents.filter(
@@ -434,15 +320,33 @@ export class ContentsService {
 
   async loadFavorites(user: User): Promise<LoadFavoritesOutput> {
     try {
-      const favoriteContents = await this.contents
-        .createQueryBuilder('content')
-        .where('content.userId = :userId', { userId: user.id })
-        .andWhere('content.favorite = :favorite', { favorite: true })
-        .leftJoinAndSelect('content.category', 'category')
-        .getMany();
+      const favoriteContents =
+        await this.contentRepository.findWhereFavoriteWithCategories(user.id);
 
       return {
         favorite_contents: favoriteContents,
+      };
+    } catch (e) {
+      throw e;
+    }
+  }
+
+  async loadReminderCount(user: User): Promise<LoadReminderCountOutput> {
+    try {
+      // get reminder not null
+      const reminderCountThatIsNotNull =
+        await this.contentRepository.GetCountWhereReminderIsNotNull(user.id);
+
+      // get reminder is past
+      const reminderCountThatIsPast =
+        await this.contentRepository.GetCountWhereReminderIsPast(user.id);
+
+      // minus reminderCountThatIsPast from reminderCount
+      const reminderCount =
+        reminderCountThatIsNotNull - reminderCountThatIsPast;
+
+      return {
+        count: reminderCount,
       };
     } catch (e) {
       throw e;
@@ -454,11 +358,7 @@ export class ContentsService {
     contentId: number,
   ): Promise<SummarizeContentOutput> {
     try {
-      const userInDb = await this.users
-        .createQueryBuilder('user')
-        .leftJoinAndSelect('user.contents', 'content')
-        .where('user.id = :id', { id: user.id })
-        .getOne();
+      const userInDb = await this.userRepository.findOneWithContents(user.id);
       if (!userInDb) {
         throw new NotFoundException('User not found');
       }
@@ -537,10 +437,10 @@ export class ContentsService {
 @Injectable()
 export class CategoryService {
   constructor(
-    @InjectRepository(Category)
-    private readonly categories: CategoryRepository,
-    @InjectRepository(User)
-    private readonly users: Repository<User>,
+    private readonly contentRepository: ContentRepository,
+    private readonly categoryRepository: CategoryRepository,
+    private readonly categoryUtil: CategoryUtil,
+    private readonly userRepository: UserRepository,
   ) {}
 
   async addCategory(
@@ -549,17 +449,13 @@ export class CategoryService {
     queryRunnerManager: EntityManager,
   ): Promise<AddCategoryOutput> {
     try {
-      const userInDb = await queryRunnerManager
-        .createQueryBuilder(User, 'user')
-        .leftJoinAndSelect('user.categories', 'category')
-        .where('user.id = :id', { id: user.id })
-        .getOne();
+      const userInDb = await this.userRepository.findOneWithCategories(user.id);
 
       if (!userInDb) {
         throw new NotFoundException('User not found');
       }
 
-      const { categorySlug } = this.categories.generateSlug(categoryName);
+      const { categorySlug } = this.categoryUtil.generateSlug(categoryName);
 
       if (parentId) {
         // category depth should be 3
@@ -622,13 +518,8 @@ export class CategoryService {
     queryRunnerManager: EntityManager,
   ): Promise<UpdateCategoryOutput> {
     try {
-      const userInDb = await queryRunnerManager
-        .createQueryBuilder(User, 'user')
-        .leftJoinAndSelect('user.contents', 'content')
-        .leftJoinAndSelect('content.category', 'content_category')
-        .leftJoinAndSelect('user.categories', 'category')
-        .where('user.id = :id', { id: user.id })
-        .getOne();
+      const userInDb =
+        await this.userRepository.findOneWithContentsAndCategories(user.id);
 
       // Check if user exists
       if (!userInDb) {
@@ -642,7 +533,7 @@ export class CategoryService {
       if (category) {
         // Check if user has category with same slug
         if (categoryName) {
-          const { categorySlug } = this.categories.generateSlug(categoryName);
+          const { categorySlug } = this.categoryUtil.generateSlug(categoryName);
           if (
             userInDb.categories?.filter(
               (category) =>
@@ -661,13 +552,13 @@ export class CategoryService {
 
         if (parentId) {
           // category depth should be 3
-          let parentCategory = await this.categories.findOne({
+          let parentCategory = await this.categoryRepository.findOne({
             where: { id: parentId },
           });
           if (!parentCategory) {
             throw new NotFoundException('Parent category not found.');
           } else if (parentCategory?.parentId !== null) {
-            parentCategory = await this.categories.findOne({
+            parentCategory = await this.categoryRepository.findOne({
               where: { id: parentCategory.parentId },
             });
             if (parentCategory?.parentId !== null) {
@@ -696,13 +587,8 @@ export class CategoryService {
     queryRunnerManager: EntityManager,
   ): Promise<DeleteCategoryOutput> {
     try {
-      const userInDb = await queryRunnerManager
-        .createQueryBuilder(User, 'user')
-        .leftJoinAndSelect('user.contents', 'content')
-        .leftJoinAndSelect('content.category', 'content_category')
-        .leftJoinAndSelect('user.categories', 'category')
-        .where('user.id = :id', { id: user.id })
-        .getOne();
+      const userInDb =
+        await this.userRepository.findOneWithContentsAndCategories(user.id);
 
       // Check if user exists
       if (!userInDb) {
@@ -747,15 +633,15 @@ export class CategoryService {
 
       // if deleteContentFlag is true, delete all contents in category
       if (deleteContentFlag) {
-        await queryRunnerManager.delete(Content, { categoryId });
+        await queryRunnerManager.delete(Content, { category });
       }
+
       // if deleteContentFlag is false, set all contents in category to parent category
       else {
         // find all contents in category with query builder
-        const contents = await queryRunnerManager
-          .createQueryBuilder(Content, 'content')
-          .where('content.categoryId = :categoryId', { categoryId })
-          .getMany();
+        const contents = await this.contentRepository.findByCategoryId(
+          categoryId,
+        );
 
         // set content's category to parent category
         await queryRunnerManager.save(
@@ -778,18 +664,16 @@ export class CategoryService {
     user: User,
   ): Promise<LoadPersonalCategoriesOutput> {
     try {
-      const { categories } = await this.users
-        .createQueryBuilder('user')
-        .leftJoinAndSelect('user.categories', 'categories')
-        .where('user.id = :id', { id: user.id })
-        .getOneOrFail();
+      const { categories } =
+        await this.userRepository.findOneWithCategoriesOrFail(user.id);
 
       if (!categories) {
         throw new NotFoundException('Categories not found.');
       }
 
       // make categories tree by parentid
-      const categoriesTree = this.categories.generateCategoriesTree(categories);
+      const categoriesTree =
+        this.categoryUtil.generateCategoriesTree(categories);
 
       return {
         categoriesTree,
@@ -799,32 +683,36 @@ export class CategoryService {
     }
   }
 
-  async loadRecentCategories(user: User): Promise<LoadRecentCategoriesOutput> {
+  async loadFrequentCategories(
+    user: User,
+  ): Promise<LoadFrequentCategoriesOutput> {
     try {
       // 로그 파일 내의 기록을 불러온다.
-      const recentCategoryList: RecentCategoryList[] = this.loadLogs(user.id);
+      const recentCategoryList: RecentCategoryList[] =
+        this.categoryUtil.loadLogs(user.id);
 
       // 캐시 내의 카테고리 리스트를 최신 순으로 정렬하고, 동시에 저장된 횟수를 추가한다.
 
       let recentCategoriesWithSaveCount: RecentCategoryListWithSaveCount[] = [];
-      const recentCategories: Category[] = [];
+      const frequentCategories: Category[] = [];
 
       // 3번째 카테고리까지 선정되거나, 더 이상 로그가 없을 때까지 매번 10개의 로그씩 확인한다.
       let remainLogCount = recentCategoryList.length,
         i = 0;
       while (remainLogCount > 0) {
         // 3개의 카테고리가 선정되었으면 루프를 종료한다.
-        if (recentCategories.length >= 3) {
+        if (frequentCategories.length >= 3) {
           break;
         }
 
         // 10개의 로그를 확인한다.
         i += 10;
-        recentCategoriesWithSaveCount = this.makeCategoryListWithSaveCount(
-          recentCategoryList,
-          recentCategoriesWithSaveCount,
-          i,
-        );
+        recentCategoriesWithSaveCount =
+          this.categoryUtil.makeCategoryListWithSaveCount(
+            recentCategoryList,
+            recentCategoriesWithSaveCount,
+            i,
+          );
         // 10개의 로그를 확인했으므로 남은 로그 수를 10개 감소시킨다.
         remainLogCount -= 10;
 
@@ -834,7 +722,7 @@ export class CategoryService {
          */
         recentCategoriesWithSaveCount = recentCategoriesWithSaveCount.filter(
           (category) =>
-            !recentCategories.find(
+            !frequentCategories.find(
               (recentCategory) => recentCategory.id === category.categoryId,
             ),
         );
@@ -855,7 +743,7 @@ export class CategoryService {
          */
         for (let i = 0; i < 2; i++) {
           if (i < orderBySaveCount.length) {
-            const category = await this.categories.findOne({
+            const category = await this.categoryRepository.findOne({
               where: { id: orderBySaveCount[i].categoryId },
             });
 
@@ -868,7 +756,7 @@ export class CategoryService {
             );
 
             if (category) {
-              recentCategories.push(category);
+              frequentCategories.push(category);
             }
           }
         }
@@ -877,82 +765,25 @@ export class CategoryService {
          * 나머지 3-n 개 선정 기준
          * 1. 최근 저장 순
          */
-        const N = 3 - recentCategories.length;
+        const N = 3 - frequentCategories.length;
         for (let i = 0; i < N; i++) {
           if (i < orderByDate.length) {
-            const category = await this.categories.findOne({
+            const category = await this.categoryRepository.findOne({
               where: { id: orderByDate[i] },
             });
 
             if (category) {
-              recentCategories.push(category);
+              frequentCategories.push(category);
             }
           }
         }
       }
 
       return {
-        recentCategories,
+        frequentCategories,
       };
     } catch (e) {
       throw e;
     }
-  }
-
-  /**
-   * 파일에서 로그를 불러오는 함수
-   * @param id
-   * @returns RecentCategoryList[]
-   */
-  loadLogs(id: number): RecentCategoryList[] {
-    const logList: string[] = fs
-      .readFileSync(`${__dirname}/../../user_logs/${id}.txt`)
-      .toString()
-      .split('\n');
-    logList.pop(); // 마지막 줄은 빈 줄이므로 제거
-
-    // logList를 RecentCategoryList[]로 변환
-    const recentCategoryList: RecentCategoryList[] = logList.map((str) => {
-      const categoryId = +str.split('"categoryId": ')[1].split(',')[0];
-      const savedAt = +str.split('"savedAt": ')[1].split('}')[0];
-      return {
-        categoryId,
-        savedAt,
-      };
-    });
-
-    // 최신 순으로 정렬 후 반환
-    return recentCategoryList.reverse();
-  }
-
-  /**
-   * 불러온 로그를 바탕으로 카테고리당 저장된 카운트와 함께 배열을 만드는 함수(매번 10개씩 조회한다.)
-   * @param recentCategoryList
-   * @param recentCategoriesWithSaveCount
-   * @param till
-   * @returns
-   */
-  makeCategoryListWithSaveCount(
-    recentCategoryList: RecentCategoryList[],
-    recentCategoriesWithSaveCount: RecentCategoryListWithSaveCount[],
-    till: number,
-  ): RecentCategoryListWithSaveCount[] {
-    const start: number = till - 10;
-    const end: number = till;
-    for (let i = start; i < end && i < recentCategoryList.length; i++) {
-      const inNewList = recentCategoriesWithSaveCount.find(
-        (category) => category.categoryId === recentCategoryList[i].categoryId,
-      );
-      if (inNewList) {
-        inNewList.saveCount++;
-      } else {
-        recentCategoriesWithSaveCount.push({
-          ...recentCategoryList[i],
-          saveCount: 1,
-        });
-      }
-    }
-
-    return recentCategoriesWithSaveCount;
   }
 }

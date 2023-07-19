@@ -1,11 +1,5 @@
 import { Module } from '@nestjs/common';
-import {
-  getDataSourceToken,
-  getRepositoryToken,
-  TypeOrmModule,
-} from '@nestjs/typeorm';
-import { User } from '../users/entities/user.entity';
-import { DataSource } from 'typeorm';
+import { TypeOrmModule } from '@nestjs/typeorm';
 import {
   CategoryController,
   ContentsController,
@@ -14,24 +8,22 @@ import {
 import { CategoryService, ContentsService } from './contents.service';
 import { Category } from './entities/category.entity';
 import { Content } from './entities/content.entity';
-import { customCategoryRepositoryMethods } from './repository/category.repository';
+import { CategoryUtil } from './util/category.util';
+import { ContentRepository } from './repository/content.repository';
+import { CategoryRepository } from './repository/category.repository';
+import { UsersModule } from '../users/users.module';
+import { ContentUtil } from './util/content.util';
 
 @Module({
-  imports: [TypeOrmModule.forFeature([User, Content, Category])],
+  imports: [TypeOrmModule.forFeature([Content, Category]), UsersModule],
   controllers: [ContentsController, CategoryController, TestController],
   providers: [
     ContentsService,
     CategoryService,
-    {
-      provide: getRepositoryToken(Category),
-      inject: [getDataSourceToken()],
-      useFactory(dataSource: DataSource) {
-        // Override default repository for Category with a custom one
-        return dataSource
-          .getRepository(Category)
-          .extend(customCategoryRepositoryMethods);
-      },
-    },
+    ContentRepository,
+    CategoryRepository,
+    CategoryUtil,
+    ContentUtil,
   ],
   exports: [ContentsService],
 })

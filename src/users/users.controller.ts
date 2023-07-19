@@ -1,7 +1,9 @@
 import {
   Body,
   Controller,
+  Delete,
   Get,
+  Patch,
   Post,
   UseGuards,
   UseInterceptors,
@@ -9,6 +11,7 @@ import {
 import {
   ApiBearerAuth,
   ApiCreatedResponse,
+  ApiNotFoundResponse,
   ApiOkResponse,
   ApiOperation,
   ApiTags,
@@ -26,8 +29,10 @@ import {
 } from './dtos/reset-password.dto';
 import { User } from './entities/user.entity';
 import { UsersService } from './users.service';
+import { DeleteAccountOutput } from './dtos/delete-account.dto';
+import { ErrorOutput } from '../common/dtos/output.dto';
 
-@Controller('users')
+@Controller('user')
 @ApiTags('User')
 export class UsersController {
   constructor(private readonly usersService: UsersService) {}
@@ -39,14 +44,14 @@ export class UsersController {
   })
   @ApiBearerAuth('Authorization')
   @UseGuards(JwtAuthGuard)
-  @Post('edit')
+  @Patch()
   @UseInterceptors(TransactionInterceptor)
   async editProfile(
     @AuthUser() user: User,
     @Body() editProfileBody: EditProfileInput,
     @TransactionManager() queryRunnerManager: EntityManager,
   ): Promise<EditProfileOutput> {
-    return await this.usersService.editProfile(
+    return this.usersService.editProfile(
       user.id,
       editProfileBody,
       queryRunnerManager,
@@ -61,13 +66,13 @@ export class UsersController {
     description: '비밀번호 재설정 성공 여부를 알려준다.',
     type: ResetPasswordOutput,
   })
-  @Post('reset-password')
+  @Post('password')
   @UseInterceptors(TransactionInterceptor)
   async resetPassword(
     @Body() resetPasswordBody: ResetPasswordInput,
     @TransactionManager() queryRunnerManager: EntityManager,
   ): Promise<ResetPasswordOutput> {
-    return await this.usersService.resetPassword(
+    return this.usersService.resetPassword(
       resetPasswordBody,
       queryRunnerManager,
     );
@@ -80,33 +85,24 @@ export class UsersController {
   })
   @ApiBearerAuth('Authorization')
   @UseGuards(JwtAuthGuard)
-  @Get('me')
+  @Get()
   me(@AuthUser() user: User): meOutput {
     return user;
   }
 
-  // @ApiOperation({
-  //   summary: '자신의 콜렉션 조회',
-  //   description: '자신의 콜렉션을 조회하는 메서드',
-  // })
-  // @ApiQuery({
-  //   name: 'categoryId',
-  //   description: `카테고리 아이디 만약 categoryId가 없을 시 전부를 반환한다.`,
-  //   type: Number,
-  //   required: false,
-  // })
-  // @ApiOkResponse({
-  //   description:
-  //     '콜렉션 목록을 반환한다. 만약 categoryId가 없을 시 전부를 반환한다.',
-  //   type: LoadPersonalCollectionsOutput,
-  // })
-  // @ApiBearerAuth('Authorization')
-  // @UseGuards(JwtAuthGuard)
-  // @Get('load-collections')
-  // async loadPersonalCollections(
-  //   @AuthUser() user: User,
-  //   @Query('categoryId') categoryId: number,
-  // ): Promise<LoadPersonalCollectionsOutput> {
-  //   return await this.usersService.loadPersonalCollections(user, +categoryId);
-  // }
+  @ApiOperation({ summary: '회원탈퇴', description: '회원탈퇴 메서드' })
+  @ApiOkResponse({
+    description: '회원탈퇴 성공 여부를 알려준다.',
+    type: DeleteAccountOutput,
+  })
+  @ApiNotFoundResponse({
+    description: '유저가 존재하지 않는다.',
+    type: ErrorOutput,
+  })
+  @ApiBearerAuth('Authorization')
+  @UseGuards(JwtAuthGuard)
+  @Delete()
+  async deleteAccount(@AuthUser() user: User): Promise<DeleteAccountOutput> {
+    return this.usersService.deleteAccount(user.id);
+  }
 }

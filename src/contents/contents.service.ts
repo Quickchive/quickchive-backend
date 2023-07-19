@@ -470,6 +470,19 @@ export class CategoryService {
           }
           currentParentId = parentCategory?.parentId;
         }
+      } else {
+        /**
+         * TODO: 유료 플랜 사용자이면 카테고리 개수 제한 없도록 추가 구성해야함.
+         */
+        // if parentId is null, it means that category is root category
+        // root categories can't be more than 10 in one user
+        const isOverCategoryLimit =
+          await this.categoryRepository.isOverCategoryLimit(user);
+        if (isOverCategoryLimit) {
+          throw new ConflictException(
+            "Root categories can't be more than 10 in one user",
+          );
+        }
       }
 
       // check if category exists in user's categories(check if category name is duplicated in same level too)

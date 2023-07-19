@@ -85,4 +85,19 @@ export class CategoryRepository extends Repository<Category> {
 
     return category;
   }
+
+  /**
+   * 대 카테고리는 유저 당 10개까지만 생성 가능
+   * 해당 유저의 대 카테고리 개수를 확인하고, 10개 이상이면 true 반환
+   * @param user.id
+   * @returns boolean
+   */
+  async isOverCategoryLimit(user: User): Promise<boolean> {
+    const categoryCount = await this.createQueryBuilder('category')
+      .where('category.userId = :id', { id: user.id })
+      .andWhere('category.parentId IS NULL')
+      .getCount();
+
+    return categoryCount >= 10;
+  }
 }

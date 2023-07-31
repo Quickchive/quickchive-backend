@@ -6,6 +6,7 @@ import { NestedContent } from '../collections/entities/nested-content.entity';
 import { Category } from '../contents/entities/category.entity';
 import { Content } from '../contents/entities/content.entity';
 import { User } from '../users/entities/user.entity';
+import { PaidPlan } from '../users/entities/paid-plan.entity';
 
 @Injectable()
 export class TypeOrmConfigService implements TypeOrmOptionsFactory {
@@ -37,7 +38,7 @@ export class TypeOrmConfigService implements TypeOrmOptionsFactory {
       logging:
         this.configService.get('NODE_ENV') !== 'prod' &&
         this.configService.get('NODE_ENV') !== 'test',
-      entities: [User, Content, Category, Collection, NestedContent],
+      entities: [User, PaidPlan, Content, Category, Collection, NestedContent],
       migrations: [__dirname + '/migrations/**/*{.ts,.js}'],
     } as TypeOrmModuleOptions;
   }

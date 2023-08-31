@@ -12,6 +12,7 @@ import { CollectionsModule } from './collections/collections.module';
 import { BatchModule } from './batch/batch.module';
 import { SummaryModule } from './summary/summary.module';
 import { TypeOrmConfigService } from './database/typerom-config.service';
+import { OpenaiModule } from './openai/openai.module';
 
 @Module({
   imports: [
@@ -98,6 +99,7 @@ import { TypeOrmConfigService } from './database/typerom-config.service';
         ? process.env.NAVER_CLOVA_SUMMARY_REQUEST_URL
         : '',
     }),
+    OpenaiModule,
   ],
   controllers: [],
   providers: [],

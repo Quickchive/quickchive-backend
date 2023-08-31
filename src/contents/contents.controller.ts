@@ -33,6 +33,8 @@ import { CategoryService, ContentsService } from './contents.service';
 import {
   AddCategoryBodyDto,
   AddCategoryOutput,
+  AutoCategorizeBodyDto,
+  AutoCategorizeOutput,
   DeleteCategoryOutput,
   UpdateCategoryBodyDto,
   UpdateCategoryOutput,
@@ -301,7 +303,10 @@ export class ContentsController {
 @Controller('test')
 @ApiTags('Test')
 export class TestController {
-  constructor(private readonly contentsService: ContentsService) {}
+  constructor(
+    private readonly contentsService: ContentsService,
+    private readonly categoryService: CategoryService,
+  ) {}
 
   @ApiOperation({
     summary: '간편 문서 요약',
@@ -320,6 +325,17 @@ export class TestController {
     @Body() content: SummarizeContentBodyDto,
   ): Promise<SummarizeContentOutput> {
     return this.contentsService.testSummarizeContent(content);
+  }
+
+  @ApiOperation({
+    summary: '아티클 카테고리 자동 지정 (테스트용)',
+    description: 'url을 넘기면 적절한 아티클 카테고리를 반환하는 메서드',
+  })
+  @Post('auto-categorize')
+  async autoCategorize(
+    @Body() autoCategorizeBody: AutoCategorizeBodyDto,
+  ): Promise<AutoCategorizeOutput> {
+    return this.categoryService.autoCategorize(autoCategorizeBody);
   }
 }
 

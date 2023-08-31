@@ -15,6 +15,8 @@ import {
   UpdateCategoryBodyDto,
   UpdateCategoryOutput,
   RecentCategoryListWithSaveCount,
+  AutoCategorizeBodyDto,
+  AutoCategorizeOutput,
 } from './dtos/category.dto';
 import {
   AddContentBodyDto,
@@ -45,6 +47,7 @@ import { ContentRepository } from './repository/content.repository';
 import { CategoryUtil } from './util/category.util';
 import { CategoryRepository } from './repository/category.repository';
 import { ContentUtil } from './util/content.util';
+import { OpenaiService } from '../openai/openai.service';
 
 @Injectable()
 export class ContentsService {
@@ -441,6 +444,8 @@ export class CategoryService {
     private readonly categoryRepository: CategoryRepository,
     private readonly categoryUtil: CategoryUtil,
     private readonly userRepository: UserRepository,
+    private readonly contentUtil: ContentUtil,
+    private readonly openaiService: OpenaiService,
   ) {}
 
   async addCategory(
@@ -795,6 +800,38 @@ export class CategoryService {
       return {
         frequentCategories,
       };
+    } catch (e) {
+      throw e;
+    }
+  }
+
+  async autoCategorize(
+    autoCategorizeBody: AutoCategorizeBodyDto,
+  ): Promise<AutoCategorizeOutput> {
+    try {
+      const { link, categories } = autoCategorizeBody;
+      const { title, siteName, description } =
+        await this.contentUtil.getLinkInfo(link);
+
+      // TODO: 본문 크롤링 해야함.
+      const content = '본문 크롤링 해야함.';
+
+      const titleLine = `The title is "${title.trim()}"`;
+      const contentLine = `The opening 150 characters of the article read, "${content}"`;
+      const descriptionLine = `The description is ${description}"`;
+      const siteNameLine = `The site's name is "${siteName}"`;
+
+      const question = `${titleLine} ${contentLine} ${descriptionLine}  ${siteNameLine}. Please tell me the most appropriate category among the following. If none are suitable, return None. Category options: [${categories.join(
+        ', ',
+      )}]`;
+      console.log(question);
+
+      const response = await this.openaiService.createChatCompletion({
+        question,
+      });
+      console.log(response.choices[0].message);
+
+      return { category: response.choices[0].message?.content || 'None' };
     } catch (e) {
       throw e;
     }

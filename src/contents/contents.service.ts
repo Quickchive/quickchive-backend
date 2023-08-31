@@ -816,19 +816,42 @@ export class CategoryService {
       // TODO: 본문 크롤링 해야함.
       const content = '본문 크롤링 해야함.';
 
-      const titleLine = `The title is "${title.trim()}"`;
-      const contentLine = `The opening 150 characters of the article read, "${content}"`;
-      const descriptionLine = `The description is ${description}"`;
-      const siteNameLine = `The site's name is "${siteName}"`;
+      let questionLines = [];
 
-      const question = `${titleLine} ${contentLine} ${descriptionLine}  ${siteNameLine}. Please tell me the most appropriate category among the following. If none are suitable, return None. Category options: [${categories.join(
-        ', ',
-      )}]`;
+      if (title) {
+        questionLines.push(`The title is "${title.trim()}"`);
+      }
+
+      if (content) {
+        questionLines.push(
+          `The opening 150 characters of the article read, "${content.trim()}"`,
+        );
+      }
+
+      if (description) {
+        questionLines.push(`The description is ${description.trim()}"`);
+      }
+
+      if (siteName) {
+        questionLines.push(`The site's name is "${siteName.trim()}"`);
+      }
+
+      // Add the category options to the end of the list
+      questionLines.push(
+        `Please tell me the most appropriate category among the following. If none are suitable, return None. Here is Category options: [${categories.join(
+          ', ',
+        )}]`,
+      );
+
+      // Join all lines together into a single string
+      const question = questionLines.join(' ');
+
       console.log(question);
 
       const response = await this.openaiService.createChatCompletion({
         question,
       });
+
       console.log(response.choices[0].message);
 
       return { category: response.choices[0].message?.content || 'None' };

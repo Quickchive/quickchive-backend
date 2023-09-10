@@ -813,18 +813,28 @@ export class CategoryService {
       const { title, siteName, description } =
         await this.contentUtil.getLinkInfo(link);
 
-      // TODO: 본문 크롤링 해야함.
-      const content = '본문 크롤링 해야함.';
+      /**
+       * TODO: 본문 크롤링 개선 필요
+       * 현재 p 태그만 크롤링하는데, 불필요한 내용이 포함되는 경우가 많음
+       * 그러나 하나하나 예외 처리하는 방법을 제외하곤 방법을 못 찾은 상황
+       */
+      const content = await this.contentUtil.getLinkContent(link);
 
-      let questionLines = [];
+      let questionLines = [
+        "You are now auto categorizing machine. You can only answer a single category name or None. Here is the article's information:",
+      ];
 
       if (title) {
         questionLines.push(`The title is "${title.trim()}"`);
       }
 
       if (content) {
+        const contentLength = content.length / 2;
         questionLines.push(
-          `The opening 150 characters of the article read, "${content.trim()}"`,
+          `The opening 150 characters of the article read, "${content
+            .replace(/\s/g, '')
+            .slice(contentLength - 150, contentLength + 150)
+            .trim()}"`,
         );
       }
 
@@ -846,13 +856,9 @@ export class CategoryService {
       // Join all lines together into a single string
       const question = questionLines.join(' ');
 
-      console.log(question);
-
       const response = await this.openaiService.createChatCompletion({
         question,
       });
-
-      console.log(response.choices[0].message);
 
       return { category: response.choices[0].message?.content || 'None' };
     } catch (e) {

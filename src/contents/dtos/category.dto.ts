@@ -53,3 +53,20 @@ export interface RecentCategoryList {
 export interface RecentCategoryListWithSaveCount extends RecentCategoryList {
   saveCount: number;
 }
+
+export class AutoCategorizeBodyDto {
+  @ApiProperty({ description: '아티클 link' })
+  @IsString()
+  link!: string;
+
+  @ApiProperty({
+    description: '카테고리들',
+    example: ['정보', '경제', '개발', '인공지능'],
+  })
+  categories!: string[];
+}
+
+export class AutoCategorizeOutput extends CoreOutput {
+  @ApiProperty({ description: '카테고리', example: '개발' })
+  category!: string;
+}

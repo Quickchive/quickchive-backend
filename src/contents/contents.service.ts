@@ -806,6 +806,71 @@ export class CategoryService {
   }
 
   async autoCategorize(
+    user: User,
+    link: string,
+  ): Promise<AutoCategorizeOutput> {
+    try {
+      const userInDb = await this.userRepository.findOneWithCategories(user.id);
+      if (!userInDb) {
+        throw new NotFoundException('User not found');
+      }
+
+      if (!userInDb.categories) {
+        throw new NotFoundException('Categories not found');
+      }
+      const categories = userInDb.categories;
+      const { title, siteName, description } =
+        await this.contentUtil.getLinkInfo(link);
+
+      const content = await this.contentUtil.getLinkContent(link);
+
+      let questionLines = [
+        "You are now auto categorizing machine. You can only answer a single category name or None. Here is the article's information:",
+      ];
+
+      if (title) {
+        questionLines.push(`The title is "${title.trim()}"`);
+      }
+
+      if (content) {
+        const contentLength = content.length / 2;
+        questionLines.push(
+          `The opening 150 characters of the article read, "${content
+            .replace(/\s/g, '')
+            .slice(contentLength - 150, contentLength + 150)
+            .trim()}"`,
+        );
+      }
+
+      if (description) {
+        questionLines.push(`The description is ${description.trim()}"`);
+      }
+
+      if (siteName) {
+        questionLines.push(`The site's name is "${siteName.trim()}"`);
+      }
+
+      // Add the category options to the end of the list
+      questionLines.push(
+        `Please tell me the most appropriate category among the following. If none are suitable, return None. Here is Category options: [${categories.join(
+          ', ',
+        )}]`,
+      );
+
+      // Join all lines together into a single string
+      const question = questionLines.join(' ');
+
+      const response = await this.openaiService.createChatCompletion({
+        question,
+      });
+
+      return { category: response.choices[0].message?.content || 'None' };
+    } catch (e) {
+      throw e;
+    }
+  }
+
+  async autoCategorizeForTest(
     autoCategorizeBody: AutoCategorizeBodyDto,
   ): Promise<AutoCategorizeOutput> {
     try {

@@ -819,7 +819,7 @@ export class CategoryService {
       if (!userInDb.categories) {
         throw new NotFoundException('Categories not found');
       }
-      const categories = userInDb.categories;
+      const categories = userInDb.categories.map((category) => category.name);
       const { title, siteName, description } =
         await this.contentUtil.getLinkInfo(link);
 

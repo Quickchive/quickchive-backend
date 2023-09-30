@@ -335,7 +335,7 @@ export class TestController {
   async autoCategorize(
     @Body() autoCategorizeBody: AutoCategorizeBodyDto,
   ): Promise<AutoCategorizeOutput> {
-    return this.categoryService.autoCategorize(autoCategorizeBody);
+    return this.categoryService.autoCategorizeForTest(autoCategorizeBody);
   }
 }
 
@@ -458,5 +458,20 @@ export class CategoryController {
     @AuthUser() user: User,
   ): Promise<LoadFrequentCategoriesOutput> {
     return this.categoryService.loadFrequentCategories(user);
+  }
+
+  @ApiOperation({
+    summary: '아티클 카테고리 자동 지정',
+    description:
+      '아티클에 적절한 카테고리를 유저의 카테고리 목록에서 찾는 메서드',
+  })
+  @ApiBearerAuth('Authorization')
+  @UseGuards(JwtAuthGuard)
+  @Get('auto-categorize')
+  async autoCategorize(
+    @AuthUser() user: User,
+    @Query('link') link: string,
+  ): Promise<AutoCategorizeOutput> {
+    return this.categoryService.autoCategorize(user, link);
   }
 }

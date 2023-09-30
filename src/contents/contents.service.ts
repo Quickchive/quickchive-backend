@@ -493,7 +493,8 @@ export class CategoryService {
       // check if category exists in user's categories(check if category name is duplicated in same level too)
       const category = userInDb.categories?.find(
         (category) =>
-          category.slug === categorySlug && category.parentId === parentId,
+          category.slug === categorySlug &&
+          (category.parentId === parentId || (!parentId && !category.parentId)),
       );
 
       // if category doesn't exist, create it

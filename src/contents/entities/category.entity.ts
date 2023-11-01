@@ -26,8 +26,8 @@ export class Category extends CoreEntity {
   collections!: Collection[];
 
   @ApiProperty({ description: 'Category Parent ID' })
-  @Column({ nullable: true })
-  parentId?: number;
+  @Column({ type: 'int', nullable: true })
+  parentId?: number | null;
 
   @ManyToOne((type) => User, (user) => user.categories, {
     onDelete: 'CASCADE',

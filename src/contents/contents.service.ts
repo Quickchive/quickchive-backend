@@ -470,10 +470,12 @@ export class CategoryService {
           parentCategory = await queryRunnerManager.findOne(Category, {
             where: { id: currentParentId },
           });
-          if (i == 1 && parentCategory?.parentId != null) {
+          if (i == 1 && parentCategory?.parentId !== null) {
             throw new ConflictException('Category depth should be 3');
           }
-          currentParentId = parentCategory?.parentId;
+          if (parentCategory?.parentId)
+            currentParentId = parentCategory?.parentId;
+          else break;
         }
       } else {
         /**
@@ -624,6 +626,8 @@ export class CategoryService {
 
       /**
        * 자식 카테고리가 있는 경우, 부모 카테고리와 연결
+       * 단, 삭제되는 카테고리가 1단 카테고리인 경우 부모 카테고리가 없으므로
+       * 자식 카테고리의 부모 카테고리를 null로 설정
        */
 
       // find parent category
@@ -638,10 +642,9 @@ export class CategoryService {
         where: { parentId: categoryId },
       });
 
-      // set children categories' parent to parent category
       await queryRunnerManager.save(
         childrenCategories.map((childrenCategory) => {
-          childrenCategory.parentId = parentCategory?.id;
+          childrenCategory.parentId = parentCategory?.id ?? null;
           return childrenCategory;
         }),
       );

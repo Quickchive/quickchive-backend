@@ -48,7 +48,9 @@ export class CategoryRepository extends Repository<Category> {
         if (i === 1 && parentCategory?.parentId !== null) {
           throw new ConflictException('Category depth should be 3');
         }
-        currentParentId = parentCategory?.parentId;
+        if (parentCategory?.parentId)
+          currentParentId = parentCategory?.parentId;
+        else break;
       }
     }
     // check if category exists in user's categories

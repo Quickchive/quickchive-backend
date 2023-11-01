@@ -32,6 +32,7 @@ import { KakaoAuthorizeOutput, LoginWithKakaoDto } from './dtos/kakao.dto';
 import { googleUserInfo } from './dtos/google.dto';
 import { customJwtService } from './jwt/jwt.service';
 import { UserRepository } from '../users/repository/user.repository';
+import { CategoryRepository } from '../contents/repository/category.repository';
 import { OAuthUtil } from './util/oauth.util';
 
 @Injectable()
@@ -201,6 +202,7 @@ export class OauthService {
   constructor(
     private readonly jwtService: customJwtService,
     private readonly userRepository: UserRepository,
+    private readonly categoryRepository: CategoryRepository,
     @Inject(CACHE_MANAGER)
     private readonly cacheManager: Cache,
     private readonly oauthUtil: OAuthUtil,
@@ -269,11 +271,16 @@ export class OauthService {
         throw new BadRequestException('Please Agree to share your email');
       }
 
-      const user = await this.userRepository.getOrCreateAccount({
+      const { user, exist } = await this.userRepository.getOrCreateAccount({
         email,
         name: userInfo.properties.nickname,
         password: CryptoJS.SHA256(email + process.env.KAKAO_JS_KEY).toString(),
       });
+
+      // 회원가입인 경우 기본 카테고리 생성 작업 진행
+      if (exist === 0) {
+        await this.categoryRepository.createDefaultCategories(user);
+      }
 
       return this.oauthLogin(user.email);
     } catch (e) {
@@ -284,13 +291,18 @@ export class OauthService {
   // Login with Google account info
   async googleOauth({ email, name }: googleUserInfo): Promise<LoginOutput> {
     try {
-      const user = await this.userRepository.getOrCreateAccount({
+      const { user, exist } = await this.userRepository.getOrCreateAccount({
         email,
         name,
         password: CryptoJS.SHA256(
           email + process.env.GOOGLE_CLIENT_ID,
         ).toString(),
       });
+
+      // 회원가입인 경우 기본 카테고리 생성 작업 진행
+      if (exist === 0) {
+        await this.categoryRepository.createDefaultCategories(user);
+      }
 
       return this.oauthLogin(user.email);
     } catch (e) {

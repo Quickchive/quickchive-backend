@@ -450,7 +450,7 @@ export class CategoryService {
 
   async addCategory(
     user: User,
-    { categoryName, parentId }: AddCategoryBodyDto,
+    { categoryName, iconName, parentId }: AddCategoryBodyDto,
     queryRunnerManager: EntityManager,
   ): Promise<AddCategoryOutput> {
     try {
@@ -518,6 +518,7 @@ export class CategoryService {
           queryRunnerManager.create(Category, {
             slug: categorySlug,
             name: categoryName,
+            iconName,
             parentId: parentCategory?.id,
             user: userInDb,
           }),
@@ -535,7 +536,12 @@ export class CategoryService {
 
   async updateCategory(
     user: User,
-    { categoryId, name: categoryName, parentId }: UpdateCategoryBodyDto,
+    {
+      categoryId,
+      name: categoryName,
+      iconName,
+      parentId,
+    }: UpdateCategoryBodyDto,
     queryRunnerManager: EntityManager,
   ): Promise<UpdateCategoryOutput> {
     try {
@@ -569,6 +575,10 @@ export class CategoryService {
           // Update category
           category.name = categoryName;
           category.slug = categorySlug;
+        }
+
+        if (iconName) {
+          category.iconName = iconName;
         }
 
         if (parentId) {

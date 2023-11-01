@@ -30,6 +30,6 @@ import { OpenaiModule } from '../openai/openai.module';
     CategoryUtil,
     ContentUtil,
   ],
-  exports: [ContentsService],
+  exports: [ContentsService, CategoryRepository],
 })
 export class ContentsModule {}

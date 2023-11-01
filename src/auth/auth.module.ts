@@ -10,6 +10,7 @@ import { customJwtService } from './jwt/jwt.service';
 import { TWOHOUR } from './jwt/jwt.payload';
 import { UsersModule } from '../users/users.module';
 import { OAuthUtil } from './util/oauth.util';
+import { ContentsModule } from '../contents/contents.module';
 
 const accessTokenExpiration = TWOHOUR;
 export const refreshTokenExpirationInCache = 60 * 60 * 24 * 30;
@@ -26,6 +27,7 @@ export const verifyEmailExpiration = 60 * 5;
       }),
     }),
     UsersModule,
+    ContentsModule,
     CacheModule.register({
       store: redisStore,
       host: process.env.REDIS_HOST,

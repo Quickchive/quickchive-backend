@@ -102,4 +102,20 @@ export class CategoryRepository extends Repository<Category> {
 
     return categoryCount >= 10;
   }
+
+  async createDefaultCategories(user: User): Promise<void> {
+    const defaultCategories = ['꿀팁', '쇼핑'];
+
+    await this.createQueryBuilder('category')
+      .insert()
+      .into(Category)
+      .values(
+        defaultCategories.map((categoryName) => ({
+          name: categoryName,
+          slug: this.categoryUtil.generateSlug(categoryName).categorySlug,
+          user: user,
+        })),
+      )
+      .execute();
+  }
 }

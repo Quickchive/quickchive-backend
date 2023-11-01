@@ -1,7 +1,7 @@
 import { ApiProperty, PartialType, PickType } from '@nestjs/swagger';
-import { IsNumber, IsOptional, IsString } from 'class-validator';
+import { IsEnum, IsNumber, IsOptional, IsString } from 'class-validator';
 import { CoreOutput } from '../../common/dtos/output.dto';
-import { Category } from '../entities/category.entity';
+import { Category, IconName } from '../entities/category.entity';
 
 export class AddCategoryBodyDto {
   @ApiProperty({
@@ -10,6 +10,14 @@ export class AddCategoryBodyDto {
   })
   @IsString()
   categoryName!: string;
+
+  @ApiProperty({
+    description: '아이콘 이름',
+    example: 'Book',
+  })
+  @IsEnum(IconName, { message: 'Invalid icon name' })
+  @IsOptional()
+  iconName?: IconName;
 
   @ApiProperty({
     description: '부모 카테고리 id',
@@ -28,6 +36,11 @@ export class UpdateCategoryBodyDto extends PartialType(
   @ApiProperty({ description: '수정할 카테고리 id' })
   @IsNumber()
   categoryId!: number;
+
+  @ApiProperty({ description: '아이콘 이름' })
+  @IsEnum(IconName, { message: 'Invalid icon name' })
+  @IsOptional()
+  iconName?: IconName;
 }
 
 export class UpdateCategoryOutput extends CoreOutput {}

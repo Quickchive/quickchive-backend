@@ -49,7 +49,7 @@ export class UserRepository extends Repository<User> {
     userInfo: GetOrCreateAccountBodyDto,
   ): Promise<{ user: User; exist: number }> {
     try {
-      const { email, name, password } = userInfo;
+      const { email, name, profileImage, password } = userInfo;
       let user = await this.findOneBy({
         email,
       });
@@ -60,6 +60,7 @@ export class UserRepository extends Repository<User> {
           this.create({
             email,
             name,
+            profileImage,
             password,
             verified: true,
           }),

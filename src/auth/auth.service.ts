@@ -273,7 +273,8 @@ export class OauthService {
 
       const { user, exist } = await this.userRepository.getOrCreateAccount({
         email,
-        name: userInfo.properties.nickname,
+        name: userInfo.kakao_account.profile.nickname,
+        profileImage: userInfo.kakao_account.profile?.profile_image_url,
         password: CryptoJS.SHA256(email + process.env.KAKAO_JS_KEY).toString(),
       });
 
@@ -289,11 +290,16 @@ export class OauthService {
   }
 
   // Login with Google account info
-  async googleOauth({ email, name }: googleUserInfo): Promise<LoginOutput> {
+  async googleOauth({
+    email,
+    name,
+    picture,
+  }: googleUserInfo): Promise<LoginOutput> {
     try {
       const { user, exist } = await this.userRepository.getOrCreateAccount({
         email,
         name,
+        profileImage: picture,
         password: CryptoJS.SHA256(
           email + process.env.GOOGLE_CLIENT_ID,
         ).toString(),

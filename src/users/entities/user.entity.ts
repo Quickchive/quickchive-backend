@@ -33,6 +33,11 @@ export class User extends CoreEntity {
   @IsEmail()
   email!: string;
 
+  @ApiProperty({ example: 'https://ex.com', description: 'User Profile Image' })
+  @Column({ nullable: true })
+  @IsString()
+  profileImage?: string;
+
   @ApiProperty({ example: 'passw0rd', description: 'User Password' })
   @Column({ select: false })
   @IsString()

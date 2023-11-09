@@ -40,7 +40,7 @@ export class User extends CoreEntity {
 
   @ApiProperty({ example: 'passw0rd', description: 'User Password' })
   @Column({ select: false })
-  @IsString()
+  @IsString({ message: 'Password is required' })
   @Matches(/^(?=.*\d)[A-Za-z\d@$!%*?&]{8,}$/, {
     message: 'Password must be at least 8 characters long, contain 1 number',
   })

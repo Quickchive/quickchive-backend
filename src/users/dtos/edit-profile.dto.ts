@@ -1,5 +1,5 @@
 import { ApiProperty, PartialType, PickType } from '@nestjs/swagger';
-import { IsString } from 'class-validator';
+import { IsOptional, IsString } from 'class-validator';
 import { CoreOutput } from '../../common/dtos/output.dto';
 import { User } from '../entities/user.entity';
 
@@ -10,5 +10,6 @@ export class EditProfileInput extends PartialType(
 ) {
   @ApiProperty({ description: '기존 비밀번호', required: false })
   @IsString()
+  @IsOptional()
   oldPassword?: string;
 }

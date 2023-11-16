@@ -29,7 +29,7 @@ export class OpenaiService {
             content: question,
           },
         ],
-        temperature: temperature || 0.9,
+        temperature: temperature || 0.1,
       });
 
       return data;

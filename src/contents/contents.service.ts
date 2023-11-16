@@ -878,6 +878,7 @@ export class CategoryService {
 
       // Join all lines together into a single string
       const question = questionLines.join(' ');
+      console.log(question);
 
       const response = await this.openaiService.createChatCompletion({
         question,
@@ -905,17 +906,19 @@ export class CategoryService {
       const content = await this.contentUtil.getLinkContent(link);
 
       let questionLines = [
-        "You are now auto categorizing machine. You can only answer a single category name or None. Here is the article's information:",
+        "You are a machine tasked with auto-categorizing articles based on information obtained through web scraping. You can only answer a single category name. Here is the article's information:",
       ];
 
       if (title) {
-        questionLines.push(`The title is "${title.trim()}"`);
+        questionLines.push(
+          `The article in question is titled "${title.trim()}"`,
+        );
       }
 
       if (content) {
         const contentLength = content.length / 2;
         questionLines.push(
-          `The opening 150 characters of the article read, "${content
+          `The 150 characters of the article is, "${content
             .replace(/\s/g, '')
             .slice(contentLength - 150, contentLength + 150)
             .trim()}"`,
@@ -932,9 +935,9 @@ export class CategoryService {
 
       // Add the category options to the end of the list
       questionLines.push(
-        `Please tell me the most appropriate category among the following. If none are suitable, return None. Here is Category options: [${categories.join(
+        `Please provide the most suitable category among the following. Here is Category options: [${categories.join(
           ', ',
-        )}]`,
+        )}, None]`,
       );
 
       // Join all lines together into a single string

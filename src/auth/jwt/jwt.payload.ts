@@ -1,6 +1,6 @@
 export class Payload {
   email!: string; // user email
-  period!: string; // '30d' or '2h' that indicates whether or not you are an auto-login user
+  period!: string; // '1y' or '2d' that indicates whether or not you are an auto-login user
   sub!: number; // userId
 }
 

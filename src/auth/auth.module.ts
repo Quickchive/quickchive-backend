@@ -13,7 +13,7 @@ import { OAuthUtil } from './util/oauth.util';
 import { ContentsModule } from '../contents/contents.module';
 
 const accessTokenExpiration = TWOHOUR;
-export const refreshTokenExpirationInCache = 60 * 60 * 24 * 30;
+export const refreshTokenExpirationInCache = 60 * 60 * 24 * 365; // 1 year
 export const refreshTokenExpirationInCacheShortVersion = 60 * 60 * 24 * 2;
 export const verifyEmailExpiration = 60 * 5;
 

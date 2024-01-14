@@ -110,9 +110,6 @@
       "node_modules",
       ".entity.ts",
       ".constants.ts"
-    ],
-    "setupFiles": [
-      "<rootDir>/.jest/envFile.ts"
     ]
   }
 }

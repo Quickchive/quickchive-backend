@@ -172,8 +172,6 @@ describe('AuthService', () => {
 
     it('토큰이 존재하지 않아 실패한다.', async () => {
       // given
-      // cacheManager.get = jest.fn().mockImplementationOnce(() => undefined);
-
       mockCacheManager.get = jest.fn().mockResolvedValue(undefined);
 
       // when
@@ -184,8 +182,6 @@ describe('AuthService', () => {
 
     it('토큰이 유효하지 않아 실패한다.', async () => {
       // given
-      // cacheManager.get = jest.fn().mockImplementationOnce(() => 2);
-
       mockCacheManager.get = jest.fn().mockResolvedValue(2);
 
       // when

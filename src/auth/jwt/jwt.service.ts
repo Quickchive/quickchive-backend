@@ -7,9 +7,7 @@ export class customJwtService {
   constructor(private readonly jwtService: JwtService) {}
 
   sign(payload: Payload): string {
-    return this.jwtService.sign(payload, {
-      secret: process.env.JWT_ACCESS_TOKEN_PRIVATE_KEY,
-    });
+    return this.jwtService.sign(payload);
   }
 
   verify(token: string, options?: JwtVerifyOptions): Payload {

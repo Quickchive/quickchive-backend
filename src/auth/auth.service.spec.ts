@@ -3,7 +3,7 @@ import {
   NotFoundException,
   UnauthorizedException,
 } from '@nestjs/common';
-import { JwtModule, JwtService } from '@nestjs/jwt';
+import { JwtModule } from '@nestjs/jwt';
 import { Test, TestingModule } from '@nestjs/testing';
 import { getRepositoryToken, TypeOrmModule } from '@nestjs/typeorm';
 import { CONFIG_OPTIONS } from '../common/common.constants';
@@ -72,7 +72,6 @@ describe('AuthService', () => {
         AuthService,
         MailService,
         customJwtService,
-        JwtService,
         {
           provide: getRepositoryToken(User),
           useValue: mockRepository(),

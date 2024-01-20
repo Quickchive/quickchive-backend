@@ -13,6 +13,7 @@ import { BatchModule } from './batch/batch.module';
 import { SummaryModule } from './summary/summary.module';
 import { TypeOrmConfigService } from './database/typerom-config.service';
 import { OpenaiModule } from './openai/openai.module';
+import { AppController } from './app.controller';
 
 @Module({
   imports: [
@@ -101,7 +102,7 @@ import { OpenaiModule } from './openai/openai.module';
     }),
     OpenaiModule,
   ],
-  controllers: [],
+  controllers: [AppController],
   providers: [],
 })
 export class AppModule {}

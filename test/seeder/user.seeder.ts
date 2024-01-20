@@ -4,6 +4,9 @@ import { faker } from '@faker-js/faker';
 
 export class UserSeeder implements Seeder<User> {
   private readonly userStub = {
+    id: faker.number.int({ min: 1, max: 9999 }),
+    createdAt: faker.date.recent(),
+    updatedAt: faker.date.recent(),
     name: faker.person.lastName(),
     email: faker.internet.email(),
     profileImage: faker.internet.url(),
@@ -17,7 +20,7 @@ export class UserSeeder implements Seeder<User> {
     verified: true,
   };
 
-  generateOne(options?: { [K in keyof User]: any }): User {
+  generateOne(options?: Partial<User>): User {
     return { ...this.userStub, ...options } as User;
   }
 }

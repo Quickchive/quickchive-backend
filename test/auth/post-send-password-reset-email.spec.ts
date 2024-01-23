@@ -103,4 +103,22 @@ describe('[POST] /api/auth/logout', () => {
       expect(body.message).toBe('User not found');
     });
   });
+
+  describe('유저가 인증되지 않아 실패한다.', () => {
+    beforeEach(async () => {
+      userStub = userSeeder.generateOne({ verified: false });
+      await userRepository.save(userStub);
+    });
+
+    it('빈 응답과 함께 201을 반환한다.', async () => {
+      const emailParam = userStub.email;
+
+      const { status, body } = await request(app.getHttpServer()).post(
+        `/auth/send-password-reset-email/${emailParam}`,
+      );
+
+      expect(status).toBe(HttpStatus.UNAUTHORIZED);
+      expect(body.message).toBe('User not verified');
+    });
+  });
 });

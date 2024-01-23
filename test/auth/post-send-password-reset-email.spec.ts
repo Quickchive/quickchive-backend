@@ -90,4 +90,17 @@ describe('[POST] /api/auth/logout', () => {
       expect(status).toBe(HttpStatus.CREATED);
     });
   });
+
+  describe('유저가 존재하지 않아 실패한다.', () => {
+    it('404 예외를 던진다.', async () => {
+      const emailParam = 'test@email.com';
+
+      const { status, body } = await request(app.getHttpServer()).post(
+        `/auth/send-password-reset-email/${emailParam}`,
+      );
+
+      expect(status).toBe(HttpStatus.NOT_FOUND);
+      expect(body.message).toBe('User not found');
+    });
+  });
 });

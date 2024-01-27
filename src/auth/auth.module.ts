@@ -1,8 +1,9 @@
 import { CacheModule, Module } from '@nestjs/common';
 import { JwtModule } from '@nestjs/jwt';
 import { PassportModule } from '@nestjs/passport';
-import { AuthController, OauthController } from './auth.controller';
-import { AuthService, OauthService } from './auth.service';
+import { AuthController } from './auth.controller';
+import { OAuthController } from './oauth.controller';
+import { AuthService } from './auth.service';
 import { JwtStrategy } from './jwt/jwt.strategy';
 import * as redisStore from 'cache-manager-redis-store';
 import { GoogleStrategy } from './passport/google/google.strategy';
@@ -11,6 +12,7 @@ import { TWOHOUR } from './jwt/jwt.payload';
 import { UsersModule } from '../users/users.module';
 import { OAuthUtil } from './util/oauth.util';
 import { ContentsModule } from '../contents/contents.module';
+import { OAuthService } from './oauth.service';
 
 const accessTokenExpiration = TWOHOUR;
 export const refreshTokenExpirationInCache = 60 * 60 * 24 * 365; // 1 year
@@ -34,11 +36,11 @@ export const verifyEmailExpiration = 60 * 5;
       port: process.env.REDIS_PORT,
     }),
   ],
-  controllers: [AuthController, OauthController],
+  controllers: [AuthController, OAuthController],
   providers: [
     AuthService,
     JwtStrategy,
-    OauthService,
+    OAuthService,
     OAuthUtil,
     GoogleStrategy,
     customJwtService,

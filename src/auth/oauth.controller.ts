@@ -54,7 +54,6 @@ export class OAuthController {
   })
   @Get('kakao-login')
   async kakaoOauth(@Query('code') code: string): Promise<LoginOutput> {
-    console.log(code);
     return this.oauthService.kakaoOauth({ code });
   }
 

@@ -48,6 +48,7 @@ import { CategoryUtil } from './util/category.util';
 import { CategoryRepository } from './repository/category.repository';
 import { ContentUtil } from './util/content.util';
 import { OpenaiService } from '../openai/openai.service';
+import { GetLinkInfoResponseDto } from './dtos/get-link.response.dto';
 
 @Injectable()
 export class ContentsService {
@@ -404,6 +405,12 @@ export class ContentsService {
     } catch (e) {
       throw e;
     }
+  }
+
+  async getLinkInfo(link: string) {
+    const data = await this.contentUtil.getLinkInfo(link);
+
+    return new GetLinkInfoResponseDto(data);
   }
 
   async testSummarizeContent({

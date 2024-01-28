@@ -61,6 +61,7 @@ import {
   LoadPersonalContentsOutput,
 } from './dtos/load-personal-contents.dto';
 import { LoadReminderCountOutput } from './dtos/load-personal-remider-count.dto';
+import { GetLinkInfoResponseDto } from './dtos/get-link.response.dto';
 
 @Controller('contents')
 @ApiTags('Contents')
@@ -254,6 +255,19 @@ export class ContentsController {
     @AuthUser() user: User,
   ): Promise<LoadReminderCountOutput> {
     return this.contentsService.loadReminderCount(user);
+  }
+
+  @ApiOperation({
+    summary: 'OG 데이터 크롤링',
+    description: '링크 내 OG 데이터를 파싱합니다.',
+  })
+  @ApiOkResponse({
+    type: GetLinkInfoResponseDto,
+  })
+  @UseGuards(JwtAuthGuard)
+  @Get('/og')
+  async getOgData(@Query('link') link: string) {
+    return this.contentsService.getLinkInfo(link);
   }
 
   @ApiOperation({

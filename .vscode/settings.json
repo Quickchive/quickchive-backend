@@ -1,3 +1,3 @@
 {
-  "typescript.preferences.importModuleSpecifier": "project-relative"
+  "typescript.preferences.importModuleSpecifier": "relative"
 }

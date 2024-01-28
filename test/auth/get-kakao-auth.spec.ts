@@ -2,18 +2,28 @@ import { getBuilder } from '../common/application-builder';
 import { HttpStatus, INestApplication } from '@nestjs/common';
 import { StartedPostgreSqlContainer } from '@testcontainers/postgresql';
 import * as request from 'supertest';
+import { DataSource } from 'typeorm';
 
 jest.setTimeout(30_000);
 describe('[GET] /api/oauth/kakao-auth', () => {
   // Application
   let app: INestApplication;
   let container: StartedPostgreSqlContainer; // TODO 결합도 낮추기
+  let dataSource: DataSource;
 
   beforeAll(async () => {
-    const { builder, container: _container } = await getBuilder();
+    const {
+      builder,
+      container: _container,
+      dataSource: _dataSource,
+    } = await getBuilder();
     container = _container;
+    dataSource = _dataSource;
 
-    const module = await builder.compile();
+    const module = await builder
+      .overrideProvider(DataSource)
+      .useValue(dataSource)
+      .compile();
 
     app = module.createNestApplication();
     await app.init();

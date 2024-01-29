@@ -11,7 +11,7 @@ import * as bcrypt from 'bcrypt';
 import { IsBoolean, IsEmail, IsEnum, IsString, Matches } from 'class-validator';
 import { ApiProperty } from '@nestjs/swagger';
 import { Content } from '../../contents/entities/content.entity';
-import { Category } from '../../contents/entities/category.entity';
+import { Category } from '../../categories/category.entity';
 import { Collection } from '../../collections/entities/collection.entity';
 import { CoreEntity } from '../../common/entities/core.entity';
 import { PaidPlan } from './paid-plan.entity';

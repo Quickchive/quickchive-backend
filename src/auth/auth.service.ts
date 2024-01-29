@@ -32,7 +32,7 @@ import { KakaoAuthorizeOutput, LoginWithKakaoDto } from './dtos/kakao.dto';
 import { googleUserInfo } from './dtos/google.dto';
 import { customJwtService } from './jwt/jwt.service';
 import { UserRepository } from '../users/repository/user.repository';
-import { CategoryRepository } from '../contents/repository/category.repository';
+import { CategoryRepository } from '../categories/category.repository';
 import { OAuthUtil } from './util/oauth.util';
 
 @Injectable()

@@ -6,12 +6,12 @@ import { User, UserRole } from '../users/entities/user.entity';
 import { DataSource, EntityManager, ObjectLiteral, Repository } from 'typeorm';
 import { CategoryService, ContentsService } from './contents.service';
 import { Content } from './entities/content.entity';
-import { Category } from './entities/category.entity';
+import { Category } from '../categories/category.entity';
 import {
   CategoryRepository,
   customCategoryRepositoryMethods,
 } from './repository/category.old.repository';
-import { RecentCategoryList } from './dtos/category.dto';
+import { RecentCategoryList } from '../categories/dtos/category.dto';
 
 const mockRepository = () => ({
   // make as a function type that returns Object.

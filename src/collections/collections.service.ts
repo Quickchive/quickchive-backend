@@ -21,7 +21,7 @@ import {
   AddNestedContentOutput,
 } from './dtos/nested-content.dto';
 import { toggleFavoriteOutput } from 'src/contents/dtos/content.dto';
-import { Category } from '../contents/entities/category.entity';
+import { Category } from '../categories/category.entity';
 import { ContentsService } from '../contents/contents.service';
 
 @Injectable()

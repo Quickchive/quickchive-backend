@@ -9,7 +9,7 @@ import { CoreEntity } from '../../common/entities/core.entity';
 import { User } from '../../users/entities/user.entity';
 import { Column, Entity, ManyToOne, RelationId } from 'typeorm';
 import { ApiProperty } from '@nestjs/swagger';
-import { Category } from './category.entity';
+import { Category } from '../../categories/category.entity';
 import { Transform } from 'class-transformer';
 
 @Entity()

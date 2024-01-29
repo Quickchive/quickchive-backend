@@ -4,9 +4,9 @@ import {
   Injectable,
   NotFoundException,
 } from '@nestjs/common';
-import { Category } from '../entities/category.entity';
-import { CategoryUtil } from '../util/category.util';
-import { User } from '../../users/entities/user.entity';
+import { Category } from './category.entity';
+import { CategoryUtil } from '../contents/util/category.util';
+import { User } from '../users/entities/user.entity';
 
 @Injectable()
 export class CategoryRepository extends Repository<Category> {

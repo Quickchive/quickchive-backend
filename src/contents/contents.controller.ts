@@ -9,7 +9,6 @@ import {
   Patch,
   Get,
   UseInterceptors,
-  ParseBoolPipe,
   Query,
 } from '@nestjs/common';
 import {
@@ -29,32 +28,17 @@ import { TransactionInterceptor } from '../common/interceptors/transaction.inter
 import { TransactionManager } from '../common/transaction.decorator';
 import { User } from '../users/entities/user.entity';
 import { EntityManager } from 'typeorm';
-import { CategoryService, ContentsService } from './contents.service';
-import {
-  AddCategoryBodyDto,
-  AddCategoryOutput,
-  AutoCategorizeBodyDto,
-  AutoCategorizeOutput,
-  DeleteCategoryOutput,
-  UpdateCategoryBodyDto,
-  UpdateCategoryOutput,
-} from './dtos/category.dto';
+import { ContentsService } from './contents.service';
 import {
   AddContentBodyDto,
   AddContentOutput,
   AddMultipleContentsBodyDto,
-  checkReadFlagOutput,
   DeleteContentOutput,
-  SummarizeContentBodyDto,
   SummarizeContentOutput,
   toggleFavoriteOutput,
   UpdateContentBodyDto,
   UpdateContentOutput,
 } from './dtos/content.dto';
-import {
-  LoadFrequentCategoriesOutput,
-  LoadPersonalCategoriesOutput,
-} from './dtos/load-personal-categories.dto';
 import { ErrorOutput } from '../common/dtos/output.dto';
 import {
   LoadFavoritesOutput,
@@ -312,180 +296,4 @@ export class ContentsController {
   // ): Promise<SummarizeContentOutput> {
   //   return this.contentsService.testSummarizeContent(content);
   // }
-}
-
-@Controller('test')
-@ApiTags('Test')
-export class TestController {
-  constructor(
-    private readonly contentsService: ContentsService,
-    private readonly categoryService: CategoryService,
-  ) {}
-
-  @ApiOperation({
-    summary: '간편 문서 요약',
-    description: '성능 테스트를 위해 만든 간편 문서 요약 메서드',
-  })
-  @ApiOkResponse({
-    description: '간편 문서 요약 성공 여부를 반환한다.',
-    type: SummarizeContentOutput,
-  })
-  @ApiBadRequestResponse({
-    description: 'naver 서버에 잘못된 요청을 보냈을 경우',
-    type: ErrorOutput,
-  })
-  @Post('summarize')
-  async testSummarizeContent(
-    @Body() content: SummarizeContentBodyDto,
-  ): Promise<SummarizeContentOutput> {
-    return this.contentsService.testSummarizeContent(content);
-  }
-
-  @ApiOperation({
-    summary: '아티클 카테고리 자동 지정 (테스트용)',
-    description: 'url을 넘기면 적절한 아티클 카테고리를 반환하는 메서드',
-  })
-  @Post('auto-categorize')
-  async autoCategorize(
-    @Body() autoCategorizeBody: AutoCategorizeBodyDto,
-  ): Promise<AutoCategorizeOutput> {
-    return this.categoryService.autoCategorizeForTest(autoCategorizeBody);
-  }
-}
-
-@Controller('categories')
-@ApiTags('Category')
-@ApiBearerAuth('Authorization')
-@UseGuards(JwtAuthGuard)
-export class CategoryController {
-  constructor(private readonly categoryService: CategoryService) {}
-
-  @ApiOperation({
-    summary: '카테고리 추가',
-    description: '카테고리를 추가하는 메서드',
-  })
-  @ApiCreatedResponse({
-    description: '카테고리 추가 성공 여부를 반환한다.',
-    type: AddCategoryOutput,
-  })
-  @ApiConflictResponse({
-    description: '동일한 이름의 카테고리가 존재할 경우',
-    type: ErrorOutput,
-  })
-  @ApiNotFoundResponse({
-    description: '존재하지 않는 것일 경우',
-    type: ErrorOutput,
-  })
-  @Post()
-  @UseInterceptors(TransactionInterceptor)
-  async addCategory(
-    @AuthUser() user: User,
-    @Body() addCategoryBody: AddCategoryBodyDto,
-    @TransactionManager() queryRunnerManager: EntityManager,
-  ): Promise<AddCategoryOutput> {
-    return this.categoryService.addCategory(
-      user,
-      addCategoryBody,
-      queryRunnerManager,
-    );
-  }
-
-  @ApiOperation({
-    summary: '카테고리 수정',
-    description: '카테고리 이름을 수정하는 메서드',
-  })
-  @ApiCreatedResponse({
-    description: '카테고리 수정 성공 여부를 반환한다.',
-    type: UpdateCategoryOutput,
-  })
-  @Patch()
-  @UseInterceptors(TransactionInterceptor)
-  async updateCategory(
-    @AuthUser() user: User,
-    @Body() updateCategoryBody: UpdateCategoryBodyDto,
-    @TransactionManager() queryRunnerManager: EntityManager,
-  ): Promise<UpdateCategoryOutput> {
-    return this.categoryService.updateCategory(
-      user,
-      updateCategoryBody,
-      queryRunnerManager,
-    );
-  }
-
-  @ApiOperation({
-    summary: '카테고리 삭제',
-    description: '카테고리를 삭제하는 메서드',
-  })
-  @ApiOkResponse({
-    description: '카테고리 삭제 성공 여부를 반환한다.',
-    type: DeleteCategoryOutput,
-  })
-  @ApiNotFoundResponse({
-    description: '존재하지 않는 카테고리를 삭제하려고 할 경우',
-    type: ErrorOutput,
-  })
-  @Delete(':categoryId')
-  @UseInterceptors(TransactionInterceptor)
-  async deleteCategory(
-    @AuthUser() user: User,
-    @Param('categoryId', new ParseIntPipe()) categoryId: number,
-    @Query('deleteContentFlag', new ParseBoolPipe()) deleteContentFlag: boolean,
-    @TransactionManager() queryRunnerManager: EntityManager,
-  ): Promise<DeleteCategoryOutput> {
-    return this.categoryService.deleteCategory(
-      user,
-      categoryId,
-      deleteContentFlag,
-      queryRunnerManager,
-    );
-  }
-
-  @ApiOperation({
-    summary: '자신의 카테고리 목록 조회',
-    description: '자신의 카테고리 목록을 조회하는 메서드',
-  })
-  @ApiOkResponse({
-    description: '카테고리 목록을 반환한다.',
-    type: LoadPersonalCategoriesOutput,
-  })
-  @ApiBearerAuth('Authorization')
-  @UseGuards(JwtAuthGuard)
-  @Get()
-  async loadPersonalCategories(
-    @AuthUser() user: User,
-  ): Promise<LoadPersonalCategoriesOutput> {
-    return this.categoryService.loadPersonalCategories(user);
-  }
-
-  @ApiOperation({
-    summary: '자주 저장한 카테고리 조회',
-    description: '자주 저장한 카테고리를 3개까지 조회하는 메서드',
-  })
-  @ApiOkResponse({
-    description: '자주 저장한 카테고리를 최대 3개까지 반환한다.',
-    type: LoadFrequentCategoriesOutput,
-  })
-  @ApiBearerAuth('Authorization')
-  @UseGuards(JwtAuthGuard)
-  @Get('frequent')
-  async loadFrequentCategories(
-    @AuthUser() user: User,
-  ): Promise<LoadFrequentCategoriesOutput> {
-    return this.categoryService.loadFrequentCategories(user);
-  }
-
-  @ApiOperation({
-    summary: '아티클 카테고리 자동 지정',
-    description:
-      '아티클에 적절한 카테고리를 유저의 카테고리 목록에서 찾는 메서드',
-  })
-  @ApiBearerAuth('Authorization')
-  @UseGuards(JwtAuthGuard)
-  @Get('auto-categorize')
-  async autoCategorize(
-    @AuthUser() user: User,
-    @Query('link') link: string,
-  ): Promise<AutoCategorizeOutput> {
-    return this.categoryService.autoCategorize(user, link);
-  }
 }

@@ -1,10 +1,10 @@
 import { ApiProperty } from '@nestjs/swagger';
 import { IsEnum, IsString, Length } from 'class-validator';
 import { Column, Entity, ManyToOne, OneToMany, RelationId } from 'typeorm';
-import { Content } from './content.entity';
-import { CoreEntity } from '../../common/entities/core.entity';
-import { Collection } from '../../collections/entities/collection.entity';
-import { User } from '../../users/entities/user.entity';
+import { Content } from '../contents/entities/content.entity';
+import { CoreEntity } from '../common/entities/core.entity';
+import { Collection } from '../collections/entities/collection.entity';
+import { User } from '../users/entities/user.entity';
 
 export enum IconName {
   None = 'None',

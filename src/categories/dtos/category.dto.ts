@@ -1,7 +1,7 @@
 import { ApiProperty, PartialType, PickType } from '@nestjs/swagger';
 import { IsEnum, IsNumber, IsOptional, IsString } from 'class-validator';
 import { CoreOutput } from '../../common/dtos/output.dto';
-import { Category, IconName } from '../entities/category.entity';
+import { Category, IconName } from '../category.entity';
 
 export class AddCategoryBodyDto {
   @ApiProperty({

@@ -13,6 +13,7 @@ import { UsersModule } from '../users/users.module';
 import { OAuthUtil } from './util/oauth.util';
 import { ContentsModule } from '../contents/contents.module';
 import { OAuthService } from './oauth.service';
+import { CategoryModule } from '../categories/category.module';
 
 const accessTokenExpiration = TWOHOUR;
 export const refreshTokenExpirationInCache = 60 * 60 * 24 * 365; // 1 year
@@ -35,6 +36,7 @@ export const verifyEmailExpiration = 60 * 5;
       host: process.env.REDIS_HOST,
       port: process.env.REDIS_PORT,
     }),
+    CategoryModule,
   ],
   controllers: [AuthController, OAuthController],
   providers: [

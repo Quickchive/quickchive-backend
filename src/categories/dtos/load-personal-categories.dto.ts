@@ -1,7 +1,7 @@
 import { ApiProperty } from '@nestjs/swagger';
 import { CoreOutput } from '../../common/dtos/output.dto';
-import { CategoryTreeNode } from '../../contents/dtos/category.dto';
-import { Category } from '../entities/category.entity';
+import { CategoryTreeNode } from './category.dto';
+import { Category } from '../category.entity';
 
 export class LoadPersonalCategoriesOutput extends CoreOutput {
   @ApiProperty({

@@ -3,7 +3,7 @@ import { ConfigService } from '@nestjs/config';
 import { TypeOrmModuleOptions, TypeOrmOptionsFactory } from '@nestjs/typeorm';
 import { Collection } from '../collections/entities/collection.entity';
 import { NestedContent } from '../collections/entities/nested-content.entity';
-import { Category } from '../contents/entities/category.entity';
+import { Category } from '../categories/category.entity';
 import { Content } from '../contents/entities/content.entity';
 import { User } from '../users/entities/user.entity';
 import { PaidPlan } from '../users/entities/paid-plan.entity';

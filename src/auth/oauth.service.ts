@@ -13,7 +13,7 @@ import { LoginOutput } from './dtos/login.dto';
 import { Payload } from './jwt/jwt.payload';
 import { customJwtService } from './jwt/jwt.service';
 import { OAuthUtil } from './util/oauth.util';
-import { CategoryRepository } from '../contents/repository/category.repository';
+import { CategoryRepository } from '../categories/category.repository';
 import { User } from '../users/entities/user.entity';
 import { UserRepository } from '../users/repository/user.repository';
 import * as CryptoJS from 'crypto-js';

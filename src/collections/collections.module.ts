@@ -5,7 +5,7 @@ import {
   TypeOrmModule,
 } from '@nestjs/typeorm';
 import { ContentsModule } from '../contents/contents.module';
-import { Category } from '../contents/entities/category.entity';
+import { Category } from '../categories/category.entity';
 import { DataSource } from 'typeorm';
 import { CollectionsController } from './collections.controller';
 import { CollectionsService } from './collections.service';

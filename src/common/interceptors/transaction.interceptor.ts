@@ -37,10 +37,12 @@ export class TransactionInterceptor implements NestInterceptor {
           throw new InternalServerErrorException(errorMessage);
         }
       }),
-      tap(async () => {
-        console.log('check commit');
-        await queryRunner.commitTransaction();
-        await queryRunner.release();
+      tap({
+        next: async () => {
+          console.log('check commit');
+          await queryRunner.commitTransaction();
+          await queryRunner.release();
+        },
       }),
     );
   }

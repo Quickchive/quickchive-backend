@@ -67,13 +67,11 @@ export class ContentsController {
     type: ErrorOutput,
   })
   @Post()
-  @UseInterceptors(TransactionInterceptor)
   async addContent(
     @AuthUser() user: User,
     @Body() content: AddContentBodyDto,
-    @TransactionManager() queryRunnerManager: EntityManager,
   ): Promise<AddContentOutput> {
-    return this.contentsService.addContent(user, content, queryRunnerManager);
+    return this.contentsService.addContent(user, content);
   }
 
   @ApiOperation({

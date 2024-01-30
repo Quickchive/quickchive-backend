@@ -4,7 +4,7 @@ import {
   Injectable,
   NotFoundException,
 } from '@nestjs/common';
-import { EntityManager } from 'typeorm';
+import { DataSource, EntityManager } from 'typeorm';
 
 import {
   AddContentBodyDto,
@@ -41,6 +41,7 @@ export class ContentsService {
     private readonly categoryRepository: CategoryRepository,
     private readonly categoryUtil: CategoryUtil,
     private readonly contentUtil: ContentUtil,
+    private readonly dataSource: DataSource,
   ) {}
 
   async addContent(
@@ -54,15 +55,18 @@ export class ContentsService {
       categoryName,
       parentId,
     }: AddContentBodyDto,
-    queryRunnerManager: EntityManager,
   ): Promise<AddContentOutput> {
-    try {
-      const userInDb =
-        await this.userRepository.findOneWithContentsAndCategories(user.id);
-      if (!userInDb) {
-        throw new NotFoundException('User not found');
-      }
+    const userInDb = await this.userRepository.findOneWithContentsAndCategories(
+      user.id,
+    );
+    if (!userInDb) {
+      throw new NotFoundException('User not found');
+    }
+    const queryRunner = this.dataSource.createQueryRunner();
+    await queryRunner.connect();
+    await queryRunner.startTransaction();
 
+    try {
       // get og tag info from link
       const {
         title: linkTitle,
@@ -78,7 +82,7 @@ export class ContentsService {
           categoryName,
           parentId,
           userInDb,
-          queryRunnerManager,
+          queryRunner.manager,
         );
 
         await this.categoryUtil.checkContentDuplicateAndAddCategorySaveLog(
@@ -88,7 +92,7 @@ export class ContentsService {
         );
       }
 
-      const newContent = queryRunnerManager.create(Content, {
+      const newContent = queryRunner.manager.create(Content, {
         link,
         title,
         siteName,
@@ -100,11 +104,16 @@ export class ContentsService {
         user,
         ...(favorite && { favorite }),
       });
-      await queryRunnerManager.save(newContent);
+      await queryRunner.manager.save(newContent);
+
+      await queryRunner.commitTransaction();
 
       return {};
     } catch (e) {
+      await queryRunner.rollbackTransaction();
       throw e;
+    } finally {
+      await queryRunner.release();
     }
   }
 

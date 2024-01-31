@@ -27,10 +27,10 @@ import { Content } from './entities/content.entity';
 import { LoadReminderCountOutput } from './dtos/load-personal-remider-count.dto';
 import { UserRepository } from '../users/repository/user.repository';
 import { ContentRepository } from './repository/content.repository';
-import { CategoryUtil } from './util/category.util';
 import { CategoryRepository } from '../categories/category.repository';
-import { ContentUtil } from './util/content.util';
+import { getLinkInfo } from './util/content.util';
 import { GetLinkInfoResponseDto } from './dtos/get-link.response.dto';
+import { checkContentDuplicateAndAddCategorySaveLog } from './util/category.util';
 
 @Injectable()
 export class ContentsService {
@@ -39,8 +39,6 @@ export class ContentsService {
     private readonly contentRepository: ContentRepository,
     private readonly summaryService: SummaryService,
     private readonly categoryRepository: CategoryRepository,
-    private readonly categoryUtil: CategoryUtil,
-    private readonly contentUtil: ContentUtil,
     private readonly dataSource: DataSource,
   ) {}
 
@@ -73,7 +71,7 @@ export class ContentsService {
         siteName,
         description,
         coverImg,
-      } = await this.contentUtil.getLinkInfo(link);
+      } = await getLinkInfo(link);
       title = title ? title : linkTitle;
 
       let category: Category | null = null;
@@ -85,7 +83,7 @@ export class ContentsService {
           queryRunner.manager,
         );
 
-        await this.categoryUtil.checkContentDuplicateAndAddCategorySaveLog(
+        await checkContentDuplicateAndAddCategorySaveLog(
           link,
           category,
           userInDb,
@@ -141,11 +139,12 @@ export class ContentsService {
           );
         }
         for (const link of contentLinks) {
-          const { title, description, coverImg, siteName } =
-            await this.contentUtil.getLinkInfo(link);
+          const { title, description, coverImg, siteName } = await getLinkInfo(
+            link,
+          );
 
           if (category) {
-            await this.categoryUtil.checkContentDuplicateAndAddCategorySaveLog(
+            await checkContentDuplicateAndAddCategorySaveLog(
               link,
               category,
               userInDb,
@@ -220,7 +219,7 @@ export class ContentsService {
           queryRunnerManager,
         );
 
-        await this.categoryUtil.checkContentDuplicateAndAddCategorySaveLog(
+        await checkContentDuplicateAndAddCategorySaveLog(
           link,
           category,
           userInDb,
@@ -399,7 +398,7 @@ export class ContentsService {
   }
 
   async getLinkInfo(link: string) {
-    const data = await this.contentUtil.getLinkInfo(link);
+    const data = await getLinkInfo(link);
 
     return new GetLinkInfoResponseDto(data);
   }

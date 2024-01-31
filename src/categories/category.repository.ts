@@ -5,15 +5,12 @@ import {
   NotFoundException,
 } from '@nestjs/common';
 import { Category } from './category.entity';
-import { CategoryUtil } from '../contents/util/category.util';
 import { User } from '../users/entities/user.entity';
+import { generateSlug } from '../contents/util/category.util';
 
 @Injectable()
 export class CategoryRepository extends Repository<Category> {
-  constructor(
-    private readonly dataSource: DataSource,
-    private readonly categoryUtil: CategoryUtil,
-  ) {
+  constructor(private readonly dataSource: DataSource) {
     super(Category, dataSource.createEntityManager());
   }
 
@@ -34,7 +31,7 @@ export class CategoryRepository extends Repository<Category> {
     queryRunnerManager: EntityManager,
   ): Promise<Category> {
     // generate category name and slug
-    const { categorySlug } = this.categoryUtil.generateSlug(categoryName);
+    const { categorySlug } = generateSlug(categoryName);
 
     if (parentId) {
       // category depth should be 3
@@ -112,7 +109,7 @@ export class CategoryRepository extends Repository<Category> {
       .values(
         defaultCategories.map((categoryName) => ({
           name: categoryName,
-          slug: this.categoryUtil.generateSlug(categoryName).categorySlug,
+          slug: generateSlug(categoryName).categorySlug,
           user: user,
         })),
       )

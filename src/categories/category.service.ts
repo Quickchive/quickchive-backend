@@ -23,20 +23,23 @@ import { Category } from './category.entity';
 import { Content } from '../contents/entities/content.entity';
 import { CategoryRepository } from './category.repository';
 import { ContentRepository } from '../contents/repository/content.repository';
-import { CategoryUtil } from '../contents/util/category.util';
-import { ContentUtil } from '../contents/util/content.util';
+import { getLinkContent, getLinkInfo } from '../contents/util/content.util';
 import { OpenaiService } from '../openai/openai.service';
 import { User } from '../users/entities/user.entity';
 import { UserRepository } from '../users/repository/user.repository';
+import {
+  generateCategoriesTree,
+  generateSlug,
+  loadLogs,
+  makeCategoryListWithSaveCount,
+} from '../contents/util/category.util';
 
 @Injectable()
 export class CategoryService {
   constructor(
     private readonly contentRepository: ContentRepository,
     private readonly categoryRepository: CategoryRepository,
-    private readonly categoryUtil: CategoryUtil,
     private readonly userRepository: UserRepository,
-    private readonly contentUtil: ContentUtil,
     private readonly openaiService: OpenaiService,
   ) {}
 
@@ -52,7 +55,7 @@ export class CategoryService {
         throw new NotFoundException('User not found');
       }
 
-      const { categorySlug } = this.categoryUtil.generateSlug(categoryName);
+      const { categorySlug } = generateSlug(categoryName);
 
       if (parentId) {
         // category depth should be 3
@@ -152,7 +155,7 @@ export class CategoryService {
       if (category) {
         // Check if user has category with same slug
         if (categoryName) {
-          const { categorySlug } = this.categoryUtil.generateSlug(categoryName);
+          const { categorySlug } = generateSlug(categoryName);
           if (
             userInDb.categories?.filter(
               (category) =>
@@ -296,8 +299,7 @@ export class CategoryService {
       }
 
       // make categories tree by parentid
-      const categoriesTree =
-        this.categoryUtil.generateCategoriesTree(categories);
+      const categoriesTree = generateCategoriesTree(categories);
 
       return {
         categoriesTree,
@@ -312,8 +314,7 @@ export class CategoryService {
   ): Promise<LoadFrequentCategoriesOutput> {
     try {
       // 로그 파일 내의 기록을 불러온다.
-      const recentCategoryList: RecentCategoryList[] =
-        this.categoryUtil.loadLogs(user.id);
+      const recentCategoryList: RecentCategoryList[] = loadLogs(user.id);
 
       // 캐시 내의 카테고리 리스트를 최신 순으로 정렬하고, 동시에 저장된 횟수를 추가한다.
 
@@ -331,12 +332,11 @@ export class CategoryService {
 
         // 10개의 로그를 확인한다.
         i += 10;
-        recentCategoriesWithSaveCount =
-          this.categoryUtil.makeCategoryListWithSaveCount(
-            recentCategoryList,
-            recentCategoriesWithSaveCount,
-            i,
-          );
+        recentCategoriesWithSaveCount = makeCategoryListWithSaveCount(
+          recentCategoryList,
+          recentCategoriesWithSaveCount,
+          i,
+        );
         // 10개의 로그를 확인했으므로 남은 로그 수를 10개 감소시킨다.
         remainLogCount -= 10;
 
@@ -430,10 +430,9 @@ export class CategoryService {
           categories.push(category.name);
         }
       });
-      const { title, siteName, description } =
-        await this.contentUtil.getLinkInfo(link);
+      const { title, siteName, description } = await getLinkInfo(link);
 
-      const content = await this.contentUtil.getLinkContent(link);
+      const content = await getLinkContent(link);
 
       let questionLines = [
         "You are a machine tasked with auto-categorizing articles based on information obtained through web scraping. You can only answer a single category name. Here is the article's information:",
@@ -489,15 +488,14 @@ export class CategoryService {
   ): Promise<AutoCategorizeOutput> {
     try {
       const { link, categories } = autoCategorizeBody;
-      const { title, siteName, description } =
-        await this.contentUtil.getLinkInfo(link);
+      const { title, siteName, description } = await getLinkInfo(link);
 
       /**
        * TODO: 본문 크롤링 개선 필요
        * 현재 p 태그만 크롤링하는데, 불필요한 내용이 포함되는 경우가 많음
        * 그러나 하나하나 예외 처리하는 방법을 제외하곤 방법을 못 찾은 상황
        */
-      const content = await this.contentUtil.getLinkContent(link);
+      const content = await getLinkContent(link);
 
       let questionLines = [
         "You are a machine tasked with auto-categorizing articles based on information obtained through web scraping. You can only answer a single category name. Here is the article's information:",

@@ -1,10 +1,10 @@
-import { Category } from '../../categories/category.entity';
+import { Category } from '../category.entity';
 import {
   CategorySlug,
   CategoryTreeNode,
   RecentCategoryList,
   RecentCategoryListWithSaveCount,
-} from '../../categories/dtos/category.dto';
+} from '../dtos/category.dto';
 import { User } from '../../users/entities/user.entity';
 import { ConflictException } from '@nestjs/common';
 

@@ -6,7 +6,7 @@ import {
 } from '@nestjs/common';
 import { Category } from './category.entity';
 import { User } from '../users/entities/user.entity';
-import { generateSlug } from '../contents/util/category.util';
+import { generateSlug } from './utils/category.util';
 
 @Injectable()
 export class CategoryRepository extends Repository<Category> {

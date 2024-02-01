@@ -30,7 +30,7 @@ import { ContentRepository } from './repository/content.repository';
 import { CategoryRepository } from '../categories/category.repository';
 import { getLinkInfo } from './util/content.util';
 import { GetLinkInfoResponseDto } from './dtos/get-link.response.dto';
-import { checkContentDuplicateAndAddCategorySaveLog } from './util/category.util';
+import { checkContentDuplicateAndAddCategorySaveLog } from '../categories/utils/category.util';
 
 @Injectable()
 export class ContentsService {

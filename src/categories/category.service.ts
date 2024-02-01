@@ -32,7 +32,7 @@ import {
   generateSlug,
   loadLogs,
   makeCategoryListWithSaveCount,
-} from '../contents/util/category.util';
+} from './utils/category.util';
 
 @Injectable()
 export class CategoryService {

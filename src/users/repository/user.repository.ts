@@ -39,37 +39,11 @@ export class UserRepository extends Repository<User> {
       .getOne();
   }
 
-  // Create Account By OAuth User Info and Return User and number
-  /**
-   *
-   * @param userInfo
-   * @returns User, number(0: not existed, 1: existed)
-   */
-  async getOrCreateAccount(
-    userInfo: GetOrCreateAccountBodyDto,
-  ): Promise<{ user: User; exist: number }> {
-    try {
-      const { email, name, profileImage, password } = userInfo;
-      let user = await this.findOneBy({
-        email,
-      });
-      let exist = 1;
-      if (!user) {
-        exist = 0;
-        user = await this.save(
-          this.create({
-            email,
-            name,
-            profileImage,
-            password,
-            verified: true,
-          }),
-        );
-      }
+  async findOneByEmail(email: string): Promise<User | null> {
+    return this.findOne({ where: { email } });
+  }
 
-      return { user, exist };
-    } catch (e) {
-      throw e;
-    }
+  async createOne(user: Partial<User>): Promise<User> {
+    return this.save(user);
   }
 }

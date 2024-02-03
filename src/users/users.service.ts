@@ -6,7 +6,7 @@ import {
   UnauthorizedException,
 } from '@nestjs/common';
 import { EntityManager } from 'typeorm';
-import { EditProfileInput, EditProfileOutput } from './dtos/edit-profile.dto';
+import { EditProfileDto, EditProfileOutput } from './dtos/edit-profile.dto';
 import {
   ResetPasswordInput,
   ResetPasswordOutput,
@@ -25,7 +25,7 @@ export class UsersService {
 
   async editProfile(
     userId: number,
-    { password, oldPassword, name }: EditProfileInput,
+    { password, oldPassword, name }: EditProfileDto,
     queryRunnerManager: EntityManager,
   ): Promise<EditProfileOutput> {
     try {
@@ -34,25 +34,13 @@ export class UsersService {
         select: { id: true, email: true, name: true, password: true },
       });
 
-      if (name) {
-        user.name = name;
-      }
-
-      interface UserWithoutPassword extends Omit<User, 'password'> {}
+      user.name = name;
 
       if (password && oldPassword) {
         if (await user?.checkPassword(oldPassword)) user.password = password;
         else throw new UnauthorizedException('The password is incorrect');
-
-        await queryRunnerManager.save(user);
       }
-      // else {
-      //   delete user.password;
-      // }
-      else {
-        const userWithoutPassword: UserWithoutPassword = user;
-        await queryRunnerManager.save(userWithoutPassword);
-      }
+      await queryRunnerManager.save(user);
 
       return {};
     } catch (e) {

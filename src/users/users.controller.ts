@@ -21,7 +21,7 @@ import { JwtAuthGuard } from '../auth/jwt/jwt.guard';
 import { TransactionInterceptor } from '../common/interceptors/transaction.interceptor';
 import { TransactionManager } from '../common/transaction.decorator';
 import { EntityManager } from 'typeorm';
-import { EditProfileInput, EditProfileOutput } from './dtos/edit-profile.dto';
+import { EditProfileDto, EditProfileOutput } from './dtos/edit-profile.dto';
 import { meOutput } from './dtos/me.dto';
 import {
   ResetPasswordInput,
@@ -48,12 +48,12 @@ export class UsersController {
   @UseInterceptors(TransactionInterceptor)
   async editProfile(
     @AuthUser() user: User,
-    @Body() editProfileBody: EditProfileInput,
+    @Body() editProfileDto: EditProfileDto,
     @TransactionManager() queryRunnerManager: EntityManager,
   ): Promise<EditProfileOutput> {
     return this.usersService.editProfile(
       user.id,
-      editProfileBody,
+      editProfileDto,
       queryRunnerManager,
     );
   }

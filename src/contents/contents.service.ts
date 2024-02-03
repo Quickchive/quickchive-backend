@@ -77,6 +77,7 @@ export class ContentsService {
       let category: Category | null = null;
       if (categoryName) {
         category = await this.categoryRepository.getOrCreateCategory(
+          // TODO 명령과 조회를 분리
           categoryName,
           parentId,
           userInDb,

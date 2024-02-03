@@ -93,16 +93,23 @@ export class OAuthService {
         throw new BadRequestException('Please Agree to share your email');
       }
 
-      const { user, exist } = await this.userRepository.getOrCreateAccount({
-        email,
-        name: userInfo.kakao_account.profile.nickname,
-        profileImage: userInfo.kakao_account.profile?.profile_image_url,
-        password: CryptoJS.SHA256(email + process.env.KAKAO_JS_KEY).toString(),
-      });
+      let user = await this.userRepository.findOneByEmail(email);
 
       // 회원가입인 경우 기본 카테고리 생성 작업 진행
-      if (exist === 0) {
-        await this.categoryRepository.createDefaultCategories(user);
+      if (!user) {
+        user = new User();
+        user.email = email;
+        user.name = userInfo.kakao_account.profile.nickname;
+        user.profileImage = userInfo.kakao_account.profile?.profile_image_url;
+        user.password = this.encodePasswordFromEmail(
+          email,
+          process.env.KAKAO_JS_KEY,
+        );
+
+        await Promise.all([
+          this.userRepository.createOne(user),
+          this.categoryRepository.createDefaultCategories(user),
+        ]);
       }
 
       return this.oauthLogin(user.email);
@@ -118,23 +125,32 @@ export class OAuthService {
     picture,
   }: googleUserInfo): Promise<LoginOutput> {
     try {
-      const { user, exist } = await this.userRepository.getOrCreateAccount({
-        email,
-        name,
-        profileImage: picture,
-        password: CryptoJS.SHA256(
-          email + process.env.GOOGLE_CLIENT_ID,
-        ).toString(),
-      });
+      let user = await this.userRepository.findOneByEmail(email);
 
       // 회원가입인 경우 기본 카테고리 생성 작업 진행
-      if (exist === 0) {
-        await this.categoryRepository.createDefaultCategories(user);
+      if (!user) {
+        user = new User();
+        user.email = email;
+        user.name = name;
+        user.profileImage = picture;
+        user.password = this.encodePasswordFromEmail(
+          email,
+          process.env.GOOGLE_CLIENT_ID,
+        );
+
+        await Promise.all([
+          this.userRepository.createOne(user),
+          this.categoryRepository.createDefaultCategories(user),
+        ]);
       }
 
       return this.oauthLogin(user.email);
     } catch (e) {
       throw e;
     }
+  }
+
+  private encodePasswordFromEmail(email: string, key?: string): string {
+    return CryptoJS.SHA256(email + key).toString();
   }
 }

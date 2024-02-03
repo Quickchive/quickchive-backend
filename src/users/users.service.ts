@@ -34,25 +34,13 @@ export class UsersService {
         select: { id: true, email: true, name: true, password: true },
       });
 
-      if (name) {
-        user.name = name;
-      }
-
-      interface UserWithoutPassword extends Omit<User, 'password'> {}
+      user.name = name;
 
       if (password && oldPassword) {
         if (await user?.checkPassword(oldPassword)) user.password = password;
         else throw new UnauthorizedException('The password is incorrect');
-
-        await queryRunnerManager.save(user);
       }
-      // else {
-      //   delete user.password;
-      // }
-      else {
-        const userWithoutPassword: UserWithoutPassword = user;
-        await queryRunnerManager.save(userWithoutPassword);
-      }
+      await queryRunnerManager.save(user);
 
       return {};
     } catch (e) {

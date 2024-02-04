@@ -14,6 +14,7 @@ import { SummaryModule } from './summary/summary.module';
 import { TypeOrmConfigService } from './database/typerom-config.service';
 import { OpenaiModule } from './openai/openai.module';
 import { AppController } from './app.controller';
+import { AopModule } from './common/aop/aop.module';
 
 @Module({
   imports: [
@@ -101,6 +102,7 @@ import { AppController } from './app.controller';
         : '',
     }),
     OpenaiModule,
+    AopModule,
   ],
   controllers: [AppController],
   providers: [],

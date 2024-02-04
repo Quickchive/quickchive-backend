@@ -1,6 +1,6 @@
-import { SetMetadata } from '@nestjs/common';
+import { Injectable, SetMetadata, applyDecorators } from '@nestjs/common';
 
 export const ASPECT = Symbol('ASPECT');
 
 export const Aspect = (metadataKey: string | symbol) =>
-  SetMetadata(ASPECT, metadataKey);
+  applyDecorators(SetMetadata(ASPECT, metadataKey), Injectable);

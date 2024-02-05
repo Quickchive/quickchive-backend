@@ -31,6 +31,7 @@ import { CategoryRepository } from '../categories/category.repository';
 import { getLinkInfo } from './util/content.util';
 import { GetLinkInfoResponseDto } from './dtos/get-link.response.dto';
 import { checkContentDuplicateAndAddCategorySaveLog } from '../categories/utils/category.util';
+import { Transactional } from '../common/aop/transactional';
 
 @Injectable()
 export class ContentsService {
@@ -116,10 +117,11 @@ export class ContentsService {
     }
   }
 
+  @Transactional()
   async addMultipleContents(
     user: User,
     { contentLinks, categoryName, parentId }: AddMultipleContentsBodyDto,
-    queryRunnerManager: EntityManager,
+    entityManager?: EntityManager,
   ): Promise<AddContentOutput> {
     try {
       const userInDb =
@@ -136,7 +138,7 @@ export class ContentsService {
             categoryName,
             parentId,
             userInDb,
-            queryRunnerManager,
+            entityManager!,
           );
         }
         for (const link of contentLinks) {
@@ -152,7 +154,7 @@ export class ContentsService {
             );
           }
 
-          const newContent = queryRunnerManager.create(Content, {
+          const newContent = entityManager!.create(Content, {
             link,
             title,
             siteName,
@@ -161,10 +163,7 @@ export class ContentsService {
             description,
             user: userInDb,
           });
-          await queryRunnerManager.save(newContent);
-
-          // 각 링크마다 처리 후 transaction commit
-          await queryRunnerManager.query('COMMIT');
+          await this.contentRepository.saveOne(newContent, entityManager);
         }
       }
 
@@ -187,7 +186,7 @@ export class ContentsService {
       categoryName,
       parentId,
     }: UpdateContentBodyDto,
-    queryRunnerManager: EntityManager,
+    entityManager?: EntityManager,
   ): Promise<AddContentOutput> {
     const newContentObj = {
       link,
@@ -217,7 +216,7 @@ export class ContentsService {
           categoryName,
           parentId,
           userInDb,
-          queryRunnerManager,
+          entityManager!,
         );
 
         await checkContentDuplicateAndAddCategorySaveLog(
@@ -227,7 +226,7 @@ export class ContentsService {
         );
       }
 
-      await queryRunnerManager.save(Content, [
+      await entityManager!.save(Content, [
         { id: content.id, ...newContentObj, ...(category && { category }) },
       ]);
 
@@ -240,7 +239,7 @@ export class ContentsService {
   async toggleFavorite(
     user: User,
     contentId: number,
-    queryRunnerManager: EntityManager,
+    entityManager?: EntityManager,
   ): Promise<toggleFavoriteOutput> {
     try {
       const userInDb = await this.userRepository.findOneWithContents(user.id);
@@ -258,7 +257,7 @@ export class ContentsService {
       }
 
       content.favorite = !content.favorite;
-      await queryRunnerManager.save(content);
+      await entityManager!.save(content);
 
       return {};
     } catch (e) {
@@ -269,7 +268,7 @@ export class ContentsService {
   async deleteContent(
     user: User,
     contentId: number,
-    queryRunnerManager: EntityManager,
+    entityManager?: EntityManager,
   ): Promise<DeleteContentOutput> {
     try {
       const content = await this.contentRepository.findOneBy({ id: contentId });
@@ -284,7 +283,7 @@ export class ContentsService {
       }
 
       // delete content
-      await queryRunnerManager.delete(Content, content.id);
+      await entityManager!.delete(Content, content.id);
 
       return {};
     } catch (e) {

@@ -8,11 +8,8 @@ import {
 } from '@nestjs/common';
 import { Cache } from 'cache-manager';
 import { v4 as uuidv4 } from 'uuid';
-import axios from 'axios';
-import * as CryptoJS from 'crypto-js';
 
 import { MailService } from '../mail/mail.service';
-import { User } from '../users/entities/user.entity';
 import {
   refreshTokenExpirationInCache,
   refreshTokenExpirationInCacheShortVersion,
@@ -28,12 +25,8 @@ import { sendPasswordResetEmailOutput } from './dtos/send-password-reset-email.d
 import { RefreshTokenDto, RefreshTokenOutput } from './dtos/token.dto';
 import { ValidateUserDto, ValidateUserOutput } from './dtos/validate-user.dto';
 import { ONEYEAR, Payload } from './jwt/jwt.payload';
-import { KakaoAuthorizeOutput, LoginWithKakaoDto } from './dtos/kakao.dto';
-import { googleUserInfo } from './dtos/google.dto';
 import { customJwtService } from './jwt/jwt.service';
 import { UserRepository } from '../users/repository/user.repository';
-import { CategoryRepository } from '../categories/category.repository';
-import { OAuthUtil } from './util/oauth.util';
 
 @Injectable()
 export class AuthService {

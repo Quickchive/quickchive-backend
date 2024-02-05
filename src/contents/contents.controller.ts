@@ -87,17 +87,11 @@ export class ContentsController {
     type: ErrorOutput,
   })
   @Post('multiple')
-  @UseInterceptors(TransactionInterceptor)
   async addMultipleContents(
     @AuthUser() user: User,
     @Body() contentLinks: AddMultipleContentsBodyDto,
-    @TransactionManager() queryRunnerManager: EntityManager,
   ): Promise<AddContentOutput> {
-    return this.contentsService.addMultipleContents(
-      user,
-      contentLinks,
-      queryRunnerManager,
-    );
+    return this.contentsService.addMultipleContents(user, contentLinks);
   }
 
   @ApiOperation({
@@ -117,17 +111,11 @@ export class ContentsController {
     type: ErrorOutput,
   })
   @Patch()
-  @UseInterceptors(TransactionInterceptor)
   async updateContent(
     @AuthUser() user: User,
     @Body() content: UpdateContentBodyDto,
-    @TransactionManager() queryRunnerManager: EntityManager,
   ): Promise<UpdateContentOutput> {
-    return this.contentsService.updateContent(
-      user,
-      content,
-      queryRunnerManager,
-    );
+    return this.contentsService.updateContent(user, content);
   }
 
   @ApiOperation({
@@ -143,17 +131,11 @@ export class ContentsController {
     type: ErrorOutput,
   })
   @Patch(':contentId/favorite')
-  @UseInterceptors(TransactionInterceptor)
   async toggleFavorite(
     @AuthUser() user: User,
-    @Param('contentId', new ParseIntPipe()) contentId: number,
-    @TransactionManager() queryRunnerManager: EntityManager,
+    @Param('contentId', ParseIntPipe) contentId: number,
   ): Promise<toggleFavoriteOutput> {
-    return this.contentsService.toggleFavorite(
-      user,
-      contentId,
-      queryRunnerManager,
-    );
+    return this.contentsService.toggleFavorite(user, contentId);
   }
 
   @ApiOperation({
@@ -169,17 +151,11 @@ export class ContentsController {
     type: ErrorOutput,
   })
   @Delete(':contentId')
-  @UseInterceptors(TransactionInterceptor)
   async deleteContent(
     @AuthUser() user: User,
     @Param('contentId', new ParseIntPipe()) contentId: number,
-    @TransactionManager() queryRunnerManager: EntityManager,
   ): Promise<DeleteContentOutput> {
-    return this.contentsService.deleteContent(
-      user,
-      contentId,
-      queryRunnerManager,
-    );
+    return this.contentsService.deleteContent(user, contentId);
   }
 
   @ApiOperation({

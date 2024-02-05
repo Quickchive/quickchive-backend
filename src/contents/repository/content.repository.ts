@@ -1,4 +1,4 @@
-import { DataSource, Repository } from 'typeorm';
+import { DataSource, EntityManager, Repository } from 'typeorm';
 import { Content } from '../entities/content.entity';
 import { Injectable } from '@nestjs/common';
 
@@ -42,5 +42,12 @@ export class ContentRepository extends Repository<Content> {
       .andWhere('content.reminder IS NOT NULL')
       .andWhere('content.reminder < :now', { now: new Date() })
       .getCount();
+  }
+
+  async saveOne(
+    content: Content,
+    entityManager?: EntityManager,
+  ): Promise<Content> {
+    return entityManager ? entityManager.save(content) : this.save(content);
   }
 }

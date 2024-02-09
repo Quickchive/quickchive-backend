@@ -1,0 +1,15 @@
+version: '3'
+
+services:
+  redis: # Name of container
+    image: redis:latest
+    restart: always
+    ports:
+      - 6380:6379
+    networks:
+      - shared-network
+    container_name: redis
+
+networks:
+  shared-network:
+    driver: bridge

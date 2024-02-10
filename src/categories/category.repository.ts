@@ -14,6 +14,23 @@ export class CategoryRepository extends Repository<Category> {
     super(Category, dataSource.createEntityManager());
   }
 
+  async findParentCategory(
+    parentId: number,
+    entityManager?: EntityManager,
+  ): Promise<Category | null> {
+    return (
+      (await entityManager?.findOneBy(Category, { id: parentId })) ??
+      (await this.findOneBy({ id: parentId }))
+    );
+  }
+
+  async createOne(
+    category: Category,
+    entityManager?: EntityManager,
+  ): Promise<Category> {
+    return (await entityManager?.save(category)) ?? (await this.save(category));
+  }
+
   /**
    * category를 생성하거나, 이미 존재하는 category를 가져옴
    * content service의 method 내에서 중복되는 로직을 분리함

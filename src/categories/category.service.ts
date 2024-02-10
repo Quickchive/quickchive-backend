@@ -33,6 +33,7 @@ import {
   loadLogs,
   makeCategoryListWithSaveCount,
 } from './utils/category.util';
+import { Transactional } from '../common/aop/transactional';
 
 @Injectable()
 export class CategoryService {
@@ -43,10 +44,11 @@ export class CategoryService {
     private readonly openaiService: OpenaiService,
   ) {}
 
+  @Transactional()
   async addCategory(
     user: User,
     { categoryName, iconName, parentId }: AddCategoryBodyDto,
-    queryRunnerManager: EntityManager,
+    entityManager?: EntityManager,
   ): Promise<AddCategoryOutput> {
     try {
       const userInDb = await this.userRepository.findOneWithCategories(user.id);
@@ -62,9 +64,10 @@ export class CategoryService {
         let currentParentId: number | undefined = parentId;
         let parentCategory: Category | null;
         for (let i = 0; i < 2; i++) {
-          parentCategory = await queryRunnerManager.findOne(Category, {
-            where: { id: currentParentId },
-          });
+          parentCategory = await this.categoryRepository.findParentCategory(
+            currentParentId,
+            entityManager,
+          );
           if (i == 1 && parentCategory?.parentId !== null) {
             throw new ConflictException('Category depth should be 3');
           }
@@ -100,27 +103,23 @@ export class CategoryService {
       } else {
         // if parent category exists, get parent category
         const parentCategory: Category | null = parentId
-          ? await queryRunnerManager.findOne(Category, {
-              where: { id: parentId },
-            })
+          ? await this.categoryRepository.findParentCategory(parentId)
           : null;
         // if parent category doesn't exist, throw error
         if (!parentCategory && parentId) {
           throw new NotFoundException('Parent category not found');
         }
 
-        const category = await queryRunnerManager.save(
-          queryRunnerManager.create(Category, {
-            slug: categorySlug,
-            name: categoryName,
-            iconName,
-            parentId: parentCategory?.id,
-            user: userInDb,
-          }),
-        );
+        const category = await this.categoryRepository.save({
+          slug: categorySlug,
+          name: categoryName,
+          iconName,
+          parentId: parentCategory?.id,
+          user: userInDb,
+        });
 
         userInDb.categories?.push(category);
-        await queryRunnerManager.save(userInDb);
+        await entityManager!.save(userInDb);
       }
 
       return {};

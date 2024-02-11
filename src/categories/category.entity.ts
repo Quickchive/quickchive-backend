@@ -28,34 +28,35 @@ export class Category extends CoreEntity {
   @Column()
   @IsString()
   @Length(2)
-  name!: string;
+  name: string;
 
   @ApiProperty({ description: 'Category Slug' })
   @Column()
   @IsString()
-  slug!: string;
+  slug: string;
 
-  @OneToMany((type) => Content, (content) => content.category)
-  contents!: Content[];
+  @OneToMany(() => Content, (content) => content.category)
+  contents: Content[];
 
   @Column({ type: 'enum', enum: IconName, default: IconName.None })
   @IsEnum(IconName)
-  iconName!: IconName;
+  iconName?: IconName;
 
-  @OneToMany((type) => Collection, (collection) => collection.category)
-  collections!: Collection[];
+  @OneToMany(() => Collection, (collection) => collection.category)
+  collections: Collection[];
 
   @ApiProperty({ description: 'Category Parent ID', example: 1, type: Number })
   @Column({ type: 'int', nullable: true })
-  parentId?: number | null;
+  parentId?: number;
 
-  @ManyToOne((type) => User, (user) => user.categories, {
+  @ManyToOne(() => User, (user) => user.categories, {
     onDelete: 'CASCADE',
     nullable: false,
+    lazy: true,
   })
-  user!: User;
+  user: User;
 
   @ApiProperty({ description: 'Owner ID' })
   @RelationId((category: Category) => category.user)
-  userId!: number;
+  userId: number;
 }

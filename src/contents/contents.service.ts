@@ -43,6 +43,7 @@ export class ContentsService {
     private readonly dataSource: DataSource,
   ) {}
 
+  @Transactional()
   async addContent(
     user: User,
     {
@@ -54,6 +55,7 @@ export class ContentsService {
       categoryName,
       parentId,
     }: AddContentBodyDto,
+    entityManager?: EntityManager,
   ): Promise<AddContentOutput> {
     const userInDb = await this.userRepository.findOneWithContentsAndCategories(
       user.id,
@@ -61,60 +63,46 @@ export class ContentsService {
     if (!userInDb) {
       throw new NotFoundException('User not found');
     }
-    const queryRunner = this.dataSource.createQueryRunner();
-    await queryRunner.connect();
-    await queryRunner.startTransaction();
 
-    try {
-      // get og tag info from link
-      const {
-        title: linkTitle,
-        siteName,
-        description,
-        coverImg,
-      } = await getLinkInfo(link);
-      title = title ? title : linkTitle;
+    const {
+      title: linkTitle,
+      siteName,
+      description,
+      coverImg,
+    } = await getLinkInfo(link);
+    title = title ? title : linkTitle;
 
-      let category: Category | null = null;
-      if (categoryName) {
-        category = await this.categoryRepository.getOrCreateCategory(
-          // TODO 명령과 조회를 분리
-          categoryName,
-          parentId,
-          userInDb,
-          queryRunner.manager,
-        );
+    let category: Category | undefined = undefined;
+    if (categoryName) {
+      category = await this.categoryRepository.getOrCreateCategory(
+        // TODO 명령과 조회를 분리
+        categoryName,
+        parentId,
+        userInDb,
+        entityManager,
+      );
 
-        await checkContentDuplicateAndAddCategorySaveLog(
-          link,
-          category,
-          userInDb,
-        );
-      }
-
-      const newContent = queryRunner.manager.create(Content, {
+      await checkContentDuplicateAndAddCategorySaveLog(
         link,
-        title,
-        siteName,
-        coverImg,
-        description,
-        comment,
-        reminder,
-        ...(category && { category }),
-        user,
-        ...(favorite && { favorite }),
-      });
-      await queryRunner.manager.save(newContent);
-
-      await queryRunner.commitTransaction();
-
-      return {};
-    } catch (e) {
-      await queryRunner.rollbackTransaction();
-      throw e;
-    } finally {
-      await queryRunner.release();
+        category,
+        userInDb,
+      );
     }
+
+    const content = new Content();
+    content.link = link;
+    content.title = title;
+    content.siteName = siteName;
+    content.coverImg = coverImg;
+    content.description = description;
+    content.comment = comment;
+    content.reminder = reminder;
+    content.category = category;
+    content.user = user;
+    content.favorite = favorite;
+
+    await this.contentRepository.createOne(content, entityManager);
+    return {};
   }
 
   @Transactional()
@@ -163,7 +151,7 @@ export class ContentsService {
             description,
             user: userInDb,
           });
-          await this.contentRepository.saveOne(newContent, entityManager);
+          await this.contentRepository.createOne(newContent, entityManager);
         }
       }
 

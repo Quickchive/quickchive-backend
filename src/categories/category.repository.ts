@@ -14,21 +14,20 @@ export class CategoryRepository extends Repository<Category> {
     super(Category, dataSource.createEntityManager());
   }
 
-  async findParentCategory(
-    parentId: number,
+  async findById(
+    id: number,
     entityManager?: EntityManager,
   ): Promise<Category | null> {
-    return (
-      (await entityManager?.findOneBy(Category, { id: parentId })) ??
-      (await this.findOneBy({ id: parentId }))
-    );
+    return entityManager
+      ? entityManager.findOneBy(Category, { id })
+      : this.findOneBy({ id });
   }
 
   async createOne(
-    category: Category,
+    category: Category & { parentId?: number },
     entityManager?: EntityManager,
   ): Promise<Category> {
-    return (await entityManager?.save(category)) ?? (await this.save(category));
+    return entityManager ? entityManager?.save(category) : this.save(category);
   }
 
   /**
@@ -45,7 +44,7 @@ export class CategoryRepository extends Repository<Category> {
     categoryName: string,
     parentId: number | undefined,
     userInDb: User,
-    queryRunnerManager: EntityManager,
+    entityManager?: EntityManager,
   ): Promise<Category> {
     // generate category name and slug
     const { categorySlug } = generateSlug(categoryName);
@@ -56,9 +55,7 @@ export class CategoryRepository extends Repository<Category> {
       let parentCategory: Category | null;
       for (let i = 0; i < 2; i++) {
         if (currentParentId === null) break;
-        parentCategory = await queryRunnerManager.findOne(Category, {
-          where: { id: currentParentId },
-        });
+        parentCategory = await this.findById(currentParentId, entityManager);
         if (i === 1 && parentCategory?.parentId !== null) {
           throw new ConflictException('Category depth should be 3');
         }
@@ -68,7 +65,7 @@ export class CategoryRepository extends Repository<Category> {
       }
     }
     // check if category exists in user's categories
-    let category: Category | undefined = userInDb.categories?.find(
+    const category = userInDb.categories?.find(
       (category) =>
         category.slug === categorySlug && category.parentId == parentId,
     );
@@ -77,26 +74,23 @@ export class CategoryRepository extends Repository<Category> {
     if (!category) {
       // if parent id exists, get parent category
       const parentCategory: Category | null = parentId
-        ? await queryRunnerManager.findOne(Category, {
-            where: { id: parentId },
-          })
+        ? await this.findById(parentId, entityManager)
         : null;
       // if parent category doesn't exist, throw error
       if (!parentCategory && parentId) {
         throw new NotFoundException('Parent category not found');
       }
 
-      category = await queryRunnerManager.save(
-        queryRunnerManager.create(Category, {
-          slug: categorySlug,
-          name: categoryName,
-          parentId: parentCategory?.id,
-          user: userInDb,
-        }),
-      );
+      const newCategory = new Category();
+      newCategory.slug = categorySlug;
+      newCategory.name = categoryName;
+      newCategory.parentId = parentCategory?.id;
+      newCategory.user = userInDb;
 
-      userInDb.categories?.push(category);
-      await queryRunnerManager.save(userInDb);
+      await this.createOne(newCategory, entityManager);
+      userInDb.categories?.push(newCategory);
+
+      return newCategory;
     }
 
     return category;

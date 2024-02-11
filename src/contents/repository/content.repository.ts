@@ -44,7 +44,7 @@ export class ContentRepository extends Repository<Content> {
       .getCount();
   }
 
-  async saveOne(
+  async createOne(
     content: Content,
     entityManager?: EntityManager,
   ): Promise<Content> {

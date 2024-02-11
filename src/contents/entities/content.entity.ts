@@ -60,7 +60,7 @@ export class Content extends CoreEntity {
   @ApiProperty({ description: 'Favorite' })
   @Column({ default: false })
   @IsBoolean()
-  favorite!: boolean;
+  favorite?: boolean;
 
   @ApiProperty({ description: 'Article Category', required: false })
   @ManyToOne((type) => Category, (category) => category.contents, {

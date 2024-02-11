@@ -64,7 +64,7 @@ export class CategoryService {
         let currentParentId: number | undefined = parentId;
         let parentCategory: Category | null;
         for (let i = 0; i < 2; i++) {
-          parentCategory = await this.categoryRepository.findParentCategory(
+          parentCategory = await this.categoryRepository.findById(
             currentParentId,
             entityManager,
           );
@@ -103,7 +103,7 @@ export class CategoryService {
       } else {
         // if parent category exists, get parent category
         const parentCategory: Category | null = parentId
-          ? await this.categoryRepository.findParentCategory(parentId)
+          ? await this.categoryRepository.findById(parentId)
           : null;
         // if parent category doesn't exist, throw error
         if (!parentCategory && parentId) {
@@ -248,7 +248,7 @@ export class CategoryService {
 
       await queryRunnerManager.save(
         childrenCategories.map((childrenCategory) => {
-          childrenCategory.parentId = parentCategory?.id ?? null;
+          childrenCategory.parentId = parentCategory?.id;
           return childrenCategory;
         }),
       );

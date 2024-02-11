@@ -50,4 +50,10 @@ export class ContentRepository extends Repository<Content> {
   ): Promise<Content> {
     return entityManager ? entityManager.save(content) : this.save(content);
   }
+
+  async updateOne(content: Partial<Content>, entityManager?: EntityManager) {
+    return entityManager
+      ? entityManager.update(Content, { id: content.id }, content)
+      : this.update({ id: content.id }, content);
+  }
 }

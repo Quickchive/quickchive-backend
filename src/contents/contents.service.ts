@@ -173,6 +173,7 @@ export class ContentsService {
     }
   }
 
+  @Transactional()
   async updateContent(
     user: User,
     {
@@ -236,6 +237,7 @@ export class ContentsService {
     }
   }
 
+  @Transactional()
   async toggleFavorite(
     user: User,
     contentId: number,
@@ -265,6 +267,7 @@ export class ContentsService {
     }
   }
 
+  @Transactional()
   async deleteContent(
     user: User,
     contentId: number,

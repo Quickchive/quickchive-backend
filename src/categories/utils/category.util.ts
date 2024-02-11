@@ -141,7 +141,18 @@ export const checkContentDuplicateAndAddCategorySaveLog = async (
   },"savedAt": ${new Date().getTime()}}\n`;
 
   // 유저 로그 파일에 로그 추가
-  fs.appendFileSync(`${__dirname}/../../../user_logs/${userInDb.id}.txt`, log);
+  new Promise<void>((resolve, reject) => {
+    fs.appendFile(
+      `${__dirname}/../../../user_logs/${userInDb.id}.txt`,
+      log,
+      (err) => {
+        if (err) {
+          reject();
+        }
+        resolve();
+      },
+    );
+  });
 };
 
 /**

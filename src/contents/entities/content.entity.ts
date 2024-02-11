@@ -7,7 +7,7 @@ import {
 } from 'class-validator';
 import { CoreEntity } from '../../common/entities/core.entity';
 import { User } from '../../users/entities/user.entity';
-import { Column, Entity, ManyToOne, RelationId } from 'typeorm';
+import { Column, Entity, JoinColumn, ManyToOne, RelationId } from 'typeorm';
 import { ApiProperty } from '@nestjs/swagger';
 import { Category } from '../../categories/category.entity';
 import { Transform } from 'class-transformer';
@@ -18,7 +18,7 @@ export class Content extends CoreEntity {
   @Column()
   @IsString({ message: 'String URL must be required.' })
   @IsUrl()
-  link!: string;
+  link: string;
 
   @ApiProperty({ description: 'Article Title', required: false })
   @Column({ nullable: true })
@@ -63,18 +63,20 @@ export class Content extends CoreEntity {
   favorite?: boolean;
 
   @ApiProperty({ description: 'Article Category', required: false })
-  @ManyToOne((type) => Category, (category) => category.contents, {
+  @ManyToOne(() => Category, (category) => category.contents, {
     nullable: true,
     onDelete: 'SET NULL',
   })
+  @JoinColumn({ name: 'categoryId', referencedColumnName: 'id' })
   category?: Category;
 
-  @ManyToOne((type) => User, (user) => user.contents, {
+  @ManyToOne(() => User, (user) => user.contents, {
     onDelete: 'CASCADE',
   })
-  user!: User;
+  @JoinColumn({ name: 'userId', referencedColumnName: 'id' })
+  user: User;
 
   @ApiProperty({ description: 'Owner ID' })
   @RelationId((content: Content) => content.user)
-  userId!: number;
+  userId: number;
 }

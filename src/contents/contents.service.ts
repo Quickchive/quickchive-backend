@@ -111,25 +111,27 @@ export class ContentsService {
     { contentLinks, categoryName, parentId }: AddMultipleContentsBodyDto,
     entityManager?: EntityManager,
   ): Promise<AddContentOutput> {
-    try {
-      const userInDb =
-        await this.userRepository.findOneWithContentsAndCategories(user.id);
+    const userInDb = await this.userRepository.findOneWithContentsAndCategories(
+      user.id,
+    );
 
-      if (!userInDb) {
-        throw new NotFoundException('User not found');
+    if (!userInDb) {
+      throw new NotFoundException('User not found');
+    }
+
+    if (contentLinks.length > 0) {
+      let category: Category | undefined = undefined;
+      if (categoryName) {
+        category = await this.categoryRepository.getOrCreateCategory(
+          categoryName,
+          parentId,
+          userInDb,
+          entityManager,
+        );
       }
 
-      if (contentLinks.length > 0) {
-        let category: Category | null = null;
-        if (categoryName) {
-          category = await this.categoryRepository.getOrCreateCategory(
-            categoryName,
-            parentId,
-            userInDb,
-            entityManager!,
-          );
-        }
-        for (const link of contentLinks) {
+      await Promise.all(
+        contentLinks.map(async (link) => {
           const { title, description, coverImg, siteName } = await getLinkInfo(
             link,
           );
@@ -142,23 +144,21 @@ export class ContentsService {
             );
           }
 
-          const newContent = entityManager!.create(Content, {
-            link,
-            title,
-            siteName,
-            coverImg,
-            ...(category && { category }),
-            description,
-            user: userInDb,
-          });
-          await this.contentRepository.createOne(newContent, entityManager);
-        }
-      }
+          const content = new Content();
+          content.link = link;
+          content.title = title;
+          content.siteName = siteName;
+          content.coverImg = coverImg;
+          content.category = category;
+          content.description = description;
+          content.user = userInDb;
 
-      return {};
-    } catch (e) {
-      throw e;
+          await this.contentRepository.createOne(content, entityManager);
+        }),
+      );
     }
+
+    return {};
   }
 
   @Transactional()

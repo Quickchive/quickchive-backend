@@ -12,6 +12,7 @@ export const getLinkInfo = async (link: string) => {
     link = `http://${link}`;
   }
 
+  // ! TODO 크롤링에서 대략 초 단위 시간 소요 -> 개선 필요
   await axios
     .get(link)
     .then((res) => {

@@ -185,44 +185,46 @@ export class ContentsService {
       reminder,
       favorite,
     };
-    try {
-      const userInDb =
-        await this.userRepository.findOneWithContentsAndCategories(user.id);
-      if (!userInDb) {
-        throw new NotFoundException('User not found');
-      }
-
-      const content = userInDb?.contents?.filter(
-        (content) => content.id === contentId,
-      )[0];
-      if (!content) {
-        throw new NotFoundException('Content not found.');
-      }
-
-      let category: Category | null = null;
-      if (categoryName) {
-        category = await this.categoryRepository.getOrCreateCategory(
-          categoryName,
-          parentId,
-          userInDb,
-          entityManager!,
-        );
-
-        await checkContentDuplicateAndAddCategorySaveLog(
-          link,
-          category,
-          userInDb,
-        );
-      }
-
-      await entityManager!.save(Content, [
-        { id: content.id, ...newContentObj, ...(category && { category }) },
-      ]);
-
-      return {};
-    } catch (e) {
-      throw e;
+    const userInDb = await this.userRepository.findOneWithContentsAndCategories(
+      user.id,
+    );
+    if (!userInDb) {
+      throw new NotFoundException('User not found');
     }
+
+    const content = userInDb?.contents?.filter(
+      (content) => content.id === contentId,
+    )[0];
+    if (!content) {
+      throw new NotFoundException('Content not found.');
+    }
+
+    let category: Category | undefined = undefined;
+    if (categoryName) {
+      category = await this.categoryRepository.getOrCreateCategory(
+        categoryName,
+        parentId,
+        userInDb,
+        entityManager,
+      );
+
+      await checkContentDuplicateAndAddCategorySaveLog(
+        link,
+        category,
+        userInDb,
+      );
+    }
+
+    await this.contentRepository.updateOne(
+      {
+        id: content.id,
+        ...newContentObj,
+        category,
+      },
+      entityManager,
+    );
+
+    return {};
   }
 
   @Transactional()

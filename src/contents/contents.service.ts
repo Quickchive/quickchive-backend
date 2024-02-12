@@ -249,7 +249,7 @@ export class ContentsService {
       }
 
       content.favorite = !content.favorite;
-      await entityManager!.save(content);
+      await this.contentRepository.createOne(content, entityManager);
 
       return {};
     } catch (e) {

@@ -18,6 +18,7 @@ export class ContentRepository extends Repository<Content> {
     return this.createQueryBuilder('content')
       .where('content.userId = :userId', { userId: id })
       .leftJoinAndSelect('content.category', 'category')
+      .orderBy('content.createdAt', 'DESC')
       .getMany();
   }
 

@@ -276,7 +276,7 @@ export class ContentsService {
       }
 
       // delete content
-      await entityManager!.delete(Content, content.id);
+      await this.contentRepository.deleteOne(content.id, entityManager);
 
       return {};
     } catch (e) {

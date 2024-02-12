@@ -56,4 +56,10 @@ export class ContentRepository extends Repository<Content> {
       ? entityManager.update(Content, { id: content.id }, content)
       : this.update({ id: content.id }, content);
   }
+
+  async deleteOne(contentId: number, entityManager?: EntityManager) {
+    return entityManager
+      ? entityManager.delete(Content, contentId)
+      : this.delete({ id: contentId });
+  }
 }

@@ -9,6 +9,8 @@ import { UserSeeder } from '../seeder/user.seeder';
 import { User } from '../../src/users/entities/user.entity';
 import { AddContentBodyDto } from '../../src/contents/dtos/content.dto';
 import { faker } from '@faker-js/faker';
+import { Category } from '../../src/categories/category.entity';
+import { CategorySeeder } from '../seeder/category.seeder';
 
 jest.setTimeout(30_000);
 describe('[POST] /api/contents', () => {
@@ -19,12 +21,15 @@ describe('[POST] /api/contents', () => {
 
   // Seeder
   const userSeeder: UserSeeder = new UserSeeder();
+  const categorySeeder = new CategorySeeder();
 
   // userStub
   const userStub = userSeeder.generateOne({ id: 1 });
+  let categoryStub: Category;
 
   // userRepository
   let userRepository: Repository<User>;
+  let categoryRepository: Repository<Category>;
 
   beforeAll(async () => {
     const {
@@ -46,6 +51,7 @@ describe('[POST] /api/contents', () => {
     await app.init();
 
     userRepository = dataSource.getRepository(User);
+    categoryRepository = dataSource.getRepository(Category);
   });
 
   beforeEach(async () => {
@@ -57,7 +63,58 @@ describe('[POST] /api/contents', () => {
     await container.stop();
   });
 
-  describe('콘텐츠를 추가한다.', () => {
+  describe('카테고리와 함께 콘텐츠를 추가한다.', () => {
+    beforeEach(async () => {
+      await userRepository.save(userStub);
+    });
+
+    describe('카테고리가 없어 새로 생성한다.', () => {
+      it('201을 반환한다.', async () => {
+        const addContentDto: AddContentBodyDto = {
+          link: faker.internet.url(),
+          title: faker.lorem.sentence(),
+          comment: faker.lorem.paragraph(),
+          categoryName: faker.string.sample({ min: 2, max: 15 }),
+        };
+
+        const { status } = await request(app.getHttpServer())
+          .post('/contents')
+          .send(addContentDto);
+
+        expect(status).toBe(HttpStatus.CREATED);
+      });
+    });
+
+    describe('기존 카테고리와 함께 콘텐츠를 추가한다.', () => {
+      beforeEach(async () => {
+        await userRepository.save(userStub);
+        console.log(userStub.id);
+        categoryStub = categorySeeder.generateOne({
+          user: userStub,
+          userId: userStub.id,
+        });
+        console.log(categoryStub);
+        await categoryRepository.save(categoryStub);
+      });
+
+      it('201을 반환한다.', async () => {
+        const addContentDto: AddContentBodyDto = {
+          link: faker.internet.url(),
+          title: faker.lorem.sentence(),
+          comment: faker.lorem.paragraph(),
+          categoryName: categoryStub.name,
+        };
+
+        const { status } = await request(app.getHttpServer())
+          .post('/contents')
+          .send(addContentDto);
+
+        expect(status).toBe(HttpStatus.CREATED);
+      });
+    });
+  });
+
+  describe('카테고리 없이 콘텐츠를 추가한다.', () => {
     beforeEach(async () => {
       await userRepository.save(userStub);
     });

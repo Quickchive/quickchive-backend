@@ -65,7 +65,7 @@ export class User extends CoreEntity {
     type: [Content],
     required: false,
   })
-  @OneToMany((type) => Content, (content) => content.user, {
+  @OneToMany(() => Content, (content) => content.user, {
     nullable: true,
   })
   contents?: Content[];
@@ -75,7 +75,7 @@ export class User extends CoreEntity {
     type: [Category],
     required: false,
   })
-  @OneToMany((type) => Category, (category) => category.user, {
+  @OneToMany(() => Category, (category) => category.user, {
     nullable: true,
   })
   categories?: Category[];

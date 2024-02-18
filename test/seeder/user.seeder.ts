@@ -18,6 +18,7 @@ export class UserSeeder implements Seeder<User> {
       }),
     role: UserRole.Client,
     verified: true,
+    contents: [],
   };
 
   generateOne(options?: Partial<User>): User {

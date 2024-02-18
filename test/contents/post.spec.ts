@@ -88,12 +88,10 @@ describe('[POST] /api/contents', () => {
     describe('기존 카테고리와 함께 콘텐츠를 추가한다.', () => {
       beforeEach(async () => {
         await userRepository.save(userStub);
-        console.log(userStub.id);
         categoryStub = categorySeeder.generateOne({
           user: userStub,
           userId: userStub.id,
         });
-        console.log(categoryStub);
         await categoryRepository.save(categoryStub);
       });
 

@@ -52,7 +52,6 @@ export class Category extends CoreEntity {
   @ManyToOne(() => User, (user) => user.categories, {
     onDelete: 'CASCADE',
     nullable: false,
-    lazy: true,
   })
   user: User;
 

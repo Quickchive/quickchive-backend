@@ -151,7 +151,7 @@ export class OAuthService {
     return CryptoJS.SHA256(email + key).toString();
   }
 
-  public getCookieOption() {
+  public getCookieOption(): CookieOptions {
     return {
       domain: process.env.FRONTEND_DOMAIN,
       httpOnly: true,

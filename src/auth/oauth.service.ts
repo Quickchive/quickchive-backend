@@ -155,11 +155,13 @@ export class OAuthService {
     const cookieOption: CookieOptions =
       process.env.NODE_ENV === 'prod'
         ? {
+            domain: process.env.FRONTEND_URL,
             httpOnly: true,
             sameSite: 'none',
             secure: true,
           }
         : {
+            domain: process.env.FRONTEND_URL,
             httpOnly: true,
             sameSite: 'lax',
             secure: false,

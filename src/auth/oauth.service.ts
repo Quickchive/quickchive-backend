@@ -18,6 +18,7 @@ import { User } from '../users/entities/user.entity';
 import { UserRepository } from '../users/repository/user.repository';
 import * as CryptoJS from 'crypto-js';
 import { Cache } from 'cache-manager';
+import { CookieOptions } from 'express';
 
 @Injectable()
 export class OAuthService {
@@ -148,5 +149,22 @@ export class OAuthService {
 
   private encodePasswordFromEmail(email: string, key?: string): string {
     return CryptoJS.SHA256(email + key).toString();
+  }
+
+  public getCookieOption() {
+    const cookieOption: CookieOptions =
+      process.env.NODE_ENV === 'prod'
+        ? {
+            httpOnly: true,
+            sameSite: 'none',
+            secure: true,
+          }
+        : {
+            httpOnly: true,
+            sameSite: 'lax',
+            secure: false,
+          };
+
+    return cookieOption;
   }
 }

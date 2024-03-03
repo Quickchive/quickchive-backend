@@ -88,17 +88,7 @@ export class OAuthController {
   @UseGuards(AuthGuard('google'))
   async googleAuthRedirect(
     @AuthUser() user: googleUserInfo,
-    @Res() response: Response,
-  ) {
-    const { access_token, refresh_token } = await this.oauthService.googleOauth(
-      user,
-    );
-
-    const cookieOption = this.oauthService.getCookieOption();
-
-    response.cookie('accessToken', access_token, cookieOption);
-    response.cookie('refreshToken', refresh_token, cookieOption);
-
-    response.redirect(process.env.FRONTEND_REDIRECT_URL!);
+  ): Promise<LoginOutput> {
+    return this.oauthService.googleOauth(user);
   }
 }

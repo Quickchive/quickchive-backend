@@ -42,9 +42,9 @@ export class OAuthService {
           user.id,
         );
         const refreshToken = this.jwtService.generateRefreshToken(payload);
-        // await this.cacheManager.set(refreshToken, user.id, {
-        //   ttl: refreshTokenExpirationInCache,
-        // });
+        await this.cacheManager.set(refreshToken, user.id, {
+          ttl: refreshTokenExpirationInCache,
+        });
 
         return {
           access_token: this.jwtService.sign(payload),

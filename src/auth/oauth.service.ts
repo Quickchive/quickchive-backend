@@ -106,10 +106,8 @@ export class OAuthService {
           process.env.KAKAO_JS_KEY,
         );
 
-        await Promise.all([
-          this.userRepository.createOne(user),
-          this.categoryRepository.createDefaultCategories(user),
-        ]);
+        await this.userRepository.createOne(user);
+        await this.categoryRepository.createDefaultCategories(user);
       }
 
       return this.oauthLogin(user.email);
@@ -138,10 +136,8 @@ export class OAuthService {
           process.env.GOOGLE_CLIENT_ID,
         );
 
-        await Promise.all([
-          this.userRepository.createOne(user),
-          this.categoryRepository.createDefaultCategories(user),
-        ]);
+        await this.userRepository.createOne(user);
+        await this.categoryRepository.createDefaultCategories(user);
       }
 
       return this.oauthLogin(user.email);

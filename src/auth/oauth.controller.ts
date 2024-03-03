@@ -99,6 +99,6 @@ export class OAuthController {
     response.cookie('accessToken', access_token, cookieOption);
     response.cookie('refreshToken', refresh_token, cookieOption);
 
-    response.redirect(process.env.FRONTEND_URL!);
+    response.redirect(process.env.FRONTEND_REDIRECT_URL!);
   }
 }

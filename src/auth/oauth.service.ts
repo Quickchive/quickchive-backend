@@ -152,21 +152,11 @@ export class OAuthService {
   }
 
   public getCookieOption() {
-    const cookieOption: CookieOptions =
-      process.env.NODE_ENV === 'prod'
-        ? {
-            domain: process.env.FRONTEND_DOMAIN,
-            httpOnly: true,
-            sameSite: 'none',
-            secure: true,
-          }
-        : {
-            domain: process.env.FRONTEND_DOMAIN,
-            httpOnly: true,
-            sameSite: 'lax',
-            secure: false,
-          };
-
-    return cookieOption;
+    return {
+      domain: process.env.FRONTEND_DOMAIN,
+      httpOnly: true,
+      sameSite: 'none',
+      secure: true,
+    };
   }
 }

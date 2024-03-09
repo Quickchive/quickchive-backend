@@ -56,6 +56,8 @@ import { InfraModule } from './infra/infra.module';
         NAVER_API_CLIENT_ID: Joi.string().required(),
         NAVER_API_CLIENT_SECRET: Joi.string().required(),
         NAVER_CLOVA_SUMMARY_REQUEST_URL: Joi.string().required(),
+        AWS_ACCESS_KEY_ID: Joi.string().required(),
+        AWS_SECRET_ACCESS_KEY: Joi.string().required(),
       }),
     }),
     TypeOrmModule.forRootAsync({

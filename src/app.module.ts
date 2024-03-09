@@ -15,6 +15,7 @@ import { TypeOrmConfigService } from './database/typerom-config.service';
 import { OpenaiModule } from './openai/openai.module';
 import { AppController } from './app.controller';
 import { AopModule } from './common/aop/aop.module';
+import { InfraModule } from './infra/infra.module';
 
 @Module({
   imports: [
@@ -25,9 +26,9 @@ import { AopModule } from './common/aop/aop.module';
           ? '.env.dev'
           : process.env.NODE_ENV === 'prod'
           ? '.env.prod'
-          : '.env.test',
+          : '.env.local',
       validationSchema: Joi.object({
-        NODE_ENV: Joi.string().valid('dev', 'prod', 'test').required(),
+        NODE_ENV: Joi.string().valid('dev', 'prod', 'local').required(),
         DB_HOST: Joi.string(),
         DB_PORT: Joi.string(),
         DB_USERNAME: Joi.string(),
@@ -103,6 +104,7 @@ import { AopModule } from './common/aop/aop.module';
     }),
     OpenaiModule,
     AopModule,
+    InfraModule,
   ],
   controllers: [AppController],
   providers: [],

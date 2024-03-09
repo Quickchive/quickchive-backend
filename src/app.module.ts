@@ -26,9 +26,11 @@ import { InfraModule } from './infra/infra.module';
           ? '.env.dev'
           : process.env.NODE_ENV === 'prod'
           ? '.env.prod'
-          : '.env.local',
+          : process.env.NODE_ENV === 'local'
+          ? '.env.local'
+          : '.env.test',
       validationSchema: Joi.object({
-        NODE_ENV: Joi.string().valid('dev', 'prod', 'local').required(),
+        NODE_ENV: Joi.string().valid('dev', 'prod', 'local', 'test').required(),
         DB_HOST: Joi.string(),
         DB_PORT: Joi.string(),
         DB_USERNAME: Joi.string(),

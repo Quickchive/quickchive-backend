@@ -5,22 +5,42 @@ services:
     image: redis:latest
     restart: always
     ports:
-      - 6379:6379
+      - 6380:6379
     networks:
       - shared-network
+
   postgres: # Name of container
     image: postgres:alpine
     restart: always
     env_file:
-      - .env.prod
+      - .env.local
     environment:
       POSTGRES_HOST_AUTH_METHOD: 'trust'
       TZ: 'Asia/Seoul' # Timezone for OS
       PGTZ: 'Asia/Seoul' # Timezone for postgres
     ports:
-      - 5432:5432
+      - 5433:5432
     networks:
       - shared-network
+
+  localstack:
+    container_name: 'localstack-quickarchive'
+    image: localstack/localstack:latest
+    ports:
+      - '4567:4566' # Default port forward
+    environment:
+      - SERVICES=s3
+      - EDGE_PORT=4566
+      - DEBUG=1 # Debug level 1 if you want to logs, 0 if you want to disable
+      - START_WEB=0 # Flag to control whether the Web UI should be started in Docker
+      - AWS_ACCESS_KEY_ID=local
+      - AWS_SECRET_ACCESS_KEY=local
+      - DEFAULT_REGION=ap-northeast-2
+    volumes:
+      - './.localstack:/var/lib/localstack'
+      - '/var/run/docker.sock:/var/run/docker.sock'
+      - './localstack_s3_init.sh:/etc/localstack/init/ready.d/localstack_s3_init.sh'
+
 networks:
   shared-network:
     driver: bridge

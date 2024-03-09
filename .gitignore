@@ -37,10 +37,10 @@ lerna-debug.log*
 
 # dotenv environment variables file
 .env
-.env.dev
-.env.prod
-.env.test
+.env.*
 envFile.ts
 
 # certificate files
 *.pem
+
+.localstack

@@ -27,6 +27,7 @@ export class UserRepository extends Repository<User> {
     return await this.createQueryBuilder('user')
       .leftJoinAndSelect('user.categories', 'categories')
       .where('user.id = :id', { id })
+      .orderBy('categories.createdAt', 'DESC')
       .getOneOrFail();
   }
 

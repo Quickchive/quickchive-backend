@@ -244,11 +244,12 @@ export class CategoryService {
       // find children categories
       const childrenCategories = await queryRunnerManager.find(Category, {
         where: { parentId: categoryId },
+        order: { createdAt: 'DESC' },
       });
 
       await queryRunnerManager.save(
         childrenCategories.map((childrenCategory) => {
-          childrenCategory.parentId = parentCategory?.id;
+          childrenCategory.parentId = parentCategory?.id ?? null;
           return childrenCategory;
         }),
       );

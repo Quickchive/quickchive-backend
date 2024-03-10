@@ -24,7 +24,7 @@ export class CategoryRepository extends Repository<Category> {
   }
 
   async createOne(
-    category: Category & { parentId?: number },
+    category: Category & { parentId?: number | null },
     entityManager?: EntityManager,
   ): Promise<Category> {
     return entityManager ? entityManager?.save(category) : this.save(category);

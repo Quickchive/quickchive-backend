@@ -1,7 +1,5 @@
 import {
   Injectable,
-  Inject,
-  CACHE_MANAGER,
   UnauthorizedException,
   BadRequestException,
 } from '@nestjs/common';
@@ -17,8 +15,9 @@ import { CategoryRepository } from '../categories/category.repository';
 import { User } from '../users/entities/user.entity';
 import { UserRepository } from '../users/repository/user.repository';
 import * as CryptoJS from 'crypto-js';
-import { Cache } from 'cache-manager';
 import { CookieOptions } from 'express';
+import { RedisService } from '../infra/redis/redis.service';
+import { REFRESH_TOKEN_KEY } from './constants';
 
 @Injectable()
 export class OAuthService {
@@ -26,9 +25,8 @@ export class OAuthService {
     private readonly jwtService: customJwtService,
     private readonly userRepository: UserRepository,
     private readonly categoryRepository: CategoryRepository,
-    @Inject(CACHE_MANAGER)
-    private readonly cacheManager: Cache,
     private readonly oauthUtil: OAuthUtil,
+    private readonly redisService: RedisService,
   ) {}
 
   // OAuth Login
@@ -42,9 +40,11 @@ export class OAuthService {
           user.id,
         );
         const refreshToken = this.jwtService.generateRefreshToken(payload);
-        await this.cacheManager.set(refreshToken, user.id, {
-          ttl: refreshTokenExpirationInCache,
-        });
+        await this.redisService.set(
+          `${REFRESH_TOKEN_KEY}:${user.id}`,
+          refreshToken,
+          refreshTokenExpirationInCache,
+        );
 
         return {
           access_token: this.jwtService.sign(payload),

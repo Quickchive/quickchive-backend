@@ -1,6 +1,4 @@
 import {
-  CACHE_MANAGER,
-  Inject,
   Injectable,
   NotFoundException,
   UnauthorizedException,
@@ -12,15 +10,16 @@ import {
   ResetPasswordOutput,
 } from './dtos/reset-password.dto';
 import { User } from './entities/user.entity';
-import { Cache } from 'cache-manager';
 import { DeleteAccountOutput } from './dtos/delete-account.dto';
 import { UserRepository } from './repository/user.repository';
+import { RedisService } from '../infra/redis/redis.service';
+import { PASSWORD_CODE_KEY } from '../auth/constants';
 
 @Injectable()
 export class UsersService {
   constructor(
     private readonly userRepository: UserRepository,
-    @Inject(CACHE_MANAGER) private readonly cacheManager: Cache,
+    private readonly redisService: RedisService,
   ) {}
 
   async editProfile(
@@ -53,11 +52,13 @@ export class UsersService {
     queryRunnerManager: EntityManager,
   ): Promise<ResetPasswordOutput> {
     try {
-      const userId: number | undefined = await this.cacheManager.get(code);
+      const userId = await this.redisService.get(
+        `${PASSWORD_CODE_KEY}:${code}`,
+      );
 
       if (userId) {
         const user = await queryRunnerManager.findOne(User, {
-          where: { id: userId },
+          where: { id: parseInt(userId) },
           select: { id: true, password: true },
         });
         if (!user) {
@@ -66,7 +67,7 @@ export class UsersService {
         user.password = password;
 
         await queryRunnerManager.save(user); // update password
-        await this.cacheManager.del(code); // delete verification value
+        await this.redisService.del(`${PASSWORD_CODE_KEY}:${code}`); // delete verification value
 
         return {};
       } else {

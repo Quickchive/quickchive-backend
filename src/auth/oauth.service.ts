@@ -2,6 +2,7 @@ import {
   Injectable,
   UnauthorizedException,
   BadRequestException,
+  InternalServerErrorException,
 } from '@nestjs/common';
 import axios from 'axios';
 import { refreshTokenExpirationInCache } from './auth.module';
@@ -158,5 +159,55 @@ export class OAuthService {
       sameSite: 'none',
       secure: true,
     };
+  }
+
+  public async getAppleRedirectUrl() {
+    const appleClientId = process.env.APPLE_CLIENT_ID;
+    const redirectUri = process.env.APPLE_REDIRECT_URI;
+
+    const config = {
+      client_id: appleClientId, // This is the service ID we created.
+      redirect_uri: redirectUri, // As registered along with our service ID
+      response_type: 'code id_token',
+      state: 'origin:web', // Any string of your choice that you may use for some logic. It's optional and you may omit it.
+      scope: 'name email', // To tell apple we want the user name and emails fields in the response it sends us.
+      response_mode: 'form_post',
+      m: 11,
+      v: '1.5.4',
+    };
+    const queryString = Object.entries(config)
+      .map(([key, value]) => `${key}=${encodeURIComponent(value!)}`)
+      .join('&');
+
+    return { url: `https://appleid.apple.com/auth/authorize?${queryString}` };
+  }
+
+  public async appleLogin(code: string) {
+    const { data } = await this.oauthUtil.getAppleToken(code);
+
+    if (!data.id_token) {
+      throw new InternalServerErrorException(
+        `No token: ${JSON.stringify(data)}`,
+      );
+    }
+
+    const { sub: id, email } = this.jwtService.verify(data.id_token);
+
+    let user = await this.userRepository.findOneByEmail(email);
+
+    if (!user) {
+      user = new User();
+      user.email = email;
+      user.name = email.split('@')[0];
+      user.password = this.encodePasswordFromEmail(
+        email,
+        process.env.APPLE_CLIENT_ID,
+      );
+
+      await this.userRepository.createOne(user);
+      await this.categoryRepository.createDefaultCategories(user);
+    }
+
+    return this.oauthLogin(user.email);
   }
 }

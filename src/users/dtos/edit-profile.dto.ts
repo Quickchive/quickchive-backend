@@ -10,7 +10,8 @@ export class EditProfileDto {
   @Matches(/^(?=.*\d)[A-Za-z\d@$!%*?&]{8,}$/, {
     message: 'Password must be at least 8 characters long, contain 1 number',
   })
-  password: string;
+  @IsOptional()
+  password?: string;
 
   @ApiProperty({ example: 'tester', description: 'User Name' })
   @IsString()

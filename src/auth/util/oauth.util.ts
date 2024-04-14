@@ -9,9 +9,12 @@ import {
   GetKakaoAccessTokenOutput,
   GetKakaoUserInfoOutput,
 } from '../dtos/kakao.dto';
+import { JwtService } from '@nestjs/jwt';
 
 @Injectable()
 export class OAuthUtil {
+  constructor(private readonly jwtService: JwtService) {}
+
   // Get access token from Kakao Auth Server
   async getKakaoAccessToken(code: string): Promise<GetKakaoAccessTokenOutput> {
     try {
@@ -67,5 +70,37 @@ export class OAuthUtil {
     } catch (e) {
       throw e;
     }
+  }
+
+  getAppleAccessToken(): string {
+    return this.jwtService.sign(
+      {},
+      {
+        audience: 'https://appleid.apple.com',
+        issuer: process.env.APPLE_TEAM_ID,
+        subject: process.env.APPLE_CLIENT_ID,
+        expiresIn: '1h',
+        keyid: process.env.APPLE_KEY_ID,
+        algorithm: 'ES256',
+      },
+    );
+  }
+
+  async getAppleToken(code: string) {
+    return await axios.post(
+      'https://appleid.apple.com/auth/token',
+      qs.stringify({
+        grant_type: 'authorization_code',
+        code,
+        client_secret: this.getAppleAccessToken(),
+        client_id: process.env.APPLE_CLIENT_ID,
+        redirect_uri: process.env.APPLE_REDIRECT_URI,
+      }),
+      {
+        headers: {
+          'Content-Type': 'application/x-www-form-urlencoded',
+        },
+      },
+    );
   }
 }

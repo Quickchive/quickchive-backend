@@ -81,7 +81,7 @@ export class OAuthUtil {
         subject: process.env.APPLE_CLIENT_ID,
         expiresIn: '1h',
         keyid: process.env.APPLE_KEY_ID,
-        algorithm: 'ES256',
+        algorithm: 'RS256',
       },
     );
   }

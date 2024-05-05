@@ -73,10 +73,11 @@ export class OAuthUtil {
   }
 
   getAppleAccessToken(): string {
+    const timeNow = Math.floor(Date.now() / 1000);
+
     const claims = {
       iss: process.env.APPLE_TEAM_ID,
-      iat: Math.floor(Date.now() / 1000),
-      exp: Math.floor(Date.now() / 1000) + 300,
+      iat: timeNow,
       aud: 'https://appleid.apple.com',
       sub: process.env.APPLE_CLIENT_ID,
     };
@@ -85,6 +86,7 @@ export class OAuthUtil {
 
     return this.jwtService.sign(claims, {
       keyid: process.env.APPLE_KEY_ID,
+      expiresIn: timeNow + 300,
       privateKey,
       algorithm: 'ES256',
     });

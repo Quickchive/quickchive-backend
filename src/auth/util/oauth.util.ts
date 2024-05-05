@@ -73,17 +73,21 @@ export class OAuthUtil {
   }
 
   getAppleAccessToken(): string {
-    return this.jwtService.sign(
-      {},
-      {
-        audience: 'https://appleid.apple.com',
-        issuer: process.env.APPLE_TEAM_ID,
-        subject: process.env.APPLE_CLIENT_ID,
-        expiresIn: '1h',
-        keyid: process.env.APPLE_KEY_ID,
-        algorithm: 'RS256',
-      },
-    );
+    const claims = {
+      iss: process.env.APPLE_TEAM_ID,
+      iat: Math.floor(Date.now() / 1000),
+      exp: Math.floor(Date.now() / 1000) + 300,
+      aud: 'https://appleid.apple.com',
+      sub: process.env.APPLE_CLIENT_ID,
+    };
+
+    const privateKey = process.env.APPLE_SECRET_KEY;
+
+    return this.jwtService.sign(claims, {
+      keyid: process.env.APPLE_KEY_ID,
+      privateKey,
+      algorithm: 'ES256',
+    });
   }
 
   async getAppleToken(code: string) {

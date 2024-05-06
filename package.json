@@ -45,6 +45,7 @@
     "@types/crypto-js": "^4.1.1",
     "@types/passport-google-oauth20": "^2.0.11",
     "@types/uuid": "^9.0.0",
+    "apple-signin-auth": "^1.7.6",
     "axios": "^0.27.2",
     "bcrypt": "^5.0.1",
     "cache-manager": "^4.1.0",

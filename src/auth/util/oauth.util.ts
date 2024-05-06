@@ -10,10 +10,18 @@ import {
   GetKakaoUserInfoOutput,
 } from '../dtos/kakao.dto';
 import { JwtService } from '@nestjs/jwt';
+import appleSignin from 'apple-signin-auth';
 
 @Injectable()
 export class OAuthUtil {
   constructor(private readonly jwtService: JwtService) {}
+
+  private readonly CLIENT_ID = process.env.APPLE_CLIENT_ID;
+  private readonly TEAM_ID = process.env.APPLE_TEAM_ID;
+  private readonly PRIMARY_KEY = String(process.env.APPLE_SECRET_KEY)
+    .split(String.raw`'\n`)
+    .join('\n');
+  private readonly KEY_ID = process.env.APPLE_KEY_ID;
 
   // Get access token from Kakao Auth Server
   async getKakaoAccessToken(code: string): Promise<GetKakaoAccessTokenOutput> {
@@ -72,44 +80,21 @@ export class OAuthUtil {
     }
   }
 
-  getAppleAccessToken(): string {
-    const timeNow = Math.floor(Date.now() / 1000);
-
-    const claims = {
-      iss: process.env.APPLE_TEAM_ID,
-      iat: timeNow,
-      aud: 'https://appleid.apple.com',
-      sub: process.env.APPLE_CLIENT_ID,
-    };
-
-    const privateKey = process.env
-      .APPLE_SECRET_KEY!.split(String.raw`\n`)
-      .join('\n');
-    console.log(privateKey);
-
-    return this.jwtService.sign(claims, {
-      keyid: process.env.APPLE_KEY_ID,
-      expiresIn: timeNow + 300,
-      privateKey,
-      algorithm: 'ES256',
+  getClientSecret(): string {
+    return appleSignin.getClientSecret({
+      clientID: this.CLIENT_ID!,
+      teamID: this.TEAM_ID!,
+      privateKey: this.PRIMARY_KEY!,
+      keyIdentifier: this.KEY_ID!,
+      expAfter: 300,
     });
   }
 
   async getAppleToken(code: string) {
-    return await axios.post(
-      'https://appleid.apple.com/auth/token',
-      qs.stringify({
-        grant_type: 'authorization_code',
-        code,
-        client_secret: this.getAppleAccessToken(),
-        client_id: process.env.APPLE_CLIENT_ID,
-        redirect_uri: process.env.APPLE_REDIRECT_URI,
-      }),
-      {
-        headers: {
-          'Content-Type': 'application/x-www-form-urlencoded',
-        },
-      },
-    );
+    return await appleSignin.getAuthorizationToken(code, {
+      clientID: this.CLIENT_ID!,
+      redirectUri: process.env.APPLE_REDIRECT_URI!,
+      clientSecret: this.getClientSecret(),
+    });
   }
 }

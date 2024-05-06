@@ -49,7 +49,7 @@ export class OAuthUtil {
 
   // Get User Info from Kakao Auth Server
   async getKakaoUserInfo(
-    access_token: String,
+    access_token: string,
   ): Promise<GetKakaoUserInfoOutput> {
     try {
       const { data: userInfo } = await axios
@@ -83,6 +83,7 @@ export class OAuthUtil {
     };
 
     const privateKey = process.env.APPLE_SECRET_KEY;
+    console.log(privateKey);
 
     return this.jwtService.sign(claims, {
       keyid: process.env.APPLE_KEY_ID,

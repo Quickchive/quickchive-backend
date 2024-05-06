@@ -82,7 +82,9 @@ export class OAuthUtil {
       sub: process.env.APPLE_CLIENT_ID,
     };
 
-    const privateKey = process.env.APPLE_SECRET_KEY;
+    const privateKey = process.env
+      .APPLE_SECRET_KEY!.split(String.raw`\n`)
+      .join('\n');
     console.log(privateKey);
 
     return this.jwtService.sign(claims, {

@@ -183,7 +183,7 @@ export class OAuthService {
   }
 
   public async appleLogin(code: string) {
-    const { data } = await this.oauthUtil.getAppleToken(code);
+    const data = await this.oauthUtil.getAppleToken(code);
 
     if (!data.id_token) {
       throw new InternalServerErrorException(

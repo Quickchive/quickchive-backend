@@ -191,7 +191,7 @@ export class OAuthService {
       );
     }
 
-    const { sub: id, email } = this.jwtService.verify(data.id_token);
+    const { sub: id, email } = this.jwtService.decode(data.id_token);
 
     let user = await this.userRepository.findOneByEmail(email);
 

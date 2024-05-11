@@ -14,6 +14,10 @@ export class customJwtService {
     return this.jwtService.verify(token, { secret: options?.secret });
   }
 
+  decode(token: string): Payload {
+    return this.jwtService.decode(token) as Payload;
+  }
+
   createPayload(email: string, autoLogin: boolean, sub: number): Payload {
     const period: string = autoLogin ? ONEYEAR : ONEDAY;
 

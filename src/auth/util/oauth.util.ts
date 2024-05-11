@@ -25,7 +25,7 @@ export class OAuthUtil {
   private readonly APPLE_PRIVATE_KEY = String(
     this.configService.get('APPLE_SECRET_KEY'),
   )
-    .split(String.raw`'\n`)
+    .split(String.raw`\n`)
     .join('\n');
   private readonly APPLE_KEY_ID = this.configService.get('APPLE_KEY_ID');
   private readonly APPLE_REDIRECT_URI =

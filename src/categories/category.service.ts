@@ -291,8 +291,9 @@ export class CategoryService {
     user: User,
   ): Promise<LoadPersonalCategoriesOutput> {
     try {
-      const { categories } =
-        await this.userRepository.findOneWithCategoriesOrFail(user.id);
+      const categories = await this.categoryRepository.findWithContents(
+        user.id,
+      );
 
       if (!categories) {
         throw new NotFoundException('Categories not found.');

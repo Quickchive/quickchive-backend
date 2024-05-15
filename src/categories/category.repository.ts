@@ -126,4 +126,13 @@ export class CategoryRepository extends Repository<Category> {
       )
       .execute();
   }
+
+  async findWithContents(userId: number): Promise<Category[]> {
+    return this.find({
+      where: {
+        user: { id: userId },
+      },
+      relations: ['contents'],
+    });
+  }
 }

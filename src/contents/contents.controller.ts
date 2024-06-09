@@ -253,21 +253,19 @@ export class ContentsController {
     return this.contentsService.summarizeContent(user, contentId);
   }
 
-  // @ApiOperation({
-  //   summary: '간편 문서 요약',
-  //   description: '성능 테스트를 위해 만든 간편 문서 요약 메서드',
-  // })
-  // @ApiOkResponse({
-  //   description: '간편 문서 요약 성공 여부를 반환한다.',
-  //   type: SummarizeContentOutput,
-  // })
-  // @ApiBadRequestResponse({
-  //   description: 'naver 서버에 잘못된 요청을 보냈을 경우',
-  // })
-  // @Post('summarize')
-  // async testSummarizeContent(
-  //   @Body() content: SummarizeContentBodyDto,
-  // ): Promise<SummarizeContentOutput> {
-  //   return this.contentsService.testSummarizeContent(content);
-  // }
+  @ApiOperation({
+    summary: '삭제된 컨텐츠 복원',
+    description: '삭제된 컨텐츠를 복원합니다.',
+  })
+  @ApiOkResponse({
+    description: '삭제된 컨텐츠 복원 성공 여부를 반환합니다.',
+  })
+  @UseGuards(JwtAuthGuard)
+  @Patch(':contentId/restore')
+  async restoreContent(
+    @AuthUser() user: User,
+    @Param('contentId', new ParseIntPipe()) contentId: number,
+  ) {
+    return this.contentsService.restoreContent(user, contentId);
+  }
 }

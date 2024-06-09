@@ -425,4 +425,31 @@ export class ContentsService {
       throw e;
     }
   }
+
+  async restoreContent(user: User, contentId: number) {
+    try {
+      const content = await this.contentRepository.findOne({
+        where: {
+          id: contentId,
+        },
+        withDeleted: true,
+      });
+
+      if (!content) {
+        throw new NotFoundException('Content not found.');
+      }
+      if (content.userId !== user.id) {
+        throw new ForbiddenException(
+          'You are not allowed to restore this content',
+        );
+      }
+
+      content.deletedAt = null;
+      await this.contentRepository.save(content);
+
+      return {};
+    } catch (e) {
+      throw e;
+    }
+  }
 }

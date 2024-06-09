@@ -60,7 +60,7 @@ export class ContentRepository extends Repository<Content> {
 
   async deleteOne(contentId: number, entityManager?: EntityManager) {
     return entityManager
-      ? entityManager.delete(Content, contentId)
-      : this.delete({ id: contentId });
+      ? entityManager.softDelete(Content, contentId)
+      : this.softDelete({ id: contentId });
   }
 }

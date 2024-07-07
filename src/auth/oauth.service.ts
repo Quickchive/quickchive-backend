@@ -19,6 +19,8 @@ import * as CryptoJS from 'crypto-js';
 import { CookieOptions } from 'express';
 import { RedisService } from '../infra/redis/redis.service';
 import { REFRESH_TOKEN_KEY } from './constants';
+import { KakaoLoginRequest } from './dtos/request/kakao-login.request.dto';
+import { KakaoLoginDto } from './dtos/kakao-login.dto';
 
 @Injectable()
 export class OAuthService {
@@ -89,6 +91,40 @@ export class OAuthService {
       const { access_token } = await this.oauthUtil.getKakaoAccessToken(code);
 
       const { userInfo } = await this.oauthUtil.getKakaoUserInfo(access_token);
+
+      const email = userInfo.kakao_account.email;
+      if (!email) {
+        throw new BadRequestException('Please Agree to share your email');
+      }
+
+      let user = await this.userRepository.findOneByEmail(email);
+
+      // 회원가입인 경우 기본 카테고리 생성 작업 진행
+      if (!user) {
+        user = new User();
+        user.email = email;
+        user.name = userInfo.kakao_account.profile.nickname;
+        user.profileImage = userInfo.kakao_account.profile?.profile_image_url;
+        user.password = this.encodePasswordFromEmail(
+          email,
+          process.env.KAKAO_JS_KEY,
+        );
+
+        await this.userRepository.createOne(user);
+        await this.categoryRepository.createDefaultCategories(user);
+      }
+
+      return this.oauthLogin(user.email);
+    } catch (e) {
+      throw e;
+    }
+  }
+
+  async createOneWithKakao({ authorizationToken }: KakaoLoginDto) {
+    try {
+      const { userInfo } = await this.oauthUtil.getKakaoUserInfo(
+        authorizationToken,
+      );
 
       const email = userInfo.kakao_account.email;
       if (!email) {

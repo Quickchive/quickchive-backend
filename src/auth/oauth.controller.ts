@@ -22,6 +22,7 @@ import { OAuthService } from './oauth.service';
 import { googleUserInfo } from './dtos/google.dto';
 import { LoginOutput } from './dtos/login.dto';
 import { ErrorOutput } from '../common/dtos/output.dto';
+import { KakaoLoginRequest } from './dtos/request/kakao-login.request.dto';
 
 @Controller('oauth')
 @ApiTags('OAuth')
@@ -128,5 +129,14 @@ export class OAuthController {
   @Get('apple-login')
   async appleLogin(@Query('code') code: string): Promise<LoginOutput> {
     return this.oauthService.appleLogin(code);
+  }
+
+  @ApiOperation({
+    summary: '카카오 로그인 요청',
+    description: 'accessToken을 받아 카카오 로그인을 요청합니다.',
+  })
+  @Post('kakao')
+  async createOneWithKakao(@Body() kakaoLoginRequest: KakaoLoginRequest) {
+    return this.oauthService.createOneWithKakao(kakaoLoginRequest);
   }
 }

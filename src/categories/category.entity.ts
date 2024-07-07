@@ -45,7 +45,7 @@ export class Category extends CoreEntity {
   @OneToMany(() => Content, (content) => content.category)
   contents: Content[];
 
-  @Column({ type: 'enum', enum: IconName, default: IconName.None })
+  @Column({ type: 'enum', enum: IconName, default: IconName.Folder })
   @IsEnum(IconName)
   iconName?: IconName;
 

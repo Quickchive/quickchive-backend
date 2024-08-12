@@ -22,7 +22,7 @@ export class OpenaiService {
   }: CreateCompletionBodyDto): Promise<CreateChatCompletionResponse> {
     try {
       const { data } = await this.openAIApi.createChatCompletion({
-        model: model || 'gpt-3.5-turbo',
+        model: model || 'gpt-4o-mini',
         messages: [
           {
             role: 'user',

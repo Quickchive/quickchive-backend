@@ -476,6 +476,7 @@ export class CategoryService {
 
       const response = await this.openaiService.createChatCompletion({
         question,
+        temperature: 0,
       });
 
       return { category: response.choices[0].message?.content || 'None' };

@@ -36,16 +36,13 @@ export class AuthService {
     private readonly redisService: RedisService,
   ) {}
 
-  async jwtLogin({
-    email,
-    password,
-    auto_login,
-  }: LoginBodyDto): Promise<LoginOutput> {
+  async jwtLogin({ email, password }: LoginBodyDto): Promise<LoginOutput> {
     try {
+      const autoLogin = true;
       const { user } = await this.validateUser({ email, password });
       const payload: Payload = this.jwtService.createPayload(
         email,
-        auto_login,
+        autoLogin,
         user.id,
       );
       const refreshToken = await this.jwtService.generateRefreshToken(payload);
@@ -53,9 +50,7 @@ export class AuthService {
       await this.redisService.set(
         `${REFRESH_TOKEN_KEY}:${user.id}`,
         refreshToken,
-        auto_login
-          ? refreshTokenExpirationInCache
-          : refreshTokenExpirationInCacheShortVersion,
+        refreshTokenExpirationInCache,
       );
 
       return {

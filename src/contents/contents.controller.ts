@@ -26,7 +26,7 @@ import { AuthUser } from '../auth/auth-user.decorator';
 import { JwtAuthGuard } from '../auth/jwt/jwt.guard';
 import { TransactionInterceptor } from '../common/interceptors/transaction.interceptor';
 import { TransactionManager } from '../common/transaction.decorator';
-import { User } from '../users/entities/user.entity';
+import { User } from '../domain/user/entities/user.entity';
 import { EntityManager } from 'typeorm';
 import { ContentsService } from './contents.service';
 import {

@@ -4,7 +4,7 @@ import {
   Injectable,
   NotFoundException,
 } from '@nestjs/common';
-import { User } from 'src/users/entities/user.entity';
+import { User } from 'src/domain/user/entities/user.entity';
 import { EntityManager } from 'typeorm';
 import { InjectRepository } from '@nestjs/typeorm';
 import {

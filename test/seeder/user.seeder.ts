@@ -1,5 +1,5 @@
 import { Seeder } from './seeder.interface';
-import { User, UserRole } from '../../src/users/entities/user.entity';
+import { User, UserRole } from '../../src/domain/user/entities/user.entity';
 import { faker } from '@faker-js/faker';
 
 export class UserSeeder implements Seeder<User> {

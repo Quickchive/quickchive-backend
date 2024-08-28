@@ -1,5 +1,6 @@
 import {
   BadRequestException,
+  Inject,
   Injectable,
   NotFoundException,
   UnauthorizedException,
@@ -23,15 +24,15 @@ import { RefreshTokenDto, RefreshTokenOutput } from './dtos/token.dto';
 import { ValidateUserDto, ValidateUserOutput } from './dtos/validate-user.dto';
 import { ONEYEAR, Payload } from './jwt/jwt.payload';
 import { customJwtService } from './jwt/jwt.service';
-import { UserRepository } from '../users/repository/user.repository';
-import { RedisService } from '../infra/redis/redis.service';
+import { UserRepository } from '../domain/user/user.repository';
+import { RedisService } from '../infrastructure/redis/redis.service';
 import { PASSWORD_CODE_KEY, REFRESH_TOKEN_KEY } from './constants';
 
 @Injectable()
 export class AuthService {
   constructor(
     private readonly jwtService: customJwtService,
-    private readonly userRepository: UserRepository,
+    @Inject(UserRepository) private readonly userRepository: UserRepository,
     private readonly mailService: MailService,
     private readonly redisService: RedisService,
   ) {}
@@ -66,7 +67,7 @@ export class AuthService {
     userId: number,
     { refresh_token: refreshToken }: LogoutBodyDto,
   ): Promise<LogoutOutput> {
-    const user = await this.userRepository.findOneBy({ id: userId });
+    const user = await this.userRepository.findById(userId);
     if (user) {
       if (!refreshToken) {
         throw new BadRequestException('Refresh token is required');
@@ -100,7 +101,7 @@ export class AuthService {
     } catch (e) {
       throw new UnauthorizedException('Invalid refresh token');
     }
-    const user = await this.userRepository.findOneBy({ id: decoded.sub });
+    const user = await this.userRepository.findById(decoded.sub);
     if (!user) {
       throw new NotFoundException('User not found');
     }
@@ -140,7 +141,7 @@ export class AuthService {
   async sendPasswordResetEmail(
     email: string,
   ): Promise<sendPasswordResetEmailOutput> {
-    const user = await this.userRepository.findOneBy({ email });
+    const user = await this.userRepository.findByEmail(email);
     if (user) {
       if (!user.verified) {
         throw new UnauthorizedException('User not verified');
@@ -167,10 +168,7 @@ export class AuthService {
     password,
   }: ValidateUserDto): Promise<ValidateUserOutput> {
     try {
-      const user = await this.userRepository.findOne({
-        where: { email },
-        select: { id: true, password: true },
-      });
+      const user = await this.userRepository.findByEmail(email);
       if (!user) {
         throw new NotFoundException('User Not Found');
       }

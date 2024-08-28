@@ -1,6 +1,7 @@
 import {
   BadRequestException,
   ForbiddenException,
+  Inject,
   Injectable,
   NotFoundException,
 } from '@nestjs/common';
@@ -21,11 +22,11 @@ import {
   LoadPersonalContentsOutput,
 } from './dtos/load-personal-contents.dto';
 import { SummaryService } from '../summary/summary.service';
-import { User } from '../users/entities/user.entity';
+import { User } from '../domain/user/entities/user.entity';
 import { Category } from '../categories/category.entity';
 import { Content } from './entities/content.entity';
 import { LoadReminderCountOutput } from './dtos/load-personal-remider-count.dto';
-import { UserRepository } from '../users/repository/user.repository';
+import { UserRepository } from '../domain/user/user.repository';
 import { ContentRepository } from './repository/content.repository';
 import { CategoryRepository } from '../categories/category.repository';
 import { getLinkInfo } from './util/content.util';
@@ -36,7 +37,7 @@ import { Transactional } from '../common/aop/transactional';
 @Injectable()
 export class ContentsService {
   constructor(
-    private readonly userRepository: UserRepository,
+    @Inject(UserRepository) private readonly userRepository: UserRepository,
     private readonly contentRepository: ContentRepository,
     private readonly summaryService: SummaryService,
     private readonly categoryRepository: CategoryRepository,
@@ -234,7 +235,7 @@ export class ContentsService {
     entityManager?: EntityManager,
   ): Promise<toggleFavoriteOutput> {
     try {
-      const userInDb = await this.userRepository.findOneWithContents(user.id);
+      const userInDb = await this.userRepository.findByIdWithContents(user.id);
 
       if (!userInDb) {
         throw new NotFoundException('User not found');
@@ -345,7 +346,7 @@ export class ContentsService {
     contentId: number,
   ): Promise<SummarizeContentOutput> {
     try {
-      const userInDb = await this.userRepository.findOneWithContents(user.id);
+      const userInDb = await this.userRepository.findByIdWithContents(user.id);
       if (!userInDb) {
         throw new NotFoundException('User not found');
       }

@@ -1,24 +1,27 @@
 import {
+  Inject,
   Injectable,
   NotFoundException,
   UnauthorizedException,
 } from '@nestjs/common';
 import { EntityManager } from 'typeorm';
-import { EditProfileDto, EditProfileOutput } from './dtos/edit-profile.dto';
+import {
+  EditProfileDto,
+  EditProfileOutput,
+} from '../../users/dtos/edit-profile.dto';
 import {
   ResetPasswordInput,
   ResetPasswordOutput,
-} from './dtos/reset-password.dto';
+} from '../../users/dtos/reset-password.dto';
 import { User } from './entities/user.entity';
-import { DeleteAccountOutput } from './dtos/delete-account.dto';
-import { UserRepository } from './repository/user.repository';
-import { RedisService } from '../infra/redis/redis.service';
-import { PASSWORD_CODE_KEY } from '../auth/constants';
+import { RedisService } from '../../infrastructure/redis/redis.service';
+import { PASSWORD_CODE_KEY } from '../../auth/constants';
+import { UserRepository } from './user.repository';
 
 @Injectable()
 export class UsersService {
   constructor(
-    private readonly userRepository: UserRepository,
+    @Inject(UserRepository) private readonly userRepository: UserRepository,
     private readonly redisService: RedisService,
   ) {}
 
@@ -78,13 +81,13 @@ export class UsersService {
     }
   }
 
-  async deleteAccount(userId: number): Promise<DeleteAccountOutput> {
-    const { affected } = await this.userRepository.delete(userId);
+  async deleteAccount(userId: number): Promise<void> {
+    const user = await this.userRepository.findByIdWithContents(userId);
 
-    if (affected === 1) {
-      return {};
-    } else {
+    if (!user) {
       throw new NotFoundException('User not found');
     }
+
+    await this.userRepository.deleteById(userId);
   }
 }

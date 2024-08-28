@@ -5,8 +5,8 @@ import { Collection } from '../collections/entities/collection.entity';
 import { NestedContent } from '../collections/entities/nested-content.entity';
 import { Category } from '../categories/category.entity';
 import { Content } from '../contents/entities/content.entity';
-import { User } from '../users/entities/user.entity';
-import { PaidPlan } from '../users/entities/paid-plan.entity';
+import { User } from '../domain/user/entities/user.entity';
+import { PaidPlan } from '../domain/user/entities/paid-plan.entity';
 
 @Injectable()
 export class TypeOrmConfigService implements TypeOrmOptionsFactory {

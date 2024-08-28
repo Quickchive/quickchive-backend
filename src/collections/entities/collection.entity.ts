@@ -2,7 +2,7 @@
 import { ApiProperty } from '@nestjs/swagger';
 import { CoreEntity } from '../../common/entities/core.entity';
 import { NestedContent } from './nested-content.entity';
-import { User } from '../../users/entities/user.entity';
+import { User } from '../../domain/user/entities/user.entity';
 import { Column, Entity, ManyToOne, OneToMany, RelationId } from 'typeorm';
 import { Category } from '../../categories/category.entity';
 

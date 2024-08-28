@@ -16,21 +16,24 @@ import {
   ApiOperation,
   ApiTags,
 } from '@nestjs/swagger';
-import { AuthUser } from '../auth/auth-user.decorator';
-import { JwtAuthGuard } from '../auth/jwt/jwt.guard';
-import { TransactionInterceptor } from '../common/interceptors/transaction.interceptor';
-import { TransactionManager } from '../common/transaction.decorator';
+import { AuthUser } from '../../auth/auth-user.decorator';
+import { JwtAuthGuard } from '../../auth/jwt/jwt.guard';
+import { TransactionInterceptor } from '../../common/interceptors/transaction.interceptor';
+import { TransactionManager } from '../../common/transaction.decorator';
 import { EntityManager } from 'typeorm';
-import { EditProfileDto, EditProfileOutput } from './dtos/edit-profile.dto';
-import { meOutput } from './dtos/me.dto';
+import {
+  EditProfileDto,
+  EditProfileOutput,
+} from '../../users/dtos/edit-profile.dto';
+import { meOutput } from '../../users/dtos/me.dto';
 import {
   ResetPasswordInput,
   ResetPasswordOutput,
-} from './dtos/reset-password.dto';
-import { User } from './entities/user.entity';
-import { UsersService } from './users.service';
-import { DeleteAccountOutput } from './dtos/delete-account.dto';
-import { ErrorOutput } from '../common/dtos/output.dto';
+} from '../../users/dtos/reset-password.dto';
+import { User } from '../../domain/user/entities/user.entity';
+import { UsersService } from '../../domain/user/users.service';
+import { DeleteAccountOutput } from '../../users/dtos/delete-account.dto';
+import { ErrorOutput } from '../../common/dtos/output.dto';
 
 @Controller('user')
 @ApiTags('User')
@@ -103,6 +106,8 @@ export class UsersController {
   @UseGuards(JwtAuthGuard)
   @Delete()
   async deleteAccount(@AuthUser() user: User): Promise<DeleteAccountOutput> {
-    return this.usersService.deleteAccount(user.id);
+    await this.usersService.deleteAccount(user.id);
+
+    return {};
   }
 }

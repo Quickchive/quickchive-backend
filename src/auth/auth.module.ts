@@ -8,12 +8,13 @@ import { JwtStrategy } from './jwt/jwt.strategy';
 import { GoogleStrategy } from './passport/google/google.strategy';
 import { customJwtService } from './jwt/jwt.service';
 import { TWOHOUR } from './jwt/jwt.payload';
-import { UsersModule } from '../users/users.module';
+import { UsersModule } from '../presentation/user/users.module';
 import { OAuthUtil } from './util/oauth.util';
 import { ContentsModule } from '../contents/contents.module';
 import { OAuthService } from './oauth.service';
 import { CategoryModule } from '../categories/category.module';
-import { RedisModule } from '../infra/redis/redis.module';
+import { RedisModule } from '../infrastructure/redis/redis.module';
+import { UserDomainModule } from '../domain/user/user.module';
 
 const accessTokenExpiration = TWOHOUR;
 export const refreshTokenExpirationInCache = 60 * 60 * 24 * 365; // 1 year
@@ -29,7 +30,7 @@ export const verifyEmailExpiration = 60 * 5;
         signOptions: { expiresIn: accessTokenExpiration },
       }),
     }),
-    UsersModule,
+    UserDomainModule,
     ContentsModule,
     CategoryModule,
     RedisModule,

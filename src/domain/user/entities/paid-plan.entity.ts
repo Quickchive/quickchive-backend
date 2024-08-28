@@ -1,7 +1,7 @@
 import { Column, Entity, OneToMany } from 'typeorm';
 import { IsNumber, IsString } from 'class-validator';
 import { ApiProperty } from '@nestjs/swagger';
-import { CoreEntity } from '../../common/entities/core.entity';
+import { CoreEntity } from '../../../common/entities/core.entity';
 import { User } from './user.entity';
 
 @Entity()

@@ -6,7 +6,7 @@ import {
   IsUrl,
 } from 'class-validator';
 import { CoreEntity } from '../../common/entities/core.entity';
-import { User } from '../../users/entities/user.entity';
+import { User } from '../../domain/user/entities/user.entity';
 import { Column, Entity, JoinColumn, ManyToOne, RelationId } from 'typeorm';
 import { ApiProperty } from '@nestjs/swagger';
 import { Category } from '../../categories/category.entity';

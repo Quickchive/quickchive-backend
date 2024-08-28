@@ -5,7 +5,7 @@ import {
   NotFoundException,
 } from '@nestjs/common';
 import { Category } from './category.entity';
-import { User } from '../users/entities/user.entity';
+import { User } from '../domain/user/entities/user.entity';
 import { generateSlug } from './utils/category.util';
 
 @Injectable()

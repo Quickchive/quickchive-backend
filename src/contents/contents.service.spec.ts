@@ -2,7 +2,7 @@ import { Test, TestingModule } from '@nestjs/testing';
 import { getRepositoryToken } from '@nestjs/typeorm';
 import { CONFIG_OPTIONS } from '../common/common.constants';
 import { SummaryService } from '../summary/summary.service';
-import { User, UserRole } from '../users/entities/user.entity';
+import { User, UserRole } from '../domain/user/entities/user.entity';
 import { DataSource, EntityManager, ObjectLiteral, Repository } from 'typeorm';
 import { CategoryService, ContentsService } from './contents.service';
 import { Content } from './entities/content.entity';

@@ -2,30 +2,6 @@ import { BadRequestException } from '@nestjs/common';
 import * as cheerio from 'cheerio';
 import axios from 'axios';
 
-import ogs from 'open-graph-scraper';
-
-export async function getOgData(link: string) {
-  try {
-    const { result } = await ogs({
-      url: link,
-    });
-
-    return {
-      title: result.ogTitle ?? '',
-      description: result.ogDescription ?? '',
-      coverImg: result.ogImage ? result.ogImage[0].url : '',
-      siteName: result.ogSiteName ?? '',
-    };
-  } catch {
-    return {
-      title: '',
-      description: '',
-      coverImg: '',
-      siteName: '',
-    };
-  }
-}
-
 export const getLinkInfo = async (link: string) => {
   let title: string | undefined = '';
   let coverImg: string | undefined = '';

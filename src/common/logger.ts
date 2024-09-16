@@ -1,5 +1,5 @@
 import * as winston from 'winston';
-import DailyRotateFile from 'winston-daily-rotate-file';
+import * as DailyRotateFile from 'winston-daily-rotate-file';
 
 const { combine, label, printf, colorize } = winston.format;
 const logFormat = printf(({ level, label, message }) => {

@@ -28,10 +28,10 @@ import { LoadReminderCountOutput } from './dtos/load-personal-remider-count.dto'
 import { UserRepository } from '../users/repository/user.repository';
 import { ContentRepository } from './repository/content.repository';
 import { CategoryRepository } from '../categories/category.repository';
-import { getOgData } from './util/content.util';
 import { GetLinkInfoResponseDto } from './dtos/get-link.response.dto';
 import { checkContentDuplicateAndAddCategorySaveLog } from '../categories/utils/category.util';
 import { Transactional } from '../common/aop/transactional';
+import { getLinkInfo } from './util/content.util';
 
 @Injectable()
 export class ContentsService {
@@ -69,7 +69,7 @@ export class ContentsService {
       siteName,
       description,
       coverImg,
-    } = await getOgData(link);
+    } = await getLinkInfo(link);
     title = title ? title : linkTitle;
 
     let category: Category | undefined = undefined;
@@ -132,7 +132,7 @@ export class ContentsService {
 
       await Promise.all(
         contentLinks.map(async (link) => {
-          const { title, description, coverImg, siteName } = await getOgData(
+          const { title, description, coverImg, siteName } = await getLinkInfo(
             link,
           );
 
@@ -391,7 +391,7 @@ export class ContentsService {
   }
 
   async getLinkInfo(link: string) {
-    const data = await getOgData(link);
+    const data = await getLinkInfo(link);
 
     return new GetLinkInfoResponseDto(data);
   }

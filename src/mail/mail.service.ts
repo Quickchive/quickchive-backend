@@ -1,7 +1,7 @@
 import { Inject, Injectable } from '@nestjs/common';
 import { EmailVar, MailModuleOptions } from './mail.interface';
 import axios from 'axios';
-import FormData from 'form-data';
+import * as FormData from 'form-data';
 import { CONFIG_OPTIONS } from '../common/common.constants';
 
 @Injectable()

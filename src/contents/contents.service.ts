@@ -52,8 +52,8 @@ export class ContentsService {
       comment,
       reminder,
       favorite,
-      categoryName,
       parentId,
+      categoryId,
     }: AddContentBodyDto,
     entityManager?: EntityManager,
   ): Promise<AddContentOutput> {
@@ -64,6 +64,8 @@ export class ContentsService {
       throw new NotFoundException('User not found');
     }
 
+    categoryId = categoryId ? categoryId : parentId;
+
     const {
       title: linkTitle,
       siteName,
@@ -72,24 +74,25 @@ export class ContentsService {
     } = await getLinkInfo(link);
     title = title ? title : linkTitle;
 
-    let category: Category | undefined = undefined;
-    if (categoryName) {
-      category = await this.categoryRepository.getOrCreateCategory(
-        // TODO 명령과 조회를 분리
-        categoryName,
-        parentId,
-        userInDb,
+    const content = new Content();
+
+    if (categoryId) {
+      const category = await this.categoryRepository.findById(
+        categoryId,
         entityManager,
       );
+
+      if (!category) throw new NotFoundException('Category not found');
 
       await checkContentDuplicateAndAddCategorySaveLog(
         link,
         category,
         userInDb,
       );
+
+      content.category = category;
     }
 
-    const content = new Content();
     content.link = link;
     content.title = title;
     content.siteName = siteName;
@@ -97,7 +100,6 @@ export class ContentsService {
     content.description = description;
     content.comment = comment;
     content.reminder = reminder;
-    content.category = category;
     content.user = user;
     content.favorite = favorite;
 

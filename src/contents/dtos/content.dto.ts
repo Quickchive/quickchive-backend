@@ -1,36 +1,90 @@
 import {
   ApiProperty,
+  ApiPropertyOptional,
   IntersectionType,
   PartialType,
   PickType,
 } from '@nestjs/swagger';
-import { IsNumber, IsOptional, IsString } from 'class-validator';
+import {
+  IsBoolean,
+  IsDate,
+  IsInt,
+  IsNotEmpty,
+  IsNumber,
+  IsOptional,
+  IsPositive,
+  IsString,
+} from 'class-validator';
 import { CoreOutput } from '../../common/dtos/output.dto';
 import { Content } from '../entities/content.entity';
+import { Type } from 'class-transformer';
 
-class ContentBodyExceptLink extends PartialType(
-  PickType(Content, ['title', 'comment', 'reminder', 'favorite']),
-) {
-  @ApiProperty({ description: 'Category Name', required: false })
+export class AddContentBodyDto {
+  @ApiProperty({ example: 'ex.com', description: '아티클 주소' })
   @IsString()
+  link: string;
+
+  @ApiPropertyOptional({
+    description: '아티클 제목',
+    type: String,
+  })
   @IsOptional()
+  @IsString()
+  title?: string;
+
+  @ApiPropertyOptional({
+    description: '아티클 설명/메모',
+    type: String,
+  })
+  @IsOptional()
+  @IsString()
+  comment?: string;
+
+  @ApiPropertyOptional({
+    description: 'Article Reminder Date(YYYY-MM-DD HH:mm:ss)',
+    type: Date,
+  })
+  @IsOptional()
+  @IsDate()
+  @Type(() => Date)
+  reminder?: Date;
+
+  @ApiPropertyOptional({
+    description: '즐겨찾기 여부',
+    type: Boolean,
+  })
+  @IsOptional()
+  @IsBoolean()
+  favorite?: boolean;
+
+  @ApiPropertyOptional({
+    description: '카테고리 이름',
+    type: String,
+  })
+  @IsOptional()
+  @IsString()
+  @IsNotEmpty()
   categoryName?: string;
 
-  @ApiProperty({
+  @ApiPropertyOptional({
     description: '부모 카테고리 id',
-    example: 1,
-    required: false,
+    type: Number,
   })
-  @IsNumber()
   @IsOptional()
+  @IsInt()
+  @IsPositive()
   parentId?: number;
-}
-class ContentBodyWithLinkOnly extends PickType(Content, ['link']) {}
 
-export class AddContentBodyDto extends IntersectionType(
-  ContentBodyWithLinkOnly,
-  ContentBodyExceptLink,
-) {}
+  @ApiPropertyOptional({
+    description: '카테고리 id',
+    type: Number,
+  })
+  @IsOptional()
+  @IsInt()
+  @IsPositive()
+  categoryId?: number;
+}
+
 export class AddContentOutput extends CoreOutput {}
 
 export class AddMultipleContentsBodyDto {

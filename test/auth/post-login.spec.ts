@@ -1,7 +1,7 @@
 import { getBuilder } from '../common/application-builder';
 import { CACHE_MANAGER, HttpStatus, INestApplication } from '@nestjs/common';
 import { cacheManagerMock } from '../mock/cache-manager.mock';
-import { User } from '../../src/users/entities/user.entity';
+import { User } from '../../src/domain/user/entities/user.entity';
 import { DataSource, Repository } from 'typeorm';
 import { StartedPostgreSqlContainer } from '@testcontainers/postgresql';
 import * as request from 'supertest';

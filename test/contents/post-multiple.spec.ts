@@ -6,7 +6,7 @@ import { getBuilder } from '../common/application-builder';
 import { JwtAuthGuard } from '../../src/auth/jwt/jwt.guard';
 import { jwtAuthGuardMock } from '../mock/jwt-auth-guard.mock';
 import { UserSeeder } from '../seeder/user.seeder';
-import { User } from '../../src/users/entities/user.entity';
+import { User } from '../../src/domain/user/entities/user.entity';
 import { AddMultipleContentsBodyDto } from '../../src/contents/dtos/content.dto';
 import { faker } from '@faker-js/faker';
 import { Category } from '../../src/categories/category.entity';

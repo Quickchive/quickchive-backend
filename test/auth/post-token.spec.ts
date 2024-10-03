@@ -2,7 +2,7 @@ import { CACHE_MANAGER, HttpStatus, INestApplication } from '@nestjs/common';
 import { StartedPostgreSqlContainer } from '@testcontainers/postgresql';
 import { DataSource, Repository } from 'typeorm';
 import { Cache } from 'cache-manager';
-import { User } from '../../src/users/entities/user.entity';
+import { User } from '../../src/domain/user/entities/user.entity';
 import { Seeder } from '../seeder/seeder.interface';
 import { UserSeeder } from '../seeder/user.seeder';
 import { getBuilder } from '../common/application-builder';

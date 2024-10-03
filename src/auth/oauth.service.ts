@@ -3,6 +3,8 @@ import {
   UnauthorizedException,
   BadRequestException,
   InternalServerErrorException,
+  Inject,
+  NotFoundException,
 } from '@nestjs/common';
 import axios from 'axios';
 import { refreshTokenExpirationInCache } from './auth.module';
@@ -13,20 +15,21 @@ import { Payload } from './jwt/jwt.payload';
 import { customJwtService } from './jwt/jwt.service';
 import { OAuthUtil } from './util/oauth.util';
 import { CategoryRepository } from '../categories/category.repository';
-import { User } from '../users/entities/user.entity';
-import { UserRepository } from '../users/repository/user.repository';
+import { User } from '../domain/user/entities/user.entity';
+
 import * as CryptoJS from 'crypto-js';
 import { CookieOptions } from 'express';
-import { RedisService } from '../infra/redis/redis.service';
+import { RedisService } from '../infrastructure/redis/redis.service';
 import { REFRESH_TOKEN_KEY } from './constants';
 import { KakaoLoginRequest } from './dtos/request/kakao-login.request.dto';
 import { KakaoLoginDto } from './dtos/kakao-login.dto';
+import { UserRepository } from '../domain/user/user.repository';
 
 @Injectable()
 export class OAuthService {
   constructor(
     private readonly jwtService: customJwtService,
-    private readonly userRepository: UserRepository,
+    @Inject(UserRepository) private readonly userRepository: UserRepository,
     private readonly categoryRepository: CategoryRepository,
     private readonly oauthUtil: OAuthUtil,
     private readonly redisService: RedisService,
@@ -35,7 +38,11 @@ export class OAuthService {
   // OAuth Login
   async oauthLogin(email: string): Promise<LoginOutput> {
     try {
-      const user: User = await this.userRepository.findOneByOrFail({ email });
+      const user = await this.userRepository.findByEmail(email);
+      if (!user) {
+        throw new NotFoundException('User not found');
+      }
+
       if (user) {
         const payload: Payload = this.jwtService.createPayload(
           user.email,
@@ -97,7 +104,7 @@ export class OAuthService {
         throw new BadRequestException('Please Agree to share your email');
       }
 
-      let user = await this.userRepository.findOneByEmail(email);
+      let user = await this.userRepository.findByEmail(email);
 
       // 회원가입인 경우 기본 카테고리 생성 작업 진행
       if (!user) {
@@ -131,7 +138,7 @@ export class OAuthService {
         throw new BadRequestException('Please Agree to share your email');
       }
 
-      let user = await this.userRepository.findOneByEmail(email);
+      let user = await this.userRepository.findByEmail(email);
 
       // 회원가입인 경우 기본 카테고리 생성 작업 진행
       if (!user) {
@@ -161,7 +168,7 @@ export class OAuthService {
     picture,
   }: googleUserInfo): Promise<LoginOutput> {
     try {
-      let user = await this.userRepository.findOneByEmail(email);
+      let user = await this.userRepository.findByEmail(email);
 
       // 회원가입인 경우 기본 카테고리 생성 작업 진행
       if (!user) {
@@ -229,7 +236,7 @@ export class OAuthService {
 
     const { sub: id, email } = this.jwtService.decode(data.id_token);
 
-    let user = await this.userRepository.findOneByEmail(email);
+    let user = await this.userRepository.findByEmail(email);
 
     if (!user) {
       user = new User();

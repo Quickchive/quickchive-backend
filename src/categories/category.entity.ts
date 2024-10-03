@@ -11,7 +11,7 @@ import {
 import { Content } from '../contents/entities/content.entity';
 import { CoreEntity } from '../common/entities/core.entity';
 import { Collection } from '../collections/entities/collection.entity';
-import { User } from '../users/entities/user.entity';
+import { User } from '../domain/user/entities/user.entity';
 
 export enum IconName {
   None = 'None',

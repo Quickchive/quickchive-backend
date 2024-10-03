@@ -5,7 +5,7 @@ import {
   RecentCategoryList,
   RecentCategoryListWithSaveCount,
 } from '../dtos/category.dto';
-import { User } from '../../users/entities/user.entity';
+import { User } from '../../domain/user/entities/user.entity';
 import { ConflictException } from '@nestjs/common';
 
 import * as fs from 'fs';

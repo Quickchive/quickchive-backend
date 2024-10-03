@@ -8,14 +8,14 @@ import { Test, TestingModule } from '@nestjs/testing';
 import { getRepositoryToken, TypeOrmModule } from '@nestjs/typeorm';
 import { CONFIG_OPTIONS } from '../common/common.constants';
 import { MailService } from '../mail/mail.service';
-import { User, UserRole } from '../users/entities/user.entity';
+import { User, UserRole } from '../domain/user/entities/user.entity';
 import { DataSource, ObjectLiteral, Repository } from 'typeorm';
 import { AuthService } from './auth.service';
 import { customJwtService } from './jwt/jwt.service';
 import { Cache } from 'cache-manager';
 import { LoginBodyDto, LogoutBodyDto } from './dtos/login.dto';
-import { UsersModule } from '../users/users.module';
-import { UserRepository } from '../users/repository/user.repository';
+import { UsersModule } from '../presentation/user/users.module';
+import { UserRepository } from '../infrastructure/user/repository/user.repository';
 import { TWOHOUR } from './jwt/jwt.payload';
 import * as dotenv from 'dotenv';
 

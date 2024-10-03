@@ -39,7 +39,7 @@ import {
   LoadPersonalCategoriesOutput,
   LoadFrequentCategoriesOutput,
 } from './dtos/load-personal-categories.dto';
-import { User } from '../users/entities/user.entity';
+import { User } from '../domain/user/entities/user.entity';
 import { CategoryService } from './category.service';
 
 @Controller('categories')

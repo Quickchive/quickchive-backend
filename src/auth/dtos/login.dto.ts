@@ -1,7 +1,7 @@
 import { ApiProperty, PickType } from '@nestjs/swagger';
 import { IsBoolean, IsOptional, IsString } from 'class-validator';
 import { CoreOutput } from '../../common/dtos/output.dto';
-import { User } from '../../users/entities/user.entity';
+import { User } from '../../domain/user/entities/user.entity';
 
 export class LoginBodyDto extends PickType(User, ['email', 'password']) {
   @ApiProperty({

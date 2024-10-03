@@ -8,7 +8,7 @@ import {
 } from '@nestjs/common';
 import { StartedPostgreSqlContainer } from '@testcontainers/postgresql';
 import { OAuthUtil } from '../../src/auth/util/oauth.util';
-import { User } from '../../src/users/entities/user.entity';
+import { User } from '../../src/domain/user/entities/user.entity';
 import * as request from 'supertest';
 import { cacheManagerMock } from '../mock/cache-manager.mock';
 import { oAuthUtilMock } from '../mock/oauth-util.mock';

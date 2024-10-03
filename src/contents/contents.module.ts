@@ -5,11 +5,15 @@ import { ContentsService } from './contents.service';
 import { Content } from './entities/content.entity';
 import { ContentRepository } from './repository/content.repository';
 import { CategoryRepository } from '../categories/category.repository';
-import { UsersModule } from '../users/users.module';
 import { OpenaiModule } from '../openai/openai.module';
+import { UserDomainModule } from '../domain/user/user.module';
 
 @Module({
-  imports: [TypeOrmModule.forFeature([Content]), UsersModule, OpenaiModule],
+  imports: [
+    TypeOrmModule.forFeature([Content]),
+    UserDomainModule,
+    OpenaiModule,
+  ],
   controllers: [ContentsController],
   providers: [ContentsService, ContentRepository, CategoryRepository],
   exports: [ContentsService],

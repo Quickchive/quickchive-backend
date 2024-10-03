@@ -2,6 +2,7 @@ import {
   Injectable,
   NotFoundException,
   ConflictException,
+  Inject,
 } from '@nestjs/common';
 import { EntityManager } from 'typeorm';
 import {
@@ -25,8 +26,8 @@ import { CategoryRepository } from './category.repository';
 import { ContentRepository } from '../contents/repository/content.repository';
 import { getLinkContent, getLinkInfo } from '../contents/util/content.util';
 import { OpenaiService } from '../openai/openai.service';
-import { User } from '../users/entities/user.entity';
-import { UserRepository } from '../users/repository/user.repository';
+import { User } from '../domain/user/entities/user.entity';
+
 import {
   generateCategoriesTree,
   generateSlug,
@@ -34,13 +35,14 @@ import {
   makeCategoryListWithSaveCount,
 } from './utils/category.util';
 import { Transactional } from '../common/aop/transactional';
+import { UserRepository } from '../domain/user/user.repository';
 
 @Injectable()
 export class CategoryService {
   constructor(
     private readonly contentRepository: ContentRepository,
     private readonly categoryRepository: CategoryRepository,
-    private readonly userRepository: UserRepository,
+    @Inject(UserRepository) private readonly userRepository: UserRepository,
     private readonly openaiService: OpenaiService,
   ) {}
 
@@ -51,7 +53,9 @@ export class CategoryService {
     entityManager?: EntityManager,
   ): Promise<AddCategoryOutput> {
     try {
-      const userInDb = await this.userRepository.findOneWithCategories(user.id);
+      const userInDb = await this.userRepository.findByIdWithCategories(
+        user.id,
+      );
 
       if (!userInDb) {
         throw new NotFoundException('User not found');
@@ -408,7 +412,9 @@ export class CategoryService {
     link: string,
   ): Promise<AutoCategorizeOutput> {
     try {
-      const userInDb = await this.userRepository.findOneWithCategories(user.id);
+      const userInDb = await this.userRepository.findByIdWithCategories(
+        user.id,
+      );
       if (!userInDb) {
         throw new NotFoundException('User not found');
       }

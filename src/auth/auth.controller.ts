@@ -10,7 +10,7 @@ import {
   ApiUnauthorizedResponse,
 } from '@nestjs/swagger';
 import { ErrorOutput } from '../common/dtos/output.dto';
-import { User } from '../users/entities/user.entity';
+import { User } from '../domain/user/entities/user.entity';
 import { AuthUser } from './auth-user.decorator';
 import { AuthService } from './auth.service';
 import {

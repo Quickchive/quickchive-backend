@@ -212,18 +212,9 @@ export class CategoryService {
     queryRunnerManager: EntityManager,
   ): Promise<DeleteCategoryOutput> {
     try {
-      const userInDb =
-        await this.userRepository.findOneWithContentsAndCategories(user.id);
-
-      // Check if user exists
-      if (!userInDb) {
-        throw new NotFoundException('User not found.');
-      }
-
-      const category = userInDb.categories?.find(
-        (category) => category.id === categoryId,
-      );
-
+      const category = await this.categoryRepository.findOne({
+        where: { id: categoryId },
+      });
       if (!category) {
         throw new NotFoundException('Category not found.');
       }

@@ -7,7 +7,9 @@ export class customJwtService {
   constructor(private readonly jwtService: JwtService) {}
 
   sign(payload: Payload): string {
-    return this.jwtService.sign(payload);
+    return this.jwtService.sign(payload, {
+      expiresIn: payload.period,
+    });
   }
 
   verify(token: string, options?: JwtVerifyOptions): Payload {

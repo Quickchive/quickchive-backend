@@ -2,6 +2,7 @@ import {
   Injectable,
   NotFoundException,
   ConflictException,
+  InternalServerErrorException,
 } from '@nestjs/common';
 import { EntityManager } from 'typeorm';
 import {
@@ -212,9 +213,7 @@ export class CategoryService {
     queryRunnerManager: EntityManager,
   ): Promise<DeleteCategoryOutput> {
     try {
-      const category = await this.categoryRepository.findOne({
-        where: { id: categoryId },
-      });
+      const category = await this.categoryRepository.findById(categoryId);
       if (!category) {
         throw new NotFoundException('Category not found.');
       }
@@ -471,6 +470,70 @@ export class CategoryService {
       });
 
       return { category: response.choices[0].message?.content || 'None' };
+    } catch (e) {
+      throw e;
+    }
+  }
+
+  async autoCategorizeWithId(user: User, link: string) {
+    try {
+      const categories = await this.categoryRepository.findByUserId(user.id);
+      if (categories.length === 0) {
+        throw new NotFoundException('Categories not found');
+      }
+
+      const { title, siteName, description } = await getLinkInfo(link);
+
+      const content = await getLinkContent(link);
+
+      const question = `You are a machine tasked with auto-categorizing articles based on information obtained through web scraping.
+You can only answer a single category name. Here is the article's information:
+<title>${title && `title: "${title.trim()}"`}</title>
+<content>${
+        content &&
+        `content: "${content.replace(/\s/g, '').slice(0, 300).trim()}"`
+      }</content>
+<description>${
+        description && `description: "${description.trim()}"`
+      }</description>
+<siteName>${siteName && `site name: "${siteName.trim()}"`}</siteName>
+Please provide the most suitable category among the following. Here is Category options: [${[
+        ...categories,
+        'None',
+      ].join(', ')}]
+
+Given the following categories, please provide the most suitable category for the article.
+<categories>${categories
+        .map((category) =>
+          JSON.stringify({ id: category.id, name: category.name }),
+        )
+        .join('\n')}</categories>
+
+Present your reply options in JSON format below.
+\`\`\`json
+{
+  "id": id,
+  "name": "category name"
+}
+\`\`\`
+`;
+
+      const response = await this.openaiService.createChatCompletion({
+        question,
+        temperature: 0,
+        responseType: 'json',
+      });
+
+      const categoryStr = response.choices[0].message?.content;
+
+      if (categoryStr) {
+        const { id, name } = JSON.parse(
+          categoryStr.replace(/^```json|```$/g, '').trim(),
+        );
+        return { category: { id, name } };
+      }
+
+      throw new InternalServerErrorException('Failed to categorize');
     } catch (e) {
       throw e;
     }

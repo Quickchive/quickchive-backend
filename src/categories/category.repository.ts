@@ -135,4 +135,12 @@ export class CategoryRepository extends Repository<Category> {
       relations: ['contents'],
     });
   }
+
+  async findByUserId(userId: number): Promise<Category[]> {
+    return await this.find({
+      where: {
+        user: { id: userId },
+      },
+    });
+  }
 }

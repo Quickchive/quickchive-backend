@@ -19,18 +19,24 @@ export class OpenaiService {
     question,
     model,
     temperature,
+    responseType,
   }: CreateCompletionBodyDto): Promise<CreateChatCompletionResponse> {
     try {
-      const { data } = await this.openAIApi.createChatCompletion({
-        model: model || 'gpt-4o-mini',
-        messages: [
-          {
-            role: 'user',
-            content: question,
-          },
-        ],
-        temperature: temperature || 0.1,
-      });
+      const { data } = await this.openAIApi.createChatCompletion(
+        {
+          model: model || 'gpt-4o-mini',
+          messages: [
+            {
+              role: 'user',
+              content: question,
+            },
+          ],
+          temperature: temperature || 0.1,
+        },
+        {
+          ...(responseType && { responseType }),
+        },
+      );
 
       return data;
     } catch (e) {

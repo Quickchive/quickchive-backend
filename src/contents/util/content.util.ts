@@ -14,7 +14,11 @@ export const getLinkInfo = async (link: string) => {
 
   // ! TODO 크롤링에서 대략 초 단위 시간 소요 -> 개선 필요
   await axios
-    .get(link)
+    .get(link, {
+      headers: {
+        'User-Agent': 'Mozilla/5.0 (compatible; OGCrawler/1.0)',
+      },
+    })
     .then((res) => {
       if (res.status !== 200) {
         throw new BadRequestException('잘못된 링크입니다.');
@@ -22,7 +26,10 @@ export const getLinkInfo = async (link: string) => {
         const data = res.data;
         if (typeof data === 'string') {
           const $ = cheerio.load(data);
-          title = $('title').text() !== '' ? $('title').text() : 'Untitled';
+          title =
+            $('title').text() !== ''
+              ? $('title').text() || $('meta[name="title"]').attr('content')
+              : 'Untitled';
           $('meta').each((i, el) => {
             const meta = $(el);
             if (meta.attr('property') === 'og:image') {

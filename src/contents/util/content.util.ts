@@ -5,37 +5,68 @@ import {
 import * as cheerio from 'cheerio';
 import axios, { AxiosResponse } from 'axios';
 
-interface OGData {
-  title: string;
-  description: string;
-  image: string;
-  url: string;
-  type: string;
-  site_name: string;
-  [key: string]: string; // 추가 OG 태그를 위한 인덱스 시그니처
+interface OGCrawlerOptions {
+  timeout?: number;
+  userAgent?: string;
+  maxRedirects?: number;
+  cookies?: string;
+  proxy?: string;
 }
 
 class OGCrawler {
   private readonly timeout: number;
   private readonly userAgent: string;
-  private readonly maxRedirects = 5;
+  private readonly maxRedirects: number;
+  private readonly cookies: string;
+  private readonly proxy?: string;
 
-  constructor(options: { timeout?: number; userAgent?: string } = {}) {
+  constructor(options: OGCrawlerOptions = {}) {
     this.timeout = options.timeout || 5000;
     this.userAgent =
-      options.userAgent || 'Mozilla/5.0 (compatible; OGCrawler/1.0)';
+      options.userAgent ||
+      'Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/122.0.0.0 Safari/537.36';
+    this.maxRedirects = options.maxRedirects || 5;
+    this.cookies =
+      options.cookies || 'CONSENT=YES+cb; Path=/; Domain=.youtube.com';
+    this.proxy = options.proxy;
   }
 
-  public async fetch(url: string): Promise<OGData> {
+  public async fetch(url: string): Promise<any> {
     try {
+      // YouTube 비디오 ID 추출
+      const videoId = this.extractVideoId(url);
+      if (videoId) {
+        return await this.fetchYouTubeData(videoId);
+      }
+
       const response: AxiosResponse = await axios({
         method: 'get',
         url,
         timeout: this.timeout,
         headers: {
           'User-Agent': this.userAgent,
+          Accept:
+            'text/html,application/xhtml+xml,application/xml;q=0.9,image/avif,image/webp,*/*;q=0.8',
+          'Accept-Language': 'en-US,en;q=0.5',
+          'Accept-Encoding': 'gzip, deflate, br',
+          Cookie: this.cookies,
+          'Cache-Control': 'no-cache',
+          Pragma: 'no-cache',
+          'Sec-Fetch-Dest': 'document',
+          'Sec-Fetch-Mode': 'navigate',
+          'Sec-Fetch-Site': 'none',
+          'Sec-Fetch-User': '?1',
+          DNT: '1',
         },
         maxRedirects: this.maxRedirects,
+        ...(this.proxy
+          ? {
+              proxy: {
+                host: this.proxy.split(':')[0],
+                port: parseInt(this.proxy.split(':')[1]),
+              },
+            }
+          : {}),
       });
 
       return this.parse(response.data);
@@ -49,63 +80,99 @@ class OGCrawler {
     }
   }
 
-  private parse(html: string): OGData {
-    const $ = cheerio.load(html);
-    const ogData: Partial<OGData> = {};
+  private async fetchYouTubeData(videoId: string): Promise<any> {
+    try {
+      // YouTube Data API v3를 사용하는 것이 더 안정적
+      const response = await axios({
+        method: 'get',
+        url: `https://www.youtube.com/watch?v=${videoId}`,
+        headers: {
+          'User-Agent': this.userAgent,
+          Accept:
+            'text/html,application/xhtml+xml,application/xml;q=0.9,image/avif,image/webp,*/*;q=0.8',
+          'Accept-Language': 'en-US,en;q=0.5',
+          Cookie: this.cookies,
+        },
+      });
 
-    // OG 태그 파싱
+      const $ = cheerio.load(response.data);
+
+      // YouTube 특정 메타데이터 추출
+      const title =
+        $('meta[property="og:title"]').attr('content') ||
+        $('title').text().replace('- YouTube', '').trim();
+      const description =
+        $('meta[property="og:description"]').attr('content') ||
+        $('meta[name="description"]').attr('content');
+      const coverImg =
+        $('meta[property="og:image"]').attr('content') ||
+        `https://i.ytimg.com/vi/${videoId}/maxresdefault.jpg`;
+      const siteName =
+        $('meta[property="og:site_name"]').attr('content') || 'YouTube';
+
+      return {
+        title,
+        description,
+        coverImg,
+        siteName,
+      };
+    } catch (error) {
+      console.error('Failed to fetch YouTube data:', error);
+      // 폴백: 기본 썸네일 URL 사용
+      return {
+        title: '',
+        description: '',
+        coverImg: `https://i.ytimg.com/vi/${videoId}/maxresdefault.jpg`,
+        siteName: 'YouTube',
+      };
+    }
+  }
+
+  private extractVideoId(url: string): string | null {
+    const regExp =
+      /^.*((youtu.be\/)|(v\/)|(\/u\/\w\/)|(embed\/)|(watch\?))\??v?=?([^#&?]*).*/;
+    const match = url.match(regExp);
+    return match && match[7].length === 11 ? match[7] : null;
+  }
+
+  private parse(html: string): any {
+    const $ = cheerio.load(html);
+    const ogData: any = {};
+
     $('meta[property^="og:"]').each((_, element) => {
       const property = $(element).attr('property')?.replace('og:', '');
       const content = $(element).attr('content');
 
       if (property && content) {
-        ogData[property as keyof OGData] = content;
+        ogData[property] = content;
       }
     });
 
-    // 기본 메타 태그 백업 파싱
-    if (!ogData.title) {
-      ogData.title =
-        $('title').text() || $('meta[name="title"]').attr('content') || '';
-    }
-
-    if (!ogData.description) {
-      ogData.description = $('meta[name="description"]').attr('content') || '';
-    }
-
-    // 이미지 URL 정규화
-    if (ogData.image && !ogData.image.startsWith('http')) {
-      const baseUrl = $('base').attr('href');
-      if (baseUrl) {
-        try {
-          ogData.image = new URL(ogData.image, baseUrl).href;
-        } catch (error) {
-          console.warn('Failed to normalize image URL:', error);
-        }
-      }
-    }
-
-    // 필수 필드가 있는 완성된 객체 반환
     return {
-      title: ogData.title || '',
-      description: ogData.description || '',
-      image: ogData.image || '',
-      url: ogData.url || '',
-      type: ogData.type || '',
-      site_name: ogData.site_name || '',
-      ...ogData, // 추가 OG 태그 포함
+      title: ogData.title || $('title').text() || '',
+      description:
+        ogData.description ||
+        $('meta[name="description"]').attr('content') ||
+        '',
+      coverImg: ogData.image || '',
+      siteName: ogData.site_name || '',
     };
   }
 }
 
 export const getLinkInfo = async (link: string) => {
-  const crawler = new OGCrawler();
+  const crawler = new OGCrawler({
+    timeout: 5000,
+    userAgent:
+      'Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/122.0.0.0 Safari/537.36',
+    cookies: 'CONSENT=YES+cb; Path=/; Domain=.youtube.com',
+  });
   const ogData = await crawler.fetch(link);
 
   const title = ogData.title;
   const description = ogData.description;
-  const coverImg = ogData.image;
-  const siteName = ogData.site_name;
+  const coverImg = ogData.coverImg;
+  const siteName = ogData.siteName;
 
   return {
     title,

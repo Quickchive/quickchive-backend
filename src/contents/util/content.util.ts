@@ -82,50 +82,38 @@ class OGCrawler {
 
   private async fetchYouTubeData(videoId: string): Promise<any> {
     try {
-      // YouTube Data API v3를 사용하는 것이 더 안정적
-      const response = await axios({
-        method: 'get',
-        url: `https://www.youtube.com/watch?v=${videoId}`,
-        headers: {
-          'User-Agent': this.userAgent,
-          Accept:
-            'text/html,application/xhtml+xml,application/xml;q=0.9,image/avif,image/webp,*/*;q=0.8',
-          'Accept-Language': 'en-US,en;q=0.5',
-          Cookie: this.cookies,
+      const { data } = await axios.get(
+        'https://www.googleapis.com/youtube/v3/videos',
+        {
+          params: {
+            part: 'snippet',
+            id: videoId,
+            key: process.env.YOUTUBE_DATA_API_KEY!,
+          },
         },
-      });
+      );
 
-      const $ = cheerio.load(response.data);
+      const item = data?.items[0];
 
-      // YouTube 특정 메타데이터 추출
-      const title =
-        $('meta[property="og:title"]').attr('content') ||
-        $('title').text().replace('- YouTube', '').trim();
-      const description =
-        $('meta[property="og:description"]').attr('content') ||
-        $('meta[name="description"]').attr('content');
-      const coverImg =
-        $('meta[property="og:image"]').attr('content') ||
-        `https://i.ytimg.com/vi/${videoId}/maxresdefault.jpg`;
-      const siteName =
-        $('meta[property="og:site_name"]').attr('content') || 'YouTube';
-
-      return {
-        title,
-        description,
-        coverImg,
-        siteName,
-      };
+      if (item && item.snippet) {
+        return {
+          title: item.snippet.title,
+          description: item.snippet.description,
+          coverImg: item.snippet.thumbnails?.default?.url,
+          siteName: 'YouTube',
+        };
+      }
     } catch (error) {
       console.error('Failed to fetch YouTube data:', error);
-      // 폴백: 기본 썸네일 URL 사용
-      return {
-        title: '',
-        description: '',
-        coverImg: `https://i.ytimg.com/vi/${videoId}/maxresdefault.jpg`,
-        siteName: 'YouTube',
-      };
     }
+
+    // 폴백: 기본 썸네일 URL 사용
+    return {
+      title: '',
+      description: '',
+      coverImg: `https://i.ytimg.com/vi/${videoId}/maxresdefault.jpg`,
+      siteName: 'YouTube',
+    };
   }
 
   private extractVideoId(url: string): string | null {

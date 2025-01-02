@@ -1,20 +1,20 @@
-import { Injectable, InternalServerErrorException } from '@nestjs/common';
+import { InternalServerErrorException } from '@nestjs/common';
 import {
   BeforeInsert,
   BeforeUpdate,
   Column,
   Entity,
-  JoinTable,
-  ManyToMany,
+  ManyToOne,
   OneToMany,
 } from 'typeorm';
 import * as bcrypt from 'bcrypt';
 import { IsBoolean, IsEmail, IsEnum, IsString, Matches } from 'class-validator';
-import { CoreEntity } from 'src/common/entities/core.entity';
 import { ApiProperty } from '@nestjs/swagger';
-import { Content } from 'src/contents/entities/content.entity';
-import { Category } from 'src/contents/entities/category.entity';
-import { Collection } from 'src/collections/entities/collection.entity';
+import { Content } from '../../contents/entities/content.entity';
+import { Category } from '../../categories/category.entity';
+import { Collection } from '../../collections/entities/collection.entity';
+import { CoreEntity } from '../../common/entities/core.entity';
+import { PaidPlan } from './paid-plan.entity';
 
 export enum UserRole {
   Client = 'Client',
@@ -26,20 +26,25 @@ export class User extends CoreEntity {
   @ApiProperty({ example: 'tester', description: 'User Name' })
   @Column()
   @IsString()
-  name: string;
+  name!: string;
 
   @ApiProperty({ example: 'ex@g.com', description: 'User Email' })
   @Column({ unique: true })
   @IsEmail()
-  email: string;
+  email!: string;
+
+  @ApiProperty({ example: 'https://ex.com', description: 'User Profile Image' })
+  @Column({ nullable: true })
+  @IsString()
+  profileImage?: string;
 
   @ApiProperty({ example: 'passw0rd', description: 'User Password' })
   @Column({ select: false })
-  @IsString()
+  @IsString({ message: 'Password is required' })
   @Matches(/^(?=.*\d)[A-Za-z\d@$!%*?&]{8,}$/, {
     message: 'Password must be at least 8 characters long, contain 1 number',
   })
-  password: string;
+  password!: string;
 
   @ApiProperty({
     example: 'Client',
@@ -48,19 +53,19 @@ export class User extends CoreEntity {
   })
   @Column({ type: 'enum', enum: UserRole, default: UserRole.Client })
   @IsEnum(UserRole)
-  role: UserRole;
+  role!: UserRole;
 
   @ApiProperty({ description: 'User Verified' })
   @Column({ default: false })
   @IsBoolean()
-  verified: boolean;
+  verified!: boolean;
 
   @ApiProperty({
     description: 'User Content List',
     type: [Content],
     required: false,
   })
-  @OneToMany((type) => Content, (content) => content.user, {
+  @OneToMany(() => Content, (content) => content.user, {
     nullable: true,
   })
   contents?: Content[];
@@ -70,10 +75,9 @@ export class User extends CoreEntity {
     type: [Category],
     required: false,
   })
-  @ManyToMany((type) => Category, {
+  @OneToMany(() => Category, (category) => category.user, {
     nullable: true,
   })
-  @JoinTable()
   categories?: Category[];
 
   @ApiProperty({
@@ -85,6 +89,16 @@ export class User extends CoreEntity {
     nullable: true,
   })
   collections?: Collection[];
+
+  @ApiProperty({
+    description: 'User Plan',
+    type: PaidPlan,
+    required: false,
+  })
+  @ManyToOne((type) => PaidPlan, (paidPlan) => paidPlan.users, {
+    nullable: true,
+  })
+  paidPlan?: PaidPlan;
 
   @BeforeInsert()
   @BeforeUpdate()

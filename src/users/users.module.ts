@@ -1,21 +1,13 @@
-import { CacheModule, Module } from '@nestjs/common';
-import { TypeOrmModule } from '@nestjs/typeorm';
-import { User } from './entities/user.entity';
-import { Verification } from './entities/verification.entity';
+import { Module } from '@nestjs/common';
 import { UsersController } from './users.controller';
 import { UsersService } from './users.service';
-import * as redisStore from 'cache-manager-redis-store';
+import { UserRepository } from './repository/user.repository';
+import { RedisModule } from '../infra/redis/redis.module';
 
 @Module({
-  imports: [
-    TypeOrmModule.forFeature([User, Verification]),
-    CacheModule.register({
-      store: redisStore,
-      host: process.env.REDIS_HOST,
-      port: process.env.REDIS_PORT,
-    }),
-  ],
+  imports: [RedisModule],
   controllers: [UsersController],
-  providers: [UsersService],
+  providers: [UsersService, UserRepository],
+  exports: [UserRepository],
 })
 export class UsersModule {}

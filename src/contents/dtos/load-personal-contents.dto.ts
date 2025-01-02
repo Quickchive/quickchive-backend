@@ -1,7 +1,6 @@
 import { ApiProperty } from '@nestjs/swagger';
-import { Collection } from 'src/collections/entities/collection.entity';
-import { CoreOutput } from 'src/common/dtos/output.dto';
-import { Content } from 'src/contents/entities/content.entity';
+import { CoreOutput } from '../../common/dtos/output.dto';
+import { Content } from '../entities/content.entity';
 
 export class LoadPersonalContentsOutput extends CoreOutput {
   @ApiProperty({
@@ -21,11 +20,11 @@ export class LoadFavoritesOutput extends CoreOutput {
   })
   favorite_contents?: Content[];
 
-  @ApiProperty({
-    description: '즐겨찾기한 콜렉션 목록',
-    type: [Collection],
-    required: false,
-    isArray: true,
-  })
-  favorite_collections?: Collection[];
+  // @ApiProperty({
+  //   description: '즐겨찾기한 콜렉션 목록',
+  //   type: [Collection],
+  //   required: false,
+  //   isArray: true,
+  // })
+  // favorite_collections?: Collection[];
 }

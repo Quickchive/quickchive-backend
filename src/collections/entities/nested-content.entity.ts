@@ -1,5 +1,6 @@
 import { IsOptional, IsString, IsUrl } from 'class-validator';
-import { CoreEntity } from 'src/common/entities/core.entity';
+// import { CoreEntity } from 'src/common/entities/core.entity';
+import { CoreEntity } from '../../common/entities/core.entity';
 import { Column, Entity, ManyToOne, RelationId } from 'typeorm';
 import { ApiProperty } from '@nestjs/swagger';
 import { Collection } from './collection.entity';
@@ -10,7 +11,7 @@ export class NestedContent extends CoreEntity {
   @Column()
   @IsString({ message: 'String URL must be required.' })
   @IsUrl()
-  link: string;
+  link!: string;
 
   @ApiProperty({ description: 'Nested Content Title', required: false })
   @Column({ nullable: true })
@@ -38,5 +39,5 @@ export class NestedContent extends CoreEntity {
   @ManyToOne((type) => Collection, (collection) => collection.contents, {
     onDelete: 'CASCADE',
   })
-  collection: Collection;
+  collection!: Collection;
 }

@@ -1,21 +1,19 @@
-import { ApiProperty, PickType } from '@nestjs/swagger';
+import { ApiProperty } from '@nestjs/swagger';
 import { IsOptional, IsString } from 'class-validator';
-import { CoreOutput } from 'src/common/dtos/output.dto';
+import { CoreOutput } from '../../common/dtos/output.dto';
 
 export class RefreshTokenDto {
   @ApiProperty({ description: 'refresh token', required: true })
   @IsString()
-  refresh_token: string;
+  refresh_token!: string;
 }
 
 export class RefreshTokenOutput extends CoreOutput {
-  @ApiProperty({ description: 'access token', required: false })
+  @ApiProperty({ description: 'access token', required: true })
   @IsString()
-  @IsOptional()
-  access_token?: string;
+  access_token!: string;
 
-  @ApiProperty({ description: 'refresh token', required: false })
+  @ApiProperty({ description: 'refresh token', required: true })
   @IsString()
-  @IsOptional()
-  refresh_token?: string;
+  refresh_token!: string;
 }

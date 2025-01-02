@@ -5,11 +5,11 @@ import {
   IsString,
   IsUrl,
 } from 'class-validator';
-import { CoreEntity } from 'src/common/entities/core.entity';
-import { Column, Entity, ManyToOne, RelationId } from 'typeorm';
-import { User } from 'src/users/entities/user.entity';
+import { CoreEntity } from '../../common/entities/core.entity';
+import { User } from '../../users/entities/user.entity';
+import { Column, Entity, JoinColumn, ManyToOne, RelationId } from 'typeorm';
 import { ApiProperty } from '@nestjs/swagger';
-import { Category } from './category.entity';
+import { Category } from '../../categories/category.entity';
 import { Transform } from 'class-transformer';
 
 @Entity()
@@ -48,35 +48,32 @@ export class Content extends CoreEntity {
 
   @ApiProperty({
     example: '2022-08-20',
-    description: 'Article Deadline(YYYY-MM-DD HH:mm:ss)',
+    description: 'Article Reminder Date(YYYY-MM-DD HH:mm:ss)',
     required: false,
   })
   @Column({ nullable: true })
   @IsDate()
   @IsOptional()
   @Transform(({ value }) => new Date(value))
-  deadline?: Date;
+  reminder?: Date;
 
   @ApiProperty({ description: 'Favorite' })
   @Column({ default: false })
   @IsBoolean()
-  favorite: boolean;
-
-  @ApiProperty({ description: 'Flag indicating read' })
-  @Column({ default: false })
-  @IsBoolean()
-  readFlag: boolean;
+  favorite?: boolean;
 
   @ApiProperty({ description: 'Article Category', required: false })
-  @ManyToOne((type) => Category, (category) => category.contents, {
+  @ManyToOne(() => Category, (category) => category.contents, {
     nullable: true,
     onDelete: 'SET NULL',
   })
+  @JoinColumn({ name: 'categoryId', referencedColumnName: 'id' })
   category?: Category;
 
-  @ManyToOne((type) => User, (user) => user.contents, {
+  @ManyToOne(() => User, (user) => user.contents, {
     onDelete: 'CASCADE',
   })
+  @JoinColumn({ name: 'userId', referencedColumnName: 'id' })
   user: User;
 
   @ApiProperty({ description: 'Owner ID' })

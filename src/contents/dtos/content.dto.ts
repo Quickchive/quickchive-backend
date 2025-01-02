@@ -1,27 +1,90 @@
 import {
   ApiProperty,
+  ApiPropertyOptional,
   IntersectionType,
   PartialType,
   PickType,
 } from '@nestjs/swagger';
-import { IsOptional, IsString } from 'class-validator';
-import { CoreOutput } from 'src/common/dtos/output.dto';
+import {
+  IsBoolean,
+  IsDate,
+  IsInt,
+  IsNotEmpty,
+  IsNumber,
+  IsOptional,
+  IsPositive,
+  IsString,
+} from 'class-validator';
+import { CoreOutput } from '../../common/dtos/output.dto';
 import { Content } from '../entities/content.entity';
+import { Type } from 'class-transformer';
 
-class ContentBodyExceptLink extends PartialType(
-  PickType(Content, ['title', 'comment', 'deadline', 'favorite']),
-) {
-  @ApiProperty({ description: 'Category Name', required: false })
+export class AddContentBodyDto {
+  @ApiProperty({ example: 'ex.com', description: '아티클 주소' })
   @IsString()
-  @IsOptional()
-  categoryName?: string;
-}
-class ContentBodyWithLinkOnly extends PickType(Content, ['link']) {}
+  link: string;
 
-export class AddContentBodyDto extends IntersectionType(
-  ContentBodyWithLinkOnly,
-  ContentBodyExceptLink,
-) {}
+  @ApiPropertyOptional({
+    description: '아티클 제목',
+    type: String,
+  })
+  @IsOptional()
+  @IsString()
+  title?: string;
+
+  @ApiPropertyOptional({
+    description: '아티클 설명/메모',
+    type: String,
+  })
+  @IsOptional()
+  @IsString()
+  comment?: string;
+
+  @ApiPropertyOptional({
+    description: 'Article Reminder Date(YYYY-MM-DD HH:mm:ss)',
+    type: Date,
+  })
+  @IsOptional()
+  @IsDate()
+  @Type(() => Date)
+  reminder?: Date;
+
+  @ApiPropertyOptional({
+    description: '즐겨찾기 여부',
+    type: Boolean,
+  })
+  @IsOptional()
+  @IsBoolean()
+  favorite?: boolean;
+
+  @ApiPropertyOptional({
+    description: '카테고리 이름',
+    type: String,
+  })
+  @IsOptional()
+  @IsString()
+  @IsNotEmpty()
+  categoryName?: string;
+
+  @ApiPropertyOptional({
+    description: '부모 카테고리 id',
+    type: Number,
+  })
+  @IsOptional()
+  @IsInt()
+  @IsPositive()
+  parentId?: number;
+
+  @ApiPropertyOptional({
+    description: '카테고리 id',
+    type: Number,
+  })
+  @IsOptional()
+  @IsInt()
+  @IsPositive()
+  categoryId?: number;
+}
+
 export class AddContentOutput extends CoreOutput {}
 
 export class AddMultipleContentsBodyDto {
@@ -32,7 +95,21 @@ export class AddMultipleContentsBodyDto {
     isArray: true,
   })
   @IsString({ each: true })
-  contentLinks: string[];
+  contentLinks!: string[];
+
+  @ApiProperty({ description: 'Category Name', required: false })
+  @IsString()
+  @IsOptional()
+  categoryName?: string;
+
+  @ApiProperty({
+    description: '부모 카테고리 id',
+    example: 1,
+    required: false,
+  })
+  @IsNumber()
+  @IsOptional()
+  parentId?: number;
 }
 
 class ContentBody extends PartialType(AddContentBodyDto) {}
@@ -61,7 +138,7 @@ export class SummarizeContentBodyDto {
 
   @ApiProperty({ description: '콘텐츠 내용', required: true })
   @IsString()
-  content: string;
+  content!: string;
 }
 
 export class SummarizeContentOutput extends CoreOutput {

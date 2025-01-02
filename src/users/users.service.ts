@@ -1,61 +1,47 @@
 import {
-  CACHE_MANAGER,
-  HttpException,
-  Inject,
   Injectable,
   NotFoundException,
   UnauthorizedException,
 } from '@nestjs/common';
-import { InjectRepository } from '@nestjs/typeorm';
-import { Content } from 'src/contents/entities/content.entity';
-import { EntityManager, Repository } from 'typeorm';
-import { EditProfileInput, EditProfileOutput } from './dtos/edit-profile.dto';
-import { LoadPersonalCategoriesOutput } from './dtos/load-personal-categories.dto';
-import {
-  LoadFavoritesOutput,
-  LoadPersonalContentsOutput,
-} from './dtos/load-personal-contents.dto';
+import { EntityManager } from 'typeorm';
+import { EditProfileDto, EditProfileOutput } from './dtos/edit-profile.dto';
 import {
   ResetPasswordInput,
   ResetPasswordOutput,
 } from './dtos/reset-password.dto';
 import { User } from './entities/user.entity';
-import { Cache } from 'cache-manager';
-import { LoadPersonalCollectionsOutput } from './dtos/load-personal-collections.dto';
-import { Collection } from 'src/collections/entities/collection.entity';
+import { DeleteAccountOutput } from './dtos/delete-account.dto';
+import { UserRepository } from './repository/user.repository';
+import { RedisService } from '../infra/redis/redis.service';
+import { PASSWORD_CODE_KEY } from '../auth/constants';
 
 @Injectable()
 export class UsersService {
   constructor(
-    @InjectRepository(User) private readonly users: Repository<User>,
-    @Inject(CACHE_MANAGER) private readonly cacheManager: Cache,
+    private readonly userRepository: UserRepository,
+    private readonly redisService: RedisService,
   ) {}
 
   async editProfile(
     userId: number,
-    { password, oldPassword, name }: EditProfileInput,
+    { password, oldPassword, name }: EditProfileDto,
     queryRunnerManager: EntityManager,
   ): Promise<EditProfileOutput> {
     try {
-      const user = await queryRunnerManager.findOne(User, {
+      const user = await queryRunnerManager.findOneOrFail(User, {
         where: { id: userId },
         select: { id: true, email: true, name: true, password: true },
       });
 
-      if (name) {
-        user.name = name;
-      }
+      user.name = name;
 
       if (password && oldPassword) {
-        if (user.checkPassword(oldPassword)) user.password = password;
+        if (await user?.checkPassword(oldPassword)) user.password = password;
         else throw new UnauthorizedException('The password is incorrect');
-      } else {
-        delete user.password;
       }
-
       await queryRunnerManager.save(user);
 
-      return;
+      return {};
     } catch (e) {
       throw e;
     }
@@ -66,11 +52,13 @@ export class UsersService {
     queryRunnerManager: EntityManager,
   ): Promise<ResetPasswordOutput> {
     try {
-      const userId: number = await this.cacheManager.get(code);
+      const userId = await this.redisService.get(
+        `${PASSWORD_CODE_KEY}:${code}`,
+      );
 
       if (userId) {
         const user = await queryRunnerManager.findOne(User, {
-          where: { id: userId },
+          where: { id: parseInt(userId) },
           select: { id: true, password: true },
         });
         if (!user) {
@@ -79,9 +67,9 @@ export class UsersService {
         user.password = password;
 
         await queryRunnerManager.save(user); // update password
-        await this.cacheManager.del(code); // delete verification value
+        await this.redisService.del(`${PASSWORD_CODE_KEY}:${code}`); // delete verification value
 
-        return;
+        return {};
       } else {
         throw new NotFoundException('Reset Code not found');
       }
@@ -90,111 +78,13 @@ export class UsersService {
     }
   }
 
-  async loadPersonalContents(
-    user: User,
-    categoryId: number,
-  ): Promise<LoadPersonalContentsOutput> {
-    try {
-      let { contents } = await this.users.findOne({
-        where: { id: user.id },
-        relations: {
-          contents: {
-            category: true,
-          },
-        },
-      });
-      if (categoryId) {
-        contents = contents.filter(
-          (content) => content?.category?.id === categoryId,
-        );
-      }
+  async deleteAccount(userId: number): Promise<DeleteAccountOutput> {
+    const { affected } = await this.userRepository.delete(userId);
 
-      console.log(contents);
-
-      return {
-        contents,
-      };
-    } catch (e) {
-      throw e;
-    }
-  }
-
-  async loadFavorites(user: User): Promise<LoadFavoritesOutput> {
-    try {
-      const { contents, collections } = await this.users.findOne({
-        where: { id: user.id },
-        relations: {
-          contents: {
-            category: true,
-          },
-          collections: {
-            // category: true,
-            contents: true,
-          },
-        },
-      });
-
-      const favoriteContents: Content[] = contents.filter(
-        (content) => content.favorite,
-      );
-
-      const favoriteCollections: Collection[] = collections.filter(
-        (collection) => collection.favorite,
-      );
-
-      return {
-        favorite_contents: favoriteContents,
-        favorite_collections: favoriteCollections,
-      };
-    } catch (e) {
-      throw e;
-    }
-  }
-
-  async loadPersonalCollections(
-    user: User,
-    categoryId: number,
-  ): Promise<LoadPersonalCollectionsOutput> {
-    try {
-      let { collections } = await this.users.findOne({
-        where: { id: user.id },
-        relations: {
-          collections: {
-            category: true,
-            contents: true,
-          },
-        },
-      });
-      if (categoryId) {
-        collections = collections.filter(
-          (collection) => collection?.category?.id === categoryId,
-        );
-      }
-
-      return {
-        collections,
-      };
-    } catch (e) {
-      throw e;
-    }
-  }
-
-  async loadPersonalCategories(
-    user: User,
-  ): Promise<LoadPersonalCategoriesOutput> {
-    try {
-      const { categories } = await this.users.findOne({
-        where: { id: user.id },
-        relations: {
-          categories: true,
-        },
-      });
-
-      return {
-        categories,
-      };
-    } catch (e) {
-      throw e;
+    if (affected === 1) {
+      return {};
+    } else {
+      throw new NotFoundException('User not found');
     }
   }
 }

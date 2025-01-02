@@ -1,5 +1,5 @@
 import { Test, TestingModule } from '@nestjs/testing';
-import { CONFIG_OPTIONS } from 'src/common/common.constants';
+import { CONFIG_OPTIONS } from '../common/common.constants';
 import { MailService } from './mail.service';
 
 describe('MailService', () => {

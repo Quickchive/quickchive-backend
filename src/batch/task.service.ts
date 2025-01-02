@@ -1,9 +1,9 @@
 import { Injectable } from '@nestjs/common';
 import { Cron } from '@nestjs/schedule';
 import { InjectRepository } from '@nestjs/typeorm';
-import { getKoreaTime, logger } from 'src/common/logger';
-import { Content } from 'src/contents/entities/content.entity';
-import { MailService } from 'src/mail/mail.service';
+import { getKoreaTime, logger } from '../common/logger';
+import { Content } from '../contents/entities/content.entity';
+import { MailService } from '../mail/mail.service';
 import { Repository } from 'typeorm';
 
 @Injectable() // Only support SINGLETON scope
@@ -35,14 +35,11 @@ export class TaskService {
       level: 'notice',
       message: "Check article's deadline : " + utcToday,
     });
-    const contents = await this.contents.find({
-      where: {
-        deadline: utcToday,
-      },
-      relations: {
-        user: true,
-      },
-    });
+    const contents = await this.contents
+      .createQueryBuilder('content')
+      .leftJoinAndSelect('content.user', 'user')
+      .where('content.reminder = :reminder', { reminder: utcToday })
+      .getMany();
     if (contents.length > 0) {
       // 알림
       for (const content of contents) {

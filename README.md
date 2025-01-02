@@ -8,7 +8,7 @@
 [Quickchive](https://quickchive.swygbro.com/)  
 [Quickchive Frontend](https://github.com/Quickchive/Quickchive-frontend)
 
-# v0.1.0
+# v1.0.0
 
 > releated with quickchive version 1.0
 
@@ -46,27 +46,21 @@
 
 ### User API
 
-| URL                         | method | Usage                | Authorization Needed |
-| --------------------------- | ------ | -------------------- | -------------------- |
-| /api/users/edit             | POST   | 프로필 수정          | O                    |
-| /api/users/reset-password   | POST   | 비밀번호 재생성      | X                    |
-| /api/users/me               | GET    | 프로필 조회          | O                    |
-| /api/users/load-contents    | GET    | 유저의 콘텐츠 조회   | O                    |
-| /api/users/load-favorites   | GET    | 유저의 즐겨찾기 조회 | O                    |
-| /api/users/load-collections | GET    | 유저의 콜렉션 조회   | O                    |
-| /api/users/load-categories  | GET    | 유저의 카테고리 조회 | O                    |
+| URL                | method | Usage                | Authorization Needed |
+| ------------------ | ------ | -------------------- | -------------------- |
+| /api/user          | PATCH  | 유저 정보 수정       | O                    |
+| /api/user/password | POST   | 비밀번호 재설정      | X                    |
+| /api/user          | GET    | 유저 정보 조회       | O                    |
+| /api/user          | DELETE | 유저 삭제(회원 탈퇴) | O                    |
 
 ### Auth API
 
-| URL                                               | method | Usage                            | Authorization Needed |
-| ------------------------------------------------- | ------ | -------------------------------- | -------------------- |
-| /api/auth/register                                | POST   | 회원가입                         | X                    |
-| /api/auth/login                                   | POST   | 이메일 로그인                    | X                    |
-| /api/auth/logout                                  | POST   | 로그아웃                         | O                    |
-| /api/auth/reissue                                 | POST   | 토큰 재발행                      | X                    |
-| /api/auth/send-verify-email/\<str:email\>         | GET    | 유저 인증을 위한 메일 전송       | X                    |
-| /api/auth/send-password-reset-email/\<str:email\> | GET    | 비밀번호 재설정을 위한 메일 전송 | X                    |
-| /api/auth/verify-email                            | GET    | 이메일 인증                      | X                    |
+| URL                                               | method | Usage                              | Authorization Needed |
+| ------------------------------------------------- | ------ | ---------------------------------- | -------------------- |
+| /api/auth/login                                   | POST   | 이메일 로그인                      | X                    |
+| /api/auth/logout                                  | POST   | 로그아웃                           | O                    |
+| /api/auth/token                                   | POST   | 토큰 재발행(access, refresh token) | X                    |
+| /api/auth/send-password-reset-email/\<str:email\> | POST   | 비밀번호 재설정을 위한 메일 전송   | X                    |
 
 ### OAuth API
 
@@ -79,32 +73,27 @@
 
 ### Content API
 
-| URL                                      | method | Usage                 | Authorization Needed |
-| ---------------------------------------- | ------ | --------------------- | -------------------- |
-| /api/contents/add                        | POST   | 콘텐츠 추가           | O                    |
-| /api/contents/addMultiple                | POST   | 다수의 콘텐츠 추가    | O                    |
-| /api/contents/update                     | POST   | 콘텐츠 정보 수정      | O                    |
-| /api/contents/favorite/\<int:contentId>  | PATCH  | 즐겨찾기 등록 및 해제 | O                    |
-| /api/contents/read/\<int:contentId>      | PATCH  | 읽었음 표시           | O                    |
-| /api/contents/delete/\<int:contentId>    | DELETE | 콘텐츠 삭제           | O                    |
-| /api/contents/summarize/\<int:contentId> | GET    | 콘텐츠 문서 요약      | O                    |
+| URL                                      | method | Usage                   | Authorization Needed |
+| ---------------------------------------- | ------ | ----------------------- | -------------------- |
+| /api/contents                            | POST   | 콘텐츠 추가             | O                    |
+| /api/contents/multiple                   | POST   | 다수의 콘텐츠 일괄 추가 | O                    |
+| /api/contents                            | PATCH  | 콘텐츠 정보 수정        | O                    |
+| /api/contents/\<int:contentsId>/favorite | PATCH  | 즐겨찾기 등록 및 해제   | O                    |
+| /api/contents/\<int:contentsId>          | DELETE | 콘텐츠 삭제             | O                    |
+| /api/contents                            | GET    | 콘텐츠 조회             | O                    |
+| /api/contents/favorite                   | GET    | 즐겨찾기 조회           | O                    |
+| /api/contents/\<int:contentId>/summarize | GET    | 콘텐츠 문서 요약        | O                    |
+| /api/contents/reminder-count             | GET    | 리마인더 개수 조회      | O                    |
 
 ### Category API
 
-| URL                                    | method | Usage         | Authorization Needed |
-| -------------------------------------- | ------ | ------------- | -------------------- |
-| /api/category/add                      | POST   | 카테고리 추가 | O                    |
-| /api/category/update                   | POST   | 카테고리 수정 | O                    |
-| /api/category/delete/\<int:categoryId> | DELETE | 카테고리 삭제 | O                    |
-
-### Collection API
-
-| URL                                           | method | Usage                 | Authorization Needed |
-| --------------------------------------------- | ------ | --------------------- | -------------------- |
-| /api/collections/add                          | POST   | 콜렉션 추가           | O                    |
-| /api/collections/update                       | POST   | 콜렉션 수정           | O                    |
-| /api/collections/favorite/\<int:collectionId> | PATCH  | 즐겨찾기 등록 및 해제 | O                    |
-| /api/collections/delete/\<int:contentId>      | DELETE | 콜렉션 삭제           | O                    |
+| URL                               | method | Usage                     | Authorization Needed |
+| --------------------------------- | ------ | ------------------------- | -------------------- |
+| /api/categories                   | POST   | 카테고리 추가             | O                    |
+| /api/categories                   | PATCH  | 카테고리 수정             | O                    |
+| /api/categories/\<int:categoryId> | DELETE | 카테고리 삭제             | O                    |
+| /api/categories                   | GET    | 카테고리 조회             | O                    |
+| /api/categories/frequent          | GET    | 자주 저장한 카테고리 조회 | O                    |
 
 ## License
 

@@ -2,7 +2,7 @@ import { Inject, Injectable } from '@nestjs/common';
 import { EmailVar, MailModuleOptions } from './mail.interface';
 import axios from 'axios';
 import * as FormData from 'form-data';
-import { CONFIG_OPTIONS } from 'src/common/common.constants';
+import { CONFIG_OPTIONS } from '../common/common.constants';
 
 @Injectable()
 export class MailService {
@@ -40,18 +40,6 @@ export class MailService {
     }
   }
 
-  sendVerificationEmail(email: string, name: string, code: string) {
-    this.sendEmail(
-      email,
-      'Verify Your Email',
-      this.options.templateNameForVerifyEmail,
-      [
-        { key: 'code', value: code },
-        { key: 'username', value: name },
-      ],
-    );
-  }
-
   sendResetPasswordEmail(email: string, name: string, code: string) {
     this.sendEmail(
       email,
@@ -64,7 +52,7 @@ export class MailService {
     );
   }
 
-  sendNotificationEmail(email: string, message) {
+  sendNotificationEmail(email: string, message: string) {
     this.sendEmail(
       email,
       'Notification',

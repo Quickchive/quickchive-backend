@@ -1,18 +1,16 @@
 // collection entity
-
-import { Injectable } from '@nestjs/common';
 import { ApiProperty } from '@nestjs/swagger';
-import { CoreEntity } from 'src/common/entities/core.entity';
+import { CoreEntity } from '../../common/entities/core.entity';
 import { NestedContent } from './nested-content.entity';
-import { User } from 'src/users/entities/user.entity';
+import { User } from '../../users/entities/user.entity';
 import { Column, Entity, ManyToOne, OneToMany, RelationId } from 'typeorm';
-import { Category } from 'src/contents/entities/category.entity';
+import { Category } from '../../categories/category.entity';
 
 @Entity()
 export class Collection extends CoreEntity {
   @ApiProperty({ description: 'Collection Title' })
   @Column()
-  title: string;
+  title!: string;
 
   @ApiProperty({
     description: 'Collection Comment',
@@ -48,14 +46,14 @@ export class Collection extends CoreEntity {
 
   @ApiProperty({ description: 'Favorite' })
   @Column({ default: false })
-  favorite: boolean;
+  favorite!: boolean;
 
   @ManyToOne((type) => User, (user) => user.collections, {
     onDelete: 'CASCADE',
   })
-  user: User;
+  user!: User;
 
   @ApiProperty({ description: 'Owner ID' })
   @RelationId((collection: Collection) => collection.user)
-  userId: number;
+  userId!: number;
 }

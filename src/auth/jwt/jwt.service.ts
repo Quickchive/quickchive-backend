@@ -1,22 +1,27 @@
 import { Injectable } from '@nestjs/common';
 import { JwtService, JwtVerifyOptions } from '@nestjs/jwt';
-import { refreshTokenExpiration } from '../auth.module';
-import { ONEMONTH, Payload, TWOHOUR } from './jwt.payload';
+import { ONEDAY, ONEYEAR, Payload } from './jwt.payload';
 
 @Injectable()
 export class customJwtService {
   constructor(private readonly jwtService: JwtService) {}
 
   sign(payload: Payload): string {
-    return this.jwtService.sign(payload);
+    return this.jwtService.sign(payload, {
+      expiresIn: payload.period,
+    });
   }
 
   verify(token: string, options?: JwtVerifyOptions): Payload {
-    return this.jwtService.verify(token, { secret: options.secret });
+    return this.jwtService.verify(token, { secret: options?.secret });
   }
 
-  createPayload(email, autoLogin, sub): Payload {
-    const period: string = autoLogin ? ONEMONTH : TWOHOUR;
+  decode(token: string): Payload {
+    return this.jwtService.decode(token) as Payload;
+  }
+
+  createPayload(email: string, autoLogin: boolean, sub: number): Payload {
+    const period: string = autoLogin ? ONEYEAR : ONEDAY;
 
     const payload: Payload = { email, period, sub };
 
@@ -24,8 +29,7 @@ export class customJwtService {
   }
 
   generateRefreshToken(payload: Payload): string {
-    const expiresIn: string =
-      payload.period === ONEMONTH ? refreshTokenExpiration : TWOHOUR;
+    const expiresIn: string = payload.period === ONEYEAR ? ONEYEAR : ONEDAY;
     return this.jwtService.sign(payload, {
       secret: process.env.JWT_REFRESH_TOKEN_PRIVATE_KEY,
       expiresIn,

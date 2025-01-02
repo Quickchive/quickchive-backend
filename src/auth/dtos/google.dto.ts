@@ -1,16 +1,21 @@
 import { ApiProperty } from '@nestjs/swagger';
-import { IsEmail, IsString } from 'class-validator';
+import { IsEmail, IsOptional, IsString } from 'class-validator';
 
 export class googleUserInfo {
   @ApiProperty({ description: 'google user email' })
   @IsEmail()
-  email: string;
+  email!: string;
 
   @ApiProperty({ description: 'google user name' })
   @IsString()
-  name: string;
+  name!: string;
+
+  @ApiProperty({ description: 'google user profile image' })
+  @IsString()
+  @IsOptional()
+  picture?: string;
 
   @ApiProperty({ description: 'google user access token' })
   @IsString()
-  accessToken: string;
+  accessToken!: string;
 }

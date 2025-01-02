@@ -1,19 +1,22 @@
-import { CacheModule, Module } from '@nestjs/common';
+import { Module } from '@nestjs/common';
 import { JwtModule } from '@nestjs/jwt';
 import { PassportModule } from '@nestjs/passport';
-import { TypeOrmModule } from '@nestjs/typeorm';
-import { User } from 'src/users/entities/user.entity';
-import { AuthController, OauthController } from './auth.controller';
-import { AuthService, OauthService } from './auth.service';
+import { AuthController } from './auth.controller';
+import { OAuthController } from './oauth.controller';
+import { AuthService } from './auth.service';
 import { JwtStrategy } from './jwt/jwt.strategy';
-import * as redisStore from 'cache-manager-redis-store';
 import { GoogleStrategy } from './passport/google/google.strategy';
 import { customJwtService } from './jwt/jwt.service';
-import { ONEMONTH } from './jwt/jwt.payload';
+import { TWOHOUR } from './jwt/jwt.payload';
+import { UsersModule } from '../users/users.module';
+import { OAuthUtil } from './util/oauth.util';
+import { ContentsModule } from '../contents/contents.module';
+import { OAuthService } from './oauth.service';
+import { CategoryModule } from '../categories/category.module';
+import { RedisModule } from '../infra/redis/redis.module';
 
-const accessTokenExpiration = '10m';
-export const refreshTokenExpiration = ONEMONTH;
-export const refreshTokenExpirationInCache = 60 * 60 * 24 * 30;
+const accessTokenExpiration = TWOHOUR;
+export const refreshTokenExpirationInCache = 60 * 60 * 24 * 365; // 1 year
 export const refreshTokenExpirationInCacheShortVersion = 60 * 60 * 24 * 2;
 export const verifyEmailExpiration = 60 * 5;
 
@@ -26,18 +29,17 @@ export const verifyEmailExpiration = 60 * 5;
         signOptions: { expiresIn: accessTokenExpiration },
       }),
     }),
-    TypeOrmModule.forFeature([User]),
-    CacheModule.register({
-      store: redisStore,
-      host: process.env.REDIS_HOST,
-      port: process.env.REDIS_PORT,
-    }),
+    UsersModule,
+    ContentsModule,
+    CategoryModule,
+    RedisModule,
   ],
-  controllers: [AuthController, OauthController],
+  controllers: [AuthController, OAuthController],
   providers: [
     AuthService,
     JwtStrategy,
-    OauthService,
+    OAuthService,
+    OAuthUtil,
     GoogleStrategy,
     customJwtService,
   ],

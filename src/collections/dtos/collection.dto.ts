@@ -66,7 +66,7 @@ export class UpdateCollectionBodyDto extends IntersectionType(
     required: true,
   })
   @IsNumber()
-  collectionId: number;
+  collectionId!: number;
 }
 export class UpdateCollectionOutput extends CoreOutput {}
 

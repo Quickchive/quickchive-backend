@@ -23,7 +23,7 @@ jobs:
         uses: docker/build-push-action@v3.1.1
         with:
           context: .
-          tags: hou27/test_quickchive_backend:latest
+          tags: quickarchive/quickarchive_api:test
           push: true
   job2:
     needs: job1

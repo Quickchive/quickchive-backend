@@ -25,7 +25,7 @@ jobs:
         uses: docker/build-push-action@v3.1.1
         with:
           context: .
-          tags: hou27/quickchive_backend:latest
+          tags: quickarchive/quickarchive_api:main
           # build on feature branches, push only on develop branch
           push: true
   job2:
@@ -37,8 +37,8 @@ jobs:
       - name: executing remote ssh commands using password
         uses: appleboy/ssh-action@master
         with:
-          host: ${{ secrets.HOST }}
+          host: ${{ secrets.PROD_HOST }}
           username: ubuntu
-          key: ${{ secrets.KEY_PAIR }}
+          key: ${{ secrets.PROD_KEY_PAIR }}
           script: |
-            sh /home/ubuntu/actions-runner/deploy.sh
+            sh /home/ec2-user/deploy.sh

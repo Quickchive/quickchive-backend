@@ -509,6 +509,8 @@ Given the following categories, please provide the most suitable category for th
         )
         .join('\n')}</categories>
 
+If there's no suitable category, must provide reply with "None".
+
 Present your reply options in JSON format below.
 \`\`\`json
 {

@@ -10,6 +10,7 @@ import { CategoryService } from '../category.service';
 import { AuthUser } from '../../auth/auth-user.decorator';
 import { User } from '../../users/entities/user.entity';
 import { RecommendedCategoryResponseDto } from './dto/recommended-category-response.dto';
+import { AutoCategorizeRequest } from '../dtos/auto-categorize.dto';
 
 @Controller('v2/categories')
 @ApiTags('Category v2')
@@ -29,7 +30,10 @@ export class CategoryV2Controller {
     type: RecommendedCategoryResponseDto,
   })
   @Get('auto-categorize')
-  async autoCategorize(@AuthUser() user: User, @Query('link') link: string) {
+  async autoCategorize(
+    @AuthUser() user: User,
+    @Query() { link }: AutoCategorizeRequest,
+  ) {
     const { category } = await this.categoryService.autoCategorizeWithId(
       user,
       link,

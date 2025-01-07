@@ -1,9 +1,10 @@
 import {
   BadRequestException,
+  ForbiddenException,
   InternalServerErrorException,
 } from '@nestjs/common';
 import * as cheerio from 'cheerio';
-import axios, { AxiosResponse } from 'axios';
+import axios, { AxiosError, AxiosResponse } from 'axios';
 
 interface OGCrawlerOptions {
   timeout?: number;
@@ -71,11 +72,10 @@ class OGCrawler {
 
       return this.parse(response.data);
     } catch (error) {
-      if (error instanceof Error) {
-        throw new InternalServerErrorException(
-          `Failed to fetch URL: ${error.message}`,
-        );
+      if (error instanceof AxiosError && error.response?.status === 403) {
+        throw new ForbiddenException('og 데이터를 가져올 수 없는 링크입니다.');
       }
+
       throw new InternalServerErrorException('An unknown error occurred');
     }
   }

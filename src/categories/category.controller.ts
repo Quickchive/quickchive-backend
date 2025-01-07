@@ -41,6 +41,7 @@ import {
 } from './dtos/load-personal-categories.dto';
 import { User } from '../users/entities/user.entity';
 import { CategoryService } from './category.service';
+import { AutoCategorizeRequest } from './dtos/auto-categorize.dto';
 
 @Controller('categories')
 @ApiTags('Category')
@@ -167,7 +168,7 @@ export class CategoryController {
   @Get('auto-categorize')
   async autoCategorize(
     @AuthUser() user: User,
-    @Query('link') link: string,
+    @Query() { link }: AutoCategorizeRequest,
   ): Promise<AutoCategorizeOutput> {
     return this.categoryService.autoCategorize(user, link);
   }

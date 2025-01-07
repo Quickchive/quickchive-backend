@@ -32,13 +32,13 @@ class OGCrawler {
   }
 
   public async fetch(url: string): Promise<any> {
-    try {
-      // YouTube 비디오 ID 추출
-      const videoId = this.extractVideoId(url);
-      if (videoId) {
-        return await this.fetchYouTubeData(videoId);
-      }
+    // YouTube 비디오 ID 추출
+    const videoId = this.extractVideoId(url);
+    if (videoId) {
+      return await this.fetchYouTubeData(videoId);
+    }
 
+    try {
       const response: AxiosResponse = await axios({
         method: 'get',
         url,

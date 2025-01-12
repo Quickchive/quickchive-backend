@@ -16,7 +16,7 @@ async function bootstrap() {
   app.useGlobalPipes(new ValidationPipe());
   app.setGlobalPrefix('api');
 
-  if (process.env.NODE_ENV === 'dev' || process.env.NODE_ENV === 'local') {
+  if (process.env.NODE_ENV !== 'prod') {
     const config = new DocumentBuilder()
       .setTitle('Quickchive')
       .setDescription('The API description')

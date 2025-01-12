@@ -511,20 +511,23 @@ export class CategoryService {
     const content = await getLinkContent(link);
 
     const question = `You are a machine tasked with auto-categorizing articles based on information obtained through web scraping.
-    You can only answer a single category name. Here is the article's information:
-    <title>${title && `title: "${title.trim()}"`}</title>
-    <content>${
+
+You can only answer a single category name. Here is the article's information:
+<title>${title && `title: "${title.trim()}"`}</title>
+<content>${
       content && `content: "${content.replace(/\s/g, '').slice(0, 300).trim()}"`
     }</content>
-    <description>${
+<description>${
       description && `description: "${description.trim()}"`
     }</description>
-    <siteName>${siteName && `site name: "${siteName.trim()}"`}</siteName>
-    
-    Given the following categories, please provide the most suitable category for the article.
-    - The deeper the category depth, the more specific the category is.
-    - If the 1, 2, and 3 depth categories are equally worthy of saving links, then the deeper categories should be recommended more.
-    <categories>${categories
+<siteName>${siteName && `site name: "${siteName.trim()}"`}</siteName>
+
+Given the categories below, please provide the most suitable category for the article following the rules.
+[RULES]
+- The deeper the category depth, the more specific the category is.
+- If the 1, 2, and 3 depth categories are equally worthy of saving links, then the deeper categories should be recommended more.
+- If there's no suitable category, must provide reply with "None".
+<categories>${categories
       .map((category) =>
         JSON.stringify({
           id: category.id,
@@ -533,16 +536,15 @@ export class CategoryService {
         }),
       )
       .join('\n')}</categories>
-      
-      If there's no suitable category, must provide reply with "None".
-      
-      Present your reply options in JSON format below.
-      \`\`\`json
-      {
-        "id": id,
-        "name": "category name"
-        }
-        \`\`\`
+  
+
+Present your reply options in JSON format below.
+\`\`\`json
+{
+  "id": id,
+  "name": "category name"
+}
+\`\`\`
         `;
 
     try {

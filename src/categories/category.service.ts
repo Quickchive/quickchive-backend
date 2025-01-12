@@ -477,10 +477,23 @@ export class CategoryService {
 
   async autoCategorizeWithId(user: User, link: string) {
     try {
-      const categories = await this.categoryRepository.findByUserId(user.id);
-      if (categories.length === 0) {
+      const _categories = await this.categoryRepository.findByUserId(user.id);
+      if (_categories.length === 0) {
         throw new NotFoundException('Categories not found');
       }
+
+      const categories = _categories.map((category) => ({
+        ...category,
+        depth: 0,
+      }));
+
+      categories.map((category, index) => {
+        categories.slice(index + 1).map((subCategory) => {
+          if (subCategory.parentId && subCategory.parentId === category.id) {
+            subCategory.depth = category.depth + 1;
+          }
+        });
+      });
 
       const { title, siteName, description } = await getLinkInfo(link);
 
@@ -497,15 +510,17 @@ You can only answer a single category name. Here is the article's information:
         description && `description: "${description.trim()}"`
       }</description>
 <siteName>${siteName && `site name: "${siteName.trim()}"`}</siteName>
-Please provide the most suitable category among the following. Here is Category options: [${[
-        ...categories,
-        'None',
-      ].join(', ')}]
 
 Given the following categories, please provide the most suitable category for the article.
+- The deeper the category depth, the more specific the category is.
+- If the 1, 2, and 3 depth categories are equally worthy of saving links, then the deeper categories should be recommended more.
 <categories>${categories
         .map((category) =>
-          JSON.stringify({ id: category.id, name: category.name }),
+          JSON.stringify({
+            id: category.id,
+            name: category.name,
+            depth: category.depth,
+          }),
         )
         .join('\n')}</categories>
 

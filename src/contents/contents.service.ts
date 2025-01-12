@@ -66,13 +66,22 @@ export class ContentsService {
 
     categoryId = categoryId ? categoryId : parentId;
 
-    const {
-      title: linkTitle,
-      siteName,
-      description,
-      coverImg,
-    } = await getLinkInfo(link);
-    title = title ? title : linkTitle;
+    let siteName: string | undefined;
+    let description: string | undefined;
+    let coverImg: string | undefined;
+
+    try {
+      const {
+        title: linkTitle,
+        siteName: _siteName,
+        description: _description,
+        coverImg: _coverImg,
+      } = await getLinkInfo(link);
+      title = title ? title : linkTitle;
+      siteName = _siteName;
+      description = _description;
+      coverImg = _coverImg;
+    } catch (e) {}
 
     const content = new Content();
 
@@ -366,11 +375,11 @@ export class ContentsService {
       );
 
       // 크롤링 후 처리
-      let summary: string = '';
+      let summary = '';
       if (!document) {
         throw new BadRequestException('Document not found.');
       } else if (document.length > 1900) {
-        let sliceIndex: number = 0;
+        let sliceIndex = 0;
         for (let i = 0; i < Math.ceil(document.length / 1900); i++) {
           const slicedSummary = await this.summaryService.summaryContent({
             title: content?.title,
@@ -403,10 +412,10 @@ export class ContentsService {
     content: document,
   }: SummarizeContentBodyDto): Promise<SummarizeContentOutput> {
     try {
-      let summary: string = '';
+      let summary = '';
 
       if (document.length > 1900) {
-        let sliceIndex: number = 0;
+        let sliceIndex = 0;
         for (let i = 0; i < Math.ceil(document.length / 1900); i++) {
           const slicedSummary = await this.summaryService.summaryContent({
             title,

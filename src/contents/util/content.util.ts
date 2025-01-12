@@ -72,8 +72,16 @@ class OGCrawler {
 
       return this.parse(response.data);
     } catch (error) {
-      if (error instanceof AxiosError && error.response?.status === 403) {
-        throw new ForbiddenException('og 데이터를 가져올 수 없는 링크입니다.');
+      if (error instanceof AxiosError) {
+        if (
+          error?.response?.status === 400 ||
+          error.response?.status === 403 ||
+          error.response?.status === 404
+        ) {
+          throw new ForbiddenException(
+            'og 데이터를 가져올 수 없는 링크입니다.',
+          );
+        }
       }
 
       throw new InternalServerErrorException('An unknown error occurred');

@@ -84,7 +84,7 @@ class OGCrawler {
         }
       }
 
-      throw new InternalServerErrorException('An unknown error occurred');
+      throw new InternalServerErrorException(`An unknown error occurred`);
     }
   }
 

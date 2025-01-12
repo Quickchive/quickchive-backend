@@ -104,6 +104,12 @@ export class AddMultipleContentsBodyDto {
   @IsOptional()
   categoryName?: string;
 
+  @ApiProperty({ description: '카테고리 id', required: false })
+  @IsInt()
+  @IsPositive()
+  @IsOptional()
+  categoryId?: number;
+
   @ApiProperty({
     description: '부모 카테고리 id',
     example: 1,

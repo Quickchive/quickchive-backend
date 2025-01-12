@@ -131,7 +131,7 @@ export class ContentsService {
     }
 
     if (contentLinks.length > 0) {
-      let category: Category | undefined = undefined;
+      let category: Category | null = null;
       if (categoryName) {
         category = await this.categoryRepository.getOrCreateCategory(
           categoryName,
@@ -183,6 +183,7 @@ export class ContentsService {
       comment,
       reminder,
       favorite,
+      categoryId,
       categoryName,
       parentId,
     }: UpdateContentBodyDto,
@@ -210,30 +211,37 @@ export class ContentsService {
       throw new NotFoundException('Content not found.');
     }
 
-    let category: Category | undefined = undefined;
-    if (categoryName) {
-      category = await this.categoryRepository.getOrCreateCategory(
-        categoryName,
-        parentId,
-        userInDb,
+    if (categoryId !== undefined) {
+      const category =
+        categoryId !== null
+          ? await this.categoryRepository.findById(categoryId, entityManager)
+          : null;
+
+      if (category) {
+        await checkContentDuplicateAndAddCategorySaveLog(
+          link,
+          category,
+          userInDb,
+        );
+      }
+
+      await this.contentRepository.updateOne(
+        {
+          id: content.id,
+          ...newContentObj,
+          category,
+        },
         entityManager,
       );
-
-      await checkContentDuplicateAndAddCategorySaveLog(
-        link,
-        category,
-        userInDb,
+    } else {
+      await this.contentRepository.updateOne(
+        {
+          id: content.id,
+          ...newContentObj,
+        },
+        entityManager,
       );
     }
-
-    await this.contentRepository.updateOne(
-      {
-        id: content.id,
-        ...newContentObj,
-        category,
-      },
-      entityManager,
-    );
 
     return {};
   }

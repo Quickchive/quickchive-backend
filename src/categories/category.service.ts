@@ -193,6 +193,18 @@ export class CategoryService {
           }
 
           category.parentId = parentId;
+        } else {
+          // 유저 당 대 카테고리 10개 제한
+          const isOverCategoryLimit =
+            await this.categoryRepository.isOverCategoryLimit(user);
+
+          if (isOverCategoryLimit) {
+            throw new ConflictException(
+              "Root categories can't be more than 10 in one user",
+            );
+          }
+
+          category.parentId = null;
         }
 
         await queryRunnerManager.save(category);
@@ -425,7 +437,7 @@ export class CategoryService {
 
       const content = await getLinkContent(link);
 
-      let questionLines = [
+      const questionLines = [
         "You are a machine tasked with auto-categorizing articles based on information obtained through web scraping. You can only answer a single category name. Here is the article's information:",
       ];
 
@@ -570,7 +582,7 @@ Present your reply options in JSON format below.
        */
       const content = await getLinkContent(link);
 
-      let questionLines = [
+      const questionLines = [
         "You are a machine tasked with auto-categorizing articles based on information obtained through web scraping. You can only answer a single category name. Here is the article's information:",
       ];
 

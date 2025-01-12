@@ -14,6 +14,7 @@ import {
   IsOptional,
   IsPositive,
   IsString,
+  IsUrl,
 } from 'class-validator';
 import { CoreOutput } from '../../common/dtos/output.dto';
 import { Content } from '../entities/content.entity';
@@ -22,6 +23,7 @@ import { Type } from 'class-transformer';
 export class AddContentBodyDto {
   @ApiProperty({ example: 'ex.com', description: '아티클 주소' })
   @IsString()
+  @IsUrl({}, { message: '아티클 주소가 올바르지 않습니다.' })
   link: string;
 
   @ApiPropertyOptional({

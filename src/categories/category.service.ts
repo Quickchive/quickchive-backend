@@ -241,7 +241,7 @@ export class CategoryService {
         ? await queryRunnerManager.findOneOrFail(Category, {
             where: { id: category.parentId },
           })
-        : undefined;
+        : null;
 
       // find children categories
       const childrenCategories = await queryRunnerManager.find(Category, {
@@ -522,7 +522,7 @@ You can only answer a single category name. Here is the article's information:
     }</description>
 <siteName>${siteName && `site name: "${siteName.trim()}"`}</siteName>
 
-Given the categories below, please provide the most suitable category for the article following the rules.
+Given the categories below, please provide suitable category for the article following the rules.
 [RULES]
 - The deeper the category depth, the more specific the category is.
 - If the 1, 2, and 3 depth categories are equally worthy of saving links, then the deeper categories should be recommended more.

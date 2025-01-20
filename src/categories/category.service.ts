@@ -549,6 +549,7 @@ Present your reply options in JSON format below.
 
     try {
       const response = await this.openaiService.createChatCompletion({
+        model: 'o1-mini',
         question,
         temperature: 0,
         responseType: 'json',

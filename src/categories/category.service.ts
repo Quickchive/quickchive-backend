@@ -551,8 +551,8 @@ Present your reply options in JSON format below.
       const response = await this.openaiService.createChatCompletion({
         model: 'o1-mini',
         question,
-        temperature: 0,
-        responseType: 'json',
+        temperature: 1,
+        // responseType: { type: 'json_object' },
       });
 
       const categoryStr = response.choices[0].message?.content;

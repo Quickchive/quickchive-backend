@@ -1,8 +1,15 @@
-import { ResponseType } from 'axios';
+import {
+  ResponseFormatText,
+  ResponseFormatJSONObject,
+  ResponseFormatJSONSchema,
+} from 'openai/resources';
 
 export class CreateCompletionBodyDto {
   question!: string;
   model?: string;
   temperature?: number;
-  responseType?: ResponseType;
+  responseType?:
+    | ResponseFormatText
+    | ResponseFormatJSONObject
+    | ResponseFormatJSONSchema;
 }

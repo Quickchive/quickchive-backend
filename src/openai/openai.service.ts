@@ -1,18 +1,18 @@
 import { Injectable } from '@nestjs/common';
 import { ConfigService } from '@nestjs/config';
-import { Configuration, CreateChatCompletionResponse, OpenAIApi } from 'openai';
+
 import { CreateCompletionBodyDto } from './dto/create-completion.dto';
+import OpenAI from 'openai';
+import { ChatCompletion } from 'openai/resources';
 
 @Injectable()
 export class OpenaiService {
-  private readonly openAIApi: OpenAIApi;
+  private readonly openAIApi: OpenAI;
   constructor(private readonly configService: ConfigService) {
-    this.openAIApi = new OpenAIApi(
-      new Configuration({
-        organization: this.configService.get('OPENAI_ORGANIZATION_ID'),
-        apiKey: this.configService.get('OPENAI_API_KEY'),
-      }),
-    );
+    this.openAIApi = new OpenAI({
+      organization: this.configService.get('OPENAI_ORGANIZATION_ID'),
+      apiKey: this.configService.get('OPENAI_API_KEY'),
+    });
   }
 
   async createChatCompletion({
@@ -20,25 +20,21 @@ export class OpenaiService {
     model,
     temperature,
     responseType,
-  }: CreateCompletionBodyDto): Promise<CreateChatCompletionResponse> {
+  }: CreateCompletionBodyDto): Promise<ChatCompletion> {
     try {
-      const { data } = await this.openAIApi.createChatCompletion(
-        {
-          model: model || 'gpt-4o-mini',
-          messages: [
-            {
-              role: 'user',
-              content: question,
-            },
-          ],
-          temperature: temperature || 0.1,
-        },
-        {
-          ...(responseType && { responseType }),
-        },
-      );
+      const response = await this.openAIApi.chat.completions.create({
+        model: model || 'gpt-4o-mini',
+        messages: [
+          {
+            role: 'user',
+            content: question,
+          },
+        ],
+        temperature: temperature || 0.1,
+        ...(responseType && { response_format: responseType }),
+      });
 
-      return data;
+      return response;
     } catch (e) {
       throw e;
     }

@@ -549,10 +549,10 @@ Present your reply options in JSON format below.
 
     try {
       const response = await this.openaiService.createChatCompletion({
-        model: 'o1-mini',
+        model: 'gpt-4o-mini',
         question,
-        temperature: 1,
-        // responseType: { type: 'json_object' },
+        temperature: 0,
+        responseType: { type: 'json_object' },
       });
 
       const categoryStr = response.choices[0].message?.content;

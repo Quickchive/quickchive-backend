@@ -8,10 +8,6 @@ import {
 import { ErrorOutput } from '../common/dtos/output.dto';
 import { ContentsService } from '../contents/contents.service';
 import {
-  AutoCategorizeBodyDto,
-  AutoCategorizeOutput,
-} from '../categories/dtos/category.dto';
-import {
   SummarizeContentOutput,
   SummarizeContentBodyDto,
 } from '../contents/dtos/content.dto';
@@ -42,16 +38,5 @@ export class TestController {
     @Body() content: SummarizeContentBodyDto,
   ): Promise<SummarizeContentOutput> {
     return this.contentsService.testSummarizeContent(content);
-  }
-
-  @ApiOperation({
-    summary: '아티클 카테고리 자동 지정 (테스트용)',
-    description: 'url을 넘기면 적절한 아티클 카테고리를 반환하는 메서드',
-  })
-  @Post('auto-categorize')
-  async autoCategorize(
-    @Body() autoCategorizeBody: AutoCategorizeBodyDto,
-  ): Promise<AutoCategorizeOutput> {
-    return this.categoryService.autoCategorizeForTest(autoCategorizeBody);
   }
 }

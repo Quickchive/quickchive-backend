@@ -1,4 +1,10 @@
-import { DataSource, EntityManager, Repository } from 'typeorm';
+import {
+  DataSource,
+  DeepPartial,
+  EntityManager,
+  FindOneOptions,
+  Repository,
+} from 'typeorm';
 import {
   ConflictException,
   Injectable,
@@ -7,27 +13,42 @@ import {
 import { Category } from './category.entity';
 import { User } from '../users/entities/user.entity';
 import { generateSlug } from './utils/category.util';
+import { ClsService } from 'nestjs-cls';
+import { TRANSACTION_MANAGER } from '../common/aop/transaction-manager';
 
 @Injectable()
-export class CategoryRepository extends Repository<Category> {
-  constructor(private readonly dataSource: DataSource) {
-    super(Category, dataSource.createEntityManager());
+export class CategoryRepository {
+  get manager(): EntityManager {
+    return this.cls.get(TRANSACTION_MANAGER) || this.entityManager;
   }
+
+  constructor(
+    private readonly cls: ClsService,
+    private readonly entityManager: EntityManager,
+  ) {}
 
   async findById(
     id: number,
     entityManager?: EntityManager,
   ): Promise<Category | null> {
-    return entityManager
-      ? entityManager.findOneBy(Category, { id })
-      : this.findOneBy({ id });
+    console.log('findById');
+    return this.manager.findOneBy(Category, { id });
+  }
+
+  async save<T extends DeepPartial<Category>>(
+    category: T,
+    entityManager?: EntityManager,
+  ): Promise<T> {
+    return this.manager.save(Category, category);
   }
 
   async createOne(
     category: Category & { parentId?: number | null },
     entityManager?: EntityManager,
   ): Promise<Category> {
-    return entityManager ? entityManager?.save(category) : this.save(category);
+    return entityManager
+      ? entityManager?.save(category)
+      : this.manager.save(category);
   }
 
   /**
@@ -103,7 +124,8 @@ export class CategoryRepository extends Repository<Category> {
    * @returns boolean
    */
   async isOverCategoryLimit(user: User): Promise<boolean> {
-    const categoryCount = await this.createQueryBuilder('category')
+    const categoryCount = await this.manager
+      .createQueryBuilder(Category, 'category')
       .where('category.userId = :id', { id: user.id })
       .andWhere('category.parentId IS NULL')
       .getCount();
@@ -114,7 +136,8 @@ export class CategoryRepository extends Repository<Category> {
   async createDefaultCategories(user: User): Promise<void> {
     const defaultCategories = ['꿀팁', '쇼핑'];
 
-    await this.createQueryBuilder('category')
+    await this.manager
+      .createQueryBuilder(Category, 'category')
       .insert()
       .into(Category)
       .values(
@@ -128,7 +151,7 @@ export class CategoryRepository extends Repository<Category> {
   }
 
   async findWithContents(userId: number): Promise<Category[]> {
-    return this.find({
+    return this.manager.find(Category, {
       where: {
         user: { id: userId },
       },
@@ -137,10 +160,14 @@ export class CategoryRepository extends Repository<Category> {
   }
 
   async findByUserId(userId: number): Promise<Category[]> {
-    return await this.find({
+    return await this.manager.find(Category, {
       where: {
         user: { id: userId },
       },
     });
+  }
+
+  async findOne(options: FindOneOptions<Category>) {
+    return this.manager.findOne(Category, options);
   }
 }

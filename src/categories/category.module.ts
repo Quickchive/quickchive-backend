@@ -9,6 +9,7 @@ import { CategoryController } from './category.controller';
 import { ContentRepository } from '../contents/repository/content.repository';
 import { CategoryRepository } from './category.repository';
 import { CategoryV2Controller } from './v2/category.v2.controller';
+import { ClsModule } from 'nestjs-cls';
 
 @Module({
   imports: [
@@ -16,6 +17,7 @@ import { CategoryV2Controller } from './v2/category.v2.controller';
     ContentsModule,
     OpenaiModule,
     UsersModule,
+    ClsModule,
   ],
   controllers: [CategoryController, CategoryV2Controller],
   providers: [CategoryService, ContentRepository, CategoryRepository],

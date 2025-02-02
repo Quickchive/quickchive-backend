@@ -49,7 +49,6 @@ export class CategoryService {
   async addCategory(
     user: User,
     { categoryName, iconName, parentId }: AddCategoryBodyDto,
-    entityManager?: EntityManager,
   ): Promise<AddCategoryOutput> {
     try {
       const userInDb = await this.userRepository.findOneWithCategories(user.id);
@@ -67,7 +66,6 @@ export class CategoryService {
         for (let i = 0; i < 2; i++) {
           parentCategory = await this.categoryRepository.findById(
             currentParentId,
-            entityManager,
           );
           if (i == 1 && parentCategory?.parentId !== null) {
             throw new ConflictException('Category depth should be 3');
@@ -119,8 +117,8 @@ export class CategoryService {
           user: userInDb,
         });
 
-        userInDb.categories?.push(category);
-        await entityManager!.save(userInDb);
+        userInDb.categories?.push(category as Category);
+        // await entityManager!.save(userInDb);
       }
 
       return {};

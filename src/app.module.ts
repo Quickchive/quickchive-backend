@@ -16,6 +16,7 @@ import { OpenaiModule } from './openai/openai.module';
 import { AppController } from './app.controller';
 import { AopModule } from './common/aop/aop.module';
 import { InfraModule } from './infra/infra.module';
+import { ClsModule } from 'nestjs-cls';
 
 @Module({
   imports: [
@@ -25,10 +26,10 @@ import { InfraModule } from './infra/infra.module';
         process.env.NODE_ENV === 'dev'
           ? '.env.dev'
           : process.env.NODE_ENV === 'prod'
-          ? '.env.prod'
-          : process.env.NODE_ENV === 'local'
-          ? '.env.local'
-          : '.env.test',
+            ? '.env.prod'
+            : process.env.NODE_ENV === 'local'
+              ? '.env.local'
+              : '.env.test',
       validationSchema: Joi.object({
         NODE_ENV: Joi.string().valid('dev', 'prod', 'local', 'test').required(),
         DB_HOST: Joi.string(),
@@ -69,6 +70,11 @@ import { InfraModule } from './infra/infra.module';
       ): Promise<DataSource> => {
         if (!options) throw new Error('options is undefined');
         return await new DataSource(options).initialize();
+      },
+    }),
+    ClsModule.forRoot({
+      middleware: {
+        mount: true,
       },
     }),
     UsersModule,

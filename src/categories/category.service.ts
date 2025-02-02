@@ -414,79 +414,6 @@ export class CategoryService {
     }
   }
 
-  async autoCategorize(
-    user: User,
-    link: string,
-  ): Promise<AutoCategorizeOutput> {
-    try {
-      const userInDb = await this.userRepository.findOneWithCategories(user.id);
-      if (!userInDb) {
-        throw new NotFoundException('User not found');
-      }
-
-      if (!userInDb.categories) {
-        throw new NotFoundException('Categories not found');
-      }
-      const categories: string[] = [];
-      userInDb.categories.forEach((category) => {
-        if (!category.parentId) {
-          categories.push(category.name);
-        }
-      });
-      const { title, siteName, description } = await getLinkInfo(link);
-
-      const content = await getLinkContent(link);
-
-      const questionLines = [
-        "You are a machine tasked with auto-categorizing articles based on information obtained through web scraping. You can only answer a single category name. Here is the article's information:",
-      ];
-
-      if (title) {
-        questionLines.push(
-          `The article in question is titled "${title.trim()}"`,
-        );
-      }
-
-      if (content) {
-        const contentLength = content.length / 2;
-        questionLines.push(
-          `The 150 characters of the article is, "${content
-            .replace(/\s/g, '')
-            .slice(contentLength - 150, contentLength + 150)
-            .trim()}"`,
-        );
-      }
-
-      if (description) {
-        questionLines.push(`The description is ${description.trim()}"`);
-      }
-
-      if (siteName) {
-        questionLines.push(`The site's name is "${siteName.trim()}"`);
-      }
-
-      // Add the category options to the end of the list
-      questionLines.push(
-        `Please provide the most suitable category among the following. Here is Category options: [${categories.join(
-          ', ',
-        )}, None]`,
-      );
-
-      // Join all lines together into a single string
-      const question = questionLines.join(' ');
-      console.log(question);
-
-      const response = await this.openaiService.createChatCompletion({
-        question,
-        temperature: 0,
-      });
-
-      return { category: response.choices[0].message?.content || 'None' };
-    } catch (e) {
-      throw e;
-    }
-  }
-
   async autoCategorizeWithId(user: User, link: string) {
     const _categories = await this.categoryRepository.findByUserId(user.id);
     if (_categories.length === 0) {
@@ -539,6 +466,7 @@ Given the categories below, please provide suitable category for the article fol
   
 
 Present your reply options in JSON format below.
+- If there's no suitable category, must provide reply with "None".
 \`\`\`json
 {
   "id": id,
@@ -565,68 +493,6 @@ Present your reply options in JSON format below.
       }
 
       throw new InternalServerErrorException('Failed to categorize');
-    } catch (e) {
-      throw e;
-    }
-  }
-
-  async autoCategorizeForTest(
-    autoCategorizeBody: AutoCategorizeBodyDto,
-  ): Promise<AutoCategorizeOutput> {
-    try {
-      const { link, categories } = autoCategorizeBody;
-      const { title, siteName, description } = await getLinkInfo(link);
-
-      /**
-       * TODO: 본문 크롤링 개선 필요
-       * 현재 p 태그만 크롤링하는데, 불필요한 내용이 포함되는 경우가 많음
-       * 그러나 하나하나 예외 처리하는 방법을 제외하곤 방법을 못 찾은 상황
-       */
-      const content = await getLinkContent(link);
-
-      const questionLines = [
-        "You are a machine tasked with auto-categorizing articles based on information obtained through web scraping. You can only answer a single category name. Here is the article's information:",
-      ];
-
-      if (title) {
-        questionLines.push(
-          `The article in question is titled "${title.trim()}"`,
-        );
-      }
-
-      if (content) {
-        const contentLength = content.length / 2;
-        questionLines.push(
-          `The 150 characters of the article is, "${content
-            .replace(/\s/g, '')
-            .slice(contentLength - 150, contentLength + 150)
-            .trim()}"`,
-        );
-      }
-
-      if (description) {
-        questionLines.push(`The description is ${description.trim()}"`);
-      }
-
-      if (siteName) {
-        questionLines.push(`The site's name is "${siteName.trim()}"`);
-      }
-
-      // Add the category options to the end of the list
-      questionLines.push(
-        `Please provide the most suitable category among the following. Here is Category options: [${categories.join(
-          ', ',
-        )}, None]`,
-      );
-
-      // Join all lines together into a single string
-      const question = questionLines.join(' ');
-
-      const response = await this.openaiService.createChatCompletion({
-        question,
-      });
-
-      return { category: response.choices[0].message?.content || 'None' };
     } catch (e) {
       throw e;
     }

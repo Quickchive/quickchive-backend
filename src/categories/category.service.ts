@@ -466,6 +466,7 @@ Given the categories below, please provide suitable category for the article fol
   
 
 Present your reply options in JSON format below.
+- If there's no suitable category, must provide reply with "None".
 \`\`\`json
 {
   "id": id,

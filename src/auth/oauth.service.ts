@@ -21,6 +21,7 @@ import { RedisService } from '../infra/redis/redis.service';
 import { REFRESH_TOKEN_KEY } from './constants';
 import { KakaoLoginRequest } from './dtos/request/kakao-login.request.dto';
 import { KakaoLoginDto } from './dtos/kakao-login.dto';
+import { PROVIDER } from '../users/constant/provider.constant';
 
 @Injectable()
 export class OAuthService {
@@ -97,61 +98,56 @@ export class OAuthService {
         throw new BadRequestException('Please Agree to share your email');
       }
 
-      let user = await this.userRepository.findOneByEmail(email);
-
-      // 회원가입인 경우 기본 카테고리 생성 작업 진행
-      if (!user) {
-        user = new User();
-        user.email = email;
-        user.name = userInfo.kakao_account.profile.nickname;
-        user.profileImage = userInfo.kakao_account.profile?.profile_image_url;
-        user.password = this.encodePasswordFromEmail(
-          email,
-          process.env.KAKAO_JS_KEY,
-        );
-
-        await this.userRepository.createOne(user);
-        await this.categoryRepository.createDefaultCategories(user);
+      const user = await this.userRepository.findOneByEmail(email);
+      if (user) {
+        return this.oauthLogin(user.email);
       }
 
-      return this.oauthLogin(user.email);
+      // 회원가입인 경우 기본 카테고리 생성 작업 진행
+      const newUser = User.of({
+        email,
+        name: userInfo.kakao_account.profile.nickname,
+        profileImage: userInfo.kakao_account.profile?.profile_image_url,
+        password: this.encodePasswordFromEmail(email, process.env.KAKAO_JS_KEY),
+        provider: PROVIDER.KAKAO,
+      });
+
+      await this.userRepository.createOne(newUser);
+      await this.categoryRepository.createDefaultCategories(newUser);
+
+      return this.oauthLogin(newUser.email);
     } catch (e) {
       throw e;
     }
   }
 
   async createOneWithKakao({ authorizationToken }: KakaoLoginDto) {
-    try {
-      const { userInfo } = await this.oauthUtil.getKakaoUserInfo(
-        authorizationToken,
-      );
+    const { userInfo } =
+      await this.oauthUtil.getKakaoUserInfo(authorizationToken);
 
-      const email = userInfo.kakao_account.email;
-      if (!email) {
-        throw new BadRequestException('Please Agree to share your email');
-      }
-
-      let user = await this.userRepository.findOneByEmail(email);
-
-      // 회원가입인 경우 기본 카테고리 생성 작업 진행
-      if (!user) {
-        user = new User();
-        user.email = email;
-        user.name = userInfo.kakao_account.profile.nickname;
-        user.profileImage = userInfo.kakao_account.profile?.profile_image_url;
-        user.password = this.encodePasswordFromEmail(
-          email,
-          process.env.KAKAO_JS_KEY,
-        );
-
-        await this.userRepository.createOne(user);
-        await this.categoryRepository.createDefaultCategories(user);
-      }
-
-      return this.oauthLogin(user.email);
-    } catch (e) {
-      throw e;
+    const email = userInfo.kakao_account.email;
+    if (!email) {
+      throw new BadRequestException('Please Agree to share your email');
     }
+
+    const user = await this.userRepository.findOneByEmail(email);
+
+    if (user) {
+      return this.oauthLogin(user.email);
+    }
+
+    // 회원가입인 경우 기본 카테고리 생성 작업 진행
+    const newUser = User.of({
+      email,
+      name: userInfo.kakao_account.profile.nickname,
+      profileImage: userInfo.kakao_account.profile?.profile_image_url,
+      password: this.encodePasswordFromEmail(email, process.env.KAKAO_JS_KEY),
+      provider: PROVIDER.KAKAO,
+    });
+
+    await this.userRepository.createOne(newUser);
+    await this.categoryRepository.createDefaultCategories(newUser);
+    return this.oauthLogin(newUser.email);
   }
 
   // Login with Google account info
@@ -160,28 +156,28 @@ export class OAuthService {
     name,
     picture,
   }: googleUserInfo): Promise<LoginOutput> {
-    try {
-      let user = await this.userRepository.findOneByEmail(email);
+    const user = await this.userRepository.findOneByEmail(email);
 
-      // 회원가입인 경우 기본 카테고리 생성 작업 진행
-      if (!user) {
-        user = new User();
-        user.email = email;
-        user.name = name;
-        user.profileImage = picture;
-        user.password = this.encodePasswordFromEmail(
-          email,
-          process.env.GOOGLE_CLIENT_ID,
-        );
-
-        await this.userRepository.createOne(user);
-        await this.categoryRepository.createDefaultCategories(user);
-      }
-
+    if (user) {
       return this.oauthLogin(user.email);
-    } catch (e) {
-      throw e;
     }
+
+    // 회원가입인 경우 기본 카테고리 생성 작업 진행
+    const newUser = User.of({
+      email,
+      name,
+      profileImage: picture,
+      password: this.encodePasswordFromEmail(
+        email,
+        process.env.GOOGLE_CLIENT_ID,
+      ),
+      provider: PROVIDER.GOOGLE,
+    });
+
+    await this.userRepository.createOne(newUser);
+    await this.categoryRepository.createDefaultCategories(newUser);
+
+    return this.oauthLogin(newUser.email);
   }
 
   private encodePasswordFromEmail(email: string, key?: string): string {
@@ -229,21 +225,25 @@ export class OAuthService {
 
     const { sub: id, email } = this.jwtService.decode(data.id_token);
 
-    let user = await this.userRepository.findOneByEmail(email);
+    const user = await this.userRepository.findOneByEmail(email);
 
-    if (!user) {
-      user = new User();
-      user.email = email;
-      user.name = email.split('@')[0];
-      user.password = this.encodePasswordFromEmail(
-        email,
-        process.env.APPLE_CLIENT_ID,
-      );
-
-      await this.userRepository.createOne(user);
-      await this.categoryRepository.createDefaultCategories(user);
+    if (user) {
+      return this.oauthLogin(user.email);
     }
 
-    return this.oauthLogin(user.email);
+    const newUser = User.of({
+      email,
+      name: email.split('@')[0],
+      password: this.encodePasswordFromEmail(
+        email,
+        process.env.APPLE_CLIENT_ID,
+      ),
+      provider: PROVIDER.APPLE,
+    });
+
+    await this.userRepository.createOne(newUser);
+    await this.categoryRepository.createDefaultCategories(newUser);
+
+    return this.oauthLogin(newUser.email);
   }
 }

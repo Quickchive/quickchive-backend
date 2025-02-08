@@ -12,7 +12,7 @@ import { CollectionsModule } from './collections/collections.module';
 import { BatchModule } from './batch/batch.module';
 import { SummaryModule } from './summary/summary.module';
 import { TypeOrmConfigService } from './database/typerom-config.service';
-import { OpenaiModule } from './openai/openai.module';
+import { AiModule } from './ai/openai.module';
 import { AppController } from './app.controller';
 import { AopModule } from './common/aop/aop.module';
 import { InfraModule } from './infra/infra.module';
@@ -106,7 +106,6 @@ import { InfraModule } from './infra/infra.module';
         ? process.env.NAVER_CLOVA_SUMMARY_REQUEST_URL
         : '',
     }),
-    OpenaiModule,
     AopModule,
     InfraModule,
   ],

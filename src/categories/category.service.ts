@@ -3,6 +3,7 @@ import {
   NotFoundException,
   ConflictException,
   InternalServerErrorException,
+  Inject,
 } from '@nestjs/common';
 import { EntityManager } from 'typeorm';
 import {
@@ -13,8 +14,6 @@ import {
   DeleteCategoryOutput,
   RecentCategoryList,
   RecentCategoryListWithSaveCount,
-  AutoCategorizeOutput,
-  AutoCategorizeBodyDto,
 } from './dtos/category.dto';
 import {
   LoadPersonalCategoriesOutput,
@@ -25,7 +24,6 @@ import { Content } from '../contents/entities/content.entity';
 import { CategoryRepository } from './category.repository';
 import { ContentRepository } from '../contents/repository/content.repository';
 import { getLinkContent, getLinkInfo } from '../contents/util/content.util';
-import { OpenaiService } from '../openai/openai.service';
 import { User } from '../users/entities/user.entity';
 import { UserRepository } from '../users/repository/user.repository';
 import {
@@ -35,6 +33,7 @@ import {
   makeCategoryListWithSaveCount,
 } from './utils/category.util';
 import { Transactional } from '../common/aop/transactional';
+import { AiService } from '../ai/ai.service';
 
 @Injectable()
 export class CategoryService {
@@ -42,7 +41,7 @@ export class CategoryService {
     private readonly contentRepository: ContentRepository,
     private readonly categoryRepository: CategoryRepository,
     private readonly userRepository: UserRepository,
-    private readonly openaiService: OpenaiService,
+    @Inject(AiService) private readonly aiService: AiService,
   ) {}
 
   @Transactional()
@@ -476,14 +475,12 @@ Present your reply options in JSON format below.
         `;
 
     try {
-      const response = await this.openaiService.createChatCompletion({
-        model: 'gpt-4o-mini',
-        question,
+      const categoryStr = await this.aiService.chat({
+        model: 'llama3-8b-8192',
+        messages: [{ role: 'user', content: question }],
         temperature: 0,
-        responseType: { type: 'json_object' },
+        responseType: 'json_object',
       });
-
-      const categoryStr = response.choices[0].message?.content;
 
       if (categoryStr) {
         const { id, name } = JSON.parse(

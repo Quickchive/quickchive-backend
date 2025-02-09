@@ -34,9 +34,12 @@ export class OAuthService {
   ) {}
 
   // OAuth Login
-  async oauthLogin(email: string): Promise<LoginOutput> {
+  async oauthLogin(email: string, provider: PROVIDER): Promise<LoginOutput> {
     try {
-      const user: User = await this.userRepository.findOneByOrFail({ email });
+      const user: User = await this.userRepository.findOneByOrFail({
+        email,
+        provider,
+      });
       if (user) {
         const payload: Payload = this.jwtService.createPayload(
           user.email,
@@ -98,9 +101,12 @@ export class OAuthService {
         throw new BadRequestException('Please Agree to share your email');
       }
 
-      const user = await this.userRepository.findOneByEmail(email);
+      const user = await this.userRepository.findOneByEmailAndProvider(
+        email,
+        PROVIDER.KAKAO,
+      );
       if (user) {
-        return this.oauthLogin(user.email);
+        return this.oauthLogin(user.email, PROVIDER.KAKAO);
       }
 
       // 회원가입인 경우 기본 카테고리 생성 작업 진행
@@ -115,39 +121,10 @@ export class OAuthService {
       await this.userRepository.createOne(newUser);
       await this.categoryRepository.createDefaultCategories(newUser);
 
-      return this.oauthLogin(newUser.email);
+      return this.oauthLogin(newUser.email, PROVIDER.KAKAO);
     } catch (e) {
       throw e;
     }
-  }
-
-  async createOneWithKakao({ authorizationToken }: KakaoLoginDto) {
-    const { userInfo } =
-      await this.oauthUtil.getKakaoUserInfo(authorizationToken);
-
-    const email = userInfo.kakao_account.email;
-    if (!email) {
-      throw new BadRequestException('Please Agree to share your email');
-    }
-
-    const user = await this.userRepository.findOneByEmail(email);
-
-    if (user) {
-      return this.oauthLogin(user.email);
-    }
-
-    // 회원가입인 경우 기본 카테고리 생성 작업 진행
-    const newUser = User.of({
-      email,
-      name: userInfo.kakao_account.profile.nickname,
-      profileImage: userInfo.kakao_account.profile?.profile_image_url,
-      password: this.encodePasswordFromEmail(email, process.env.KAKAO_JS_KEY),
-      provider: PROVIDER.KAKAO,
-    });
-
-    await this.userRepository.createOne(newUser);
-    await this.categoryRepository.createDefaultCategories(newUser);
-    return this.oauthLogin(newUser.email);
   }
 
   // Login with Google account info
@@ -156,10 +133,13 @@ export class OAuthService {
     name,
     picture,
   }: googleUserInfo): Promise<LoginOutput> {
-    const user = await this.userRepository.findOneByEmail(email);
+    const user = await this.userRepository.findOneByEmailAndProvider(
+      email,
+      PROVIDER.GOOGLE,
+    );
 
     if (user) {
-      return this.oauthLogin(user.email);
+      return this.oauthLogin(user.email, PROVIDER.GOOGLE);
     }
 
     // 회원가입인 경우 기본 카테고리 생성 작업 진행
@@ -177,7 +157,7 @@ export class OAuthService {
     await this.userRepository.createOne(newUser);
     await this.categoryRepository.createDefaultCategories(newUser);
 
-    return this.oauthLogin(newUser.email);
+    return this.oauthLogin(newUser.email, PROVIDER.GOOGLE);
   }
 
   private encodePasswordFromEmail(email: string, key?: string): string {
@@ -225,10 +205,13 @@ export class OAuthService {
 
     const { sub: id, email } = this.jwtService.decode(data.id_token);
 
-    const user = await this.userRepository.findOneByEmail(email);
+    const user = await this.userRepository.findOneByEmailAndProvider(
+      email,
+      PROVIDER.APPLE,
+    );
 
     if (user) {
-      return this.oauthLogin(user.email);
+      return this.oauthLogin(user.email, PROVIDER.APPLE);
     }
 
     const newUser = User.of({
@@ -244,6 +227,6 @@ export class OAuthService {
     await this.userRepository.createOne(newUser);
     await this.categoryRepository.createDefaultCategories(newUser);
 
-    return this.oauthLogin(newUser.email);
+    return this.oauthLogin(newUser.email, PROVIDER.APPLE);
   }
 }

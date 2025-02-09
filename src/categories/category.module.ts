@@ -1,7 +1,7 @@
 import { Module } from '@nestjs/common';
 import { ContentsModule } from '../contents/contents.module';
 import { CategoryService } from './category.service';
-import { OpenaiModule } from '../openai/openai.module';
+import { AiModule } from '../ai/openai.module';
 import { UsersModule } from '../users/users.module';
 import { TypeOrmModule } from '@nestjs/typeorm';
 import { Category } from './category.entity';
@@ -14,7 +14,7 @@ import { CategoryV2Controller } from './v2/category.v2.controller';
   imports: [
     TypeOrmModule.forFeature([Category]),
     ContentsModule,
-    OpenaiModule,
+    AiModule,
     UsersModule,
   ],
   controllers: [CategoryController, CategoryV2Controller],

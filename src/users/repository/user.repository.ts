@@ -2,6 +2,7 @@ import { DataSource, Repository } from 'typeorm';
 import { User } from '../entities/user.entity';
 import { Injectable } from '@nestjs/common';
 import { GetOrCreateAccountBodyDto } from '../dtos/get-or-create-account.dto';
+import { PROVIDER } from '../constant/provider.constant';
 
 @Injectable()
 export class UserRepository extends Repository<User> {
@@ -42,6 +43,13 @@ export class UserRepository extends Repository<User> {
 
   async findOneByEmail(email: string): Promise<User | null> {
     return this.findOne({ where: { email } });
+  }
+
+  async findOneByEmailAndProvider(
+    email: string,
+    provider: PROVIDER,
+  ): Promise<User | null> {
+    return this.findOne({ where: { email, provider } });
   }
 
   async createOne(user: Partial<User>): Promise<User> {

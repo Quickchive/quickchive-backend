@@ -432,9 +432,10 @@ export class CategoryService {
       });
     });
 
-    const { title, siteName, description } = await getLinkInfo(encodeURI(link));
-
-    const content = await getLinkContent(link);
+    const [{ title, siteName, description }, content] = await Promise.all([
+      getLinkInfo(encodeURI(link)),
+      getLinkContent(link),
+    ]);
 
     const question = `You are a machine tasked with auto-categorizing articles based on information obtained through web scraping.
 

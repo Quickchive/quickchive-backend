@@ -130,13 +130,4 @@ export class OAuthController {
   async appleLogin(@Query('code') code: string): Promise<LoginOutput> {
     return this.oauthService.appleLogin(code);
   }
-
-  @ApiOperation({
-    summary: '카카오 로그인 요청',
-    description: 'accessToken을 받아 카카오 로그인을 요청합니다.',
-  })
-  @Post('kakao')
-  async createOneWithKakao(@Body() kakaoLoginRequest: KakaoLoginRequest) {
-    return this.oauthService.createOneWithKakao(kakaoLoginRequest);
-  }
 }

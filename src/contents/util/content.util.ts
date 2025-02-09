@@ -26,7 +26,6 @@ class OGCrawler {
     this.userAgent =
       options.userAgent ||
       'Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/122.0.0.0 Safari/537.36';
-    this.maxRedirects = options.maxRedirects || 5;
     this.cookies =
       options.cookies || 'CONSENT=YES+cb; Path=/; Domain=.youtube.com';
     this.proxy = options.proxy;

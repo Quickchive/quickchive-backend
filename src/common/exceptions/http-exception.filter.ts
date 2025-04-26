@@ -7,18 +7,37 @@ import {
 import { Request, Response } from 'express';
 import { logger } from '../logger';
 
-@Catch(HttpException)
+class ErrorResponse {
+  statusCode: number;
+  path: string;
+  message: string;
+  data?: any;
+
+  constructor({
+    statusCode,
+    path,
+    message,
+    data,
+  }: {
+    statusCode: number;
+    path: string;
+    message: string;
+    data?: any;
+  }) {
+    this.statusCode = statusCode;
+    this.path = path;
+    this.message = message;
+    this.data = data;
+  }
+}
+
+@Catch()
 export class HttpExceptionFilter implements ExceptionFilter {
   catch(exception: HttpException, host: ArgumentsHost) {
     const ctx = host.switchToHttp();
     const response = ctx.getResponse<Response>();
     const request = ctx.getRequest<Request>();
     const status = exception.getStatus();
-    const error = exception.getResponse() as {
-      error: string;
-      statusCode: number;
-      message: string | string[];
-    };
     const { ip, method, url } = request;
     logger.error(
       `${method} - ${url} - ${ip.split(':').at(-1)} - ${JSON.stringify(
@@ -26,13 +45,29 @@ export class HttpExceptionFilter implements ExceptionFilter {
       )}`,
     );
 
-    typeof error === 'string'
-      ? response.status(status).json({
-          statusCode: status,
-          message: error,
-        })
-      : response.status(status).json({
-          ...error,
-        });
+    const exceptionResponse = exception.getResponse() as {
+      error: string;
+      message?: string | string[];
+      data?: any;
+    };
+    const exceptionMessage = (() => {
+      if (
+        exceptionResponse?.message &&
+        Array.isArray(exceptionResponse.message)
+      ) {
+        return exceptionResponse.message.join(' ');
+      }
+
+      return exception.message;
+    })();
+
+    response.status(status).json(
+      new ErrorResponse({
+        statusCode: status,
+        path: request.url,
+        message: exceptionMessage,
+        data: exceptionResponse?.data,
+      }),
+    );
   }
 }

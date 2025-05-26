@@ -14,6 +14,8 @@ import { ContentsModule } from '../contents/contents.module';
 import { OAuthService } from './oauth.service';
 import { CategoryModule } from '../categories/category.module';
 import { RedisModule } from '../infra/redis/redis.module';
+import { OauthV2Controller } from './oauth.v2.controller';
+import { OAuthV2Service } from './oauth.v2.service';
 
 const accessTokenExpiration = TWOHOUR;
 export const refreshTokenExpirationInCache = 60 * 60 * 24 * 365; // 1 year
@@ -34,7 +36,7 @@ export const verifyEmailExpiration = 60 * 5;
     CategoryModule,
     RedisModule,
   ],
-  controllers: [AuthController, OAuthController],
+  controllers: [AuthController, OAuthController, OauthV2Controller],
   providers: [
     AuthService,
     JwtStrategy,
@@ -42,6 +44,7 @@ export const verifyEmailExpiration = 60 * 5;
     OAuthUtil,
     GoogleStrategy,
     customJwtService,
+    OAuthV2Service,
   ],
   exports: [AuthService],
 })

@@ -1,4 +1,12 @@
-import { Controller, Get, Res, Query, UseGuards } from '@nestjs/common';
+import {
+  Controller,
+  Get,
+  Res,
+  Query,
+  UseGuards,
+  Post,
+  Body,
+} from '@nestjs/common';
 import { AuthGuard } from '@nestjs/passport';
 import {
   ApiTags,
@@ -14,6 +22,7 @@ import { OAuthService } from './oauth.service';
 import { googleUserInfo } from './dtos/google.dto';
 import { LoginOutput } from './dtos/login.dto';
 import { ErrorOutput } from '../common/dtos/output.dto';
+import { KakaoLoginRequest } from './dtos/request/kakao-login.request.dto';
 
 @Controller('oauth')
 @ApiTags('OAuth')
@@ -90,5 +99,35 @@ export class OAuthController {
     @AuthUser() user: googleUserInfo,
   ): Promise<LoginOutput> {
     return this.oauthService.googleOauth(user);
+  }
+
+  @ApiOperation({
+    summary: '애플 계정 로그인 요청',
+    description: '애플 계정 로그인 요청 메서드',
+  })
+  @Get('apple-auth')
+  async getAppleRedirectUrl(@Res() res: Response): Promise<void> {
+    const { url } = await this.oauthService.getAppleRedirectUrl();
+    return res.redirect(url);
+  }
+
+  @ApiOperation({
+    summary: '애플 로그인 리다이렉트 후 클라이언트 리다이렉트',
+  })
+  @Post('apple-code')
+  async appleCode(@Body('code') code: string, @Res() res: Response) {
+    return res.redirect(
+      `${process.env.APPLE_REDIRECT_FRONTEND_URI}?code=${code}`,
+    );
+  }
+
+  @ApiOperation({
+    summary: '애플 로그인',
+    description:
+      '애플 로그인 메서드. (회원가입이 안되어 있으면 회원가입 처리 후 로그인 처리)',
+  })
+  @Get('apple-login')
+  async appleLogin(@Query('code') code: string): Promise<LoginOutput> {
+    return this.oauthService.appleLogin(code);
   }
 }

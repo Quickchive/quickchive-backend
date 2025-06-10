@@ -62,13 +62,20 @@ export class Content extends CoreEntity {
   @IsBoolean()
   favorite?: boolean;
 
-  @ApiProperty({ description: 'Article Category', required: false })
+  @ApiProperty({
+    description: 'Article Category',
+    required: false,
+    default: null,
+  })
   @ManyToOne(() => Category, (category) => category.contents, {
     nullable: true,
     onDelete: 'SET NULL',
   })
-  @JoinColumn({ name: 'categoryId', referencedColumnName: 'id' })
-  category?: Category;
+  @JoinColumn({
+    name: 'categoryId',
+    referencedColumnName: 'id',
+  })
+  category: Category | null;
 
   @ManyToOne(() => User, (user) => user.contents, {
     onDelete: 'CASCADE',

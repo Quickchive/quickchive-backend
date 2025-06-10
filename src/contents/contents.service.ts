@@ -28,10 +28,10 @@ import { LoadReminderCountOutput } from './dtos/load-personal-remider-count.dto'
 import { UserRepository } from '../users/repository/user.repository';
 import { ContentRepository } from './repository/content.repository';
 import { CategoryRepository } from '../categories/category.repository';
-import { getLinkInfo } from './util/content.util';
 import { GetLinkInfoResponseDto } from './dtos/get-link.response.dto';
 import { checkContentDuplicateAndAddCategorySaveLog } from '../categories/utils/category.util';
 import { Transactional } from '../common/aop/transactional';
+import { getLinkInfo } from './util/content.util';
 
 @Injectable()
 export class ContentsService {
@@ -52,8 +52,8 @@ export class ContentsService {
       comment,
       reminder,
       favorite,
-      categoryName,
       parentId,
+      categoryId,
     }: AddContentBodyDto,
     entityManager?: EntityManager,
   ): Promise<AddContentOutput> {
@@ -64,32 +64,44 @@ export class ContentsService {
       throw new NotFoundException('User not found');
     }
 
-    const {
-      title: linkTitle,
-      siteName,
-      description,
-      coverImg,
-    } = await getLinkInfo(link);
-    title = title ? title : linkTitle;
+    categoryId = categoryId ? categoryId : parentId;
 
-    let category: Category | undefined = undefined;
-    if (categoryName) {
-      category = await this.categoryRepository.getOrCreateCategory(
-        // TODO 명령과 조회를 분리
-        categoryName,
-        parentId,
-        userInDb,
+    let siteName: string | undefined;
+    let description: string | undefined;
+    let coverImg: string | undefined;
+
+    try {
+      const {
+        title: linkTitle,
+        siteName: _siteName,
+        description: _description,
+        coverImg: _coverImg,
+      } = await getLinkInfo(link);
+      title = title ? title : linkTitle;
+      siteName = _siteName;
+      description = _description;
+      coverImg = _coverImg;
+    } catch (e) {}
+
+    const content = new Content();
+
+    if (categoryId) {
+      const category = await this.categoryRepository.findById(
+        categoryId,
         entityManager,
       );
+
+      if (!category) throw new NotFoundException('Category not found');
 
       await checkContentDuplicateAndAddCategorySaveLog(
         link,
         category,
         userInDb,
       );
+
+      content.category = category;
     }
 
-    const content = new Content();
     content.link = link;
     content.title = title;
     content.siteName = siteName;
@@ -97,7 +109,6 @@ export class ContentsService {
     content.description = description;
     content.comment = comment;
     content.reminder = reminder;
-    content.category = category;
     content.user = user;
     content.favorite = favorite;
 
@@ -120,7 +131,7 @@ export class ContentsService {
     }
 
     if (contentLinks.length > 0) {
-      let category: Category | undefined = undefined;
+      let category: Category | null = null;
       if (categoryName) {
         category = await this.categoryRepository.getOrCreateCategory(
           categoryName,
@@ -172,6 +183,7 @@ export class ContentsService {
       comment,
       reminder,
       favorite,
+      categoryId,
       categoryName,
       parentId,
     }: UpdateContentBodyDto,
@@ -199,30 +211,37 @@ export class ContentsService {
       throw new NotFoundException('Content not found.');
     }
 
-    let category: Category | undefined = undefined;
-    if (categoryName) {
-      category = await this.categoryRepository.getOrCreateCategory(
-        categoryName,
-        parentId,
-        userInDb,
+    if (categoryId !== undefined) {
+      const category =
+        categoryId !== null
+          ? await this.categoryRepository.findById(categoryId, entityManager)
+          : null;
+
+      if (category) {
+        await checkContentDuplicateAndAddCategorySaveLog(
+          link,
+          category,
+          userInDb,
+        );
+      }
+
+      await this.contentRepository.updateOne(
+        {
+          id: content.id,
+          ...newContentObj,
+          category,
+        },
         entityManager,
       );
-
-      await checkContentDuplicateAndAddCategorySaveLog(
-        link,
-        category,
-        userInDb,
+    } else {
+      await this.contentRepository.updateOne(
+        {
+          id: content.id,
+          ...newContentObj,
+        },
+        entityManager,
       );
     }
-
-    await this.contentRepository.updateOne(
-      {
-        id: content.id,
-        ...newContentObj,
-        category,
-      },
-      entityManager,
-    );
 
     return {};
   }
@@ -364,11 +383,11 @@ export class ContentsService {
       );
 
       // 크롤링 후 처리
-      let summary: string = '';
+      let summary = '';
       if (!document) {
         throw new BadRequestException('Document not found.');
       } else if (document.length > 1900) {
-        let sliceIndex: number = 0;
+        let sliceIndex = 0;
         for (let i = 0; i < Math.ceil(document.length / 1900); i++) {
           const slicedSummary = await this.summaryService.summaryContent({
             title: content?.title,
@@ -401,10 +420,10 @@ export class ContentsService {
     content: document,
   }: SummarizeContentBodyDto): Promise<SummarizeContentOutput> {
     try {
-      let summary: string = '';
+      let summary = '';
 
       if (document.length > 1900) {
-        let sliceIndex: number = 0;
+        let sliceIndex = 0;
         for (let i = 0; i < Math.ceil(document.length / 1900); i++) {
           const slicedSummary = await this.summaryService.summaryContent({
             title,
@@ -421,6 +440,33 @@ export class ContentsService {
       }
 
       return { summary };
+    } catch (e) {
+      throw e;
+    }
+  }
+
+  async restoreContent(user: User, contentId: number) {
+    try {
+      const content = await this.contentRepository.findOne({
+        where: {
+          id: contentId,
+        },
+        withDeleted: true,
+      });
+
+      if (!content) {
+        throw new NotFoundException('Content not found.');
+      }
+      if (content.userId !== user.id) {
+        throw new ForbiddenException(
+          'You are not allowed to restore this content',
+        );
+      }
+
+      content.deletedAt = null;
+      await this.contentRepository.save(content);
+
+      return {};
     } catch (e) {
       throw e;
     }

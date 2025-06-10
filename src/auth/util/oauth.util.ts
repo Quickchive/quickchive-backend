@@ -9,9 +9,28 @@ import {
   GetKakaoAccessTokenOutput,
   GetKakaoUserInfoOutput,
 } from '../dtos/kakao.dto';
+import { JwtService } from '@nestjs/jwt';
+import appleSignin from 'apple-signin-auth';
+import { ConfigService } from '@nestjs/config';
 
 @Injectable()
 export class OAuthUtil {
+  constructor(
+    private readonly jwtService: JwtService,
+    private readonly configService: ConfigService,
+  ) {}
+
+  private readonly APPLE_CLIENT_ID = this.configService.get('APPLE_CLIENT_ID');
+  private readonly APPLE_TEAM_ID = this.configService.get('APPLE_TEAM_ID');
+  private readonly APPLE_PRIVATE_KEY = String(
+    this.configService.get('APPLE_SECRET_KEY'),
+  )
+    .split(String.raw`\n`)
+    .join('\n');
+  private readonly APPLE_KEY_ID = this.configService.get('APPLE_KEY_ID');
+  private readonly APPLE_REDIRECT_URI =
+    this.configService.get('APPLE_REDIRECT_URI');
+
   // Get access token from Kakao Auth Server
   async getKakaoAccessToken(code: string): Promise<GetKakaoAccessTokenOutput> {
     try {
@@ -46,7 +65,7 @@ export class OAuthUtil {
 
   // Get User Info from Kakao Auth Server
   async getKakaoUserInfo(
-    access_token: String,
+    access_token: string,
   ): Promise<GetKakaoUserInfoOutput> {
     try {
       const { data: userInfo } = await axios
@@ -67,5 +86,21 @@ export class OAuthUtil {
     } catch (e) {
       throw e;
     }
+  }
+
+  async getAppleToken(code: string) {
+    const clientSecret = appleSignin.getClientSecret({
+      clientID: this.APPLE_CLIENT_ID,
+      teamID: this.APPLE_TEAM_ID,
+      privateKey: this.APPLE_PRIVATE_KEY,
+      keyIdentifier: this.APPLE_KEY_ID,
+      expAfter: 300,
+    });
+
+    return await appleSignin.getAuthorizationToken(code, {
+      clientID: this.APPLE_CLIENT_ID,
+      redirectUri: this.APPLE_REDIRECT_URI,
+      clientSecret,
+    });
   }
 }

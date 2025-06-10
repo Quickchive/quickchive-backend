@@ -1,6 +1,13 @@
 import { ApiProperty } from '@nestjs/swagger';
 import { IsEnum, IsString, Length } from 'class-validator';
-import { Column, Entity, ManyToOne, OneToMany, RelationId } from 'typeorm';
+import {
+  Column,
+  Entity,
+  JoinColumn,
+  ManyToOne,
+  OneToMany,
+  RelationId,
+} from 'typeorm';
 import { Content } from '../contents/entities/content.entity';
 import { CoreEntity } from '../common/entities/core.entity';
 import { Collection } from '../collections/entities/collection.entity';
@@ -38,7 +45,7 @@ export class Category extends CoreEntity {
   @OneToMany(() => Content, (content) => content.category)
   contents: Content[];
 
-  @Column({ type: 'enum', enum: IconName, default: IconName.None })
+  @Column({ type: 'enum', enum: IconName, default: IconName.Folder })
   @IsEnum(IconName)
   iconName?: IconName;
 

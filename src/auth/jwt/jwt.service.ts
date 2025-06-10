@@ -7,11 +7,17 @@ export class customJwtService {
   constructor(private readonly jwtService: JwtService) {}
 
   sign(payload: Payload): string {
-    return this.jwtService.sign(payload);
+    return this.jwtService.sign(payload, {
+      expiresIn: payload.period,
+    });
   }
 
   verify(token: string, options?: JwtVerifyOptions): Payload {
     return this.jwtService.verify(token, { secret: options?.secret });
+  }
+
+  decode(token: string): Payload {
+    return this.jwtService.decode(token) as Payload;
   }
 
   createPayload(email: string, autoLogin: boolean, sub: number): Payload {

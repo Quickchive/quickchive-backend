@@ -16,27 +16,29 @@ async function bootstrap() {
   app.useGlobalPipes(new ValidationPipe());
   app.setGlobalPrefix('api');
 
-  const config = new DocumentBuilder()
-    .setTitle('Quickchive')
-    .setDescription('The API description')
-    .setVersion('1.0.0')
-    .addTag('Minimally Viable Product Version')
-    .addBearerAuth(
-      {
-        type: 'http',
-        scheme: 'bearer',
-        bearerFormat: 'JWT',
-        in: 'header',
+  if (process.env.NODE_ENV !== 'prod') {
+    const config = new DocumentBuilder()
+      .setTitle('Quickchive')
+      .setDescription('The API description')
+      .setVersion('1.0.0')
+      .addTag('Minimally Viable Product Version')
+      .addBearerAuth(
+        {
+          type: 'http',
+          scheme: 'bearer',
+          bearerFormat: 'JWT',
+          in: 'header',
+        },
+        'Authorization',
+      )
+      .build();
+    const document = SwaggerModule.createDocument(app, config);
+    SwaggerModule.setup('docs', app, document, {
+      swaggerOptions: {
+        persistAuthorization: true,
       },
-      'Authorization',
-    )
-    .build();
-  const document = SwaggerModule.createDocument(app, config);
-  SwaggerModule.setup('docs', app, document, {
-    swaggerOptions: {
-      persistAuthorization: true,
-    },
-  });
+    });
+  }
 
   await app.listen(process.env.PORT || 4000);
 }

@@ -15,6 +15,7 @@ import { Category } from '../../categories/category.entity';
 import { Collection } from '../../collections/entities/collection.entity';
 import { CoreEntity } from '../../common/entities/core.entity';
 import { PaidPlan } from './paid-plan.entity';
+import { PROVIDER } from '../constant/provider.constant';
 
 export enum UserRole {
   Client = 'Client',
@@ -26,12 +27,12 @@ export class User extends CoreEntity {
   @ApiProperty({ example: 'tester', description: 'User Name' })
   @Column()
   @IsString()
-  name!: string;
+  name: string;
 
   @ApiProperty({ example: 'ex@g.com', description: 'User Email' })
-  @Column({ unique: true })
+  @Column({ type: 'varchar' })
   @IsEmail()
-  email!: string;
+  email: string;
 
   @ApiProperty({ example: 'https://ex.com', description: 'User Profile Image' })
   @Column({ nullable: true })
@@ -44,7 +45,7 @@ export class User extends CoreEntity {
   @Matches(/^(?=.*\d)[A-Za-z\d@$!%*?&]{8,}$/, {
     message: 'Password must be at least 8 characters long, contain 1 number',
   })
-  password!: string;
+  password: string;
 
   @ApiProperty({
     example: 'Client',
@@ -53,12 +54,15 @@ export class User extends CoreEntity {
   })
   @Column({ type: 'enum', enum: UserRole, default: UserRole.Client })
   @IsEnum(UserRole)
-  role!: UserRole;
+  role: UserRole;
+
+  @Column({ type: 'enum', enum: PROVIDER })
+  provider: PROVIDER;
 
   @ApiProperty({ description: 'User Verified' })
   @Column({ default: false })
   @IsBoolean()
-  verified!: boolean;
+  verified: boolean;
 
   @ApiProperty({
     description: 'User Content List',
@@ -120,5 +124,28 @@ export class User extends CoreEntity {
       console.log(e);
       throw new InternalServerErrorException();
     }
+  }
+
+  static of({
+    email,
+    name,
+    profileImage,
+    password,
+    provider,
+  }: {
+    email: string;
+    name: string;
+    profileImage?: string;
+    password: string;
+    provider: PROVIDER;
+  }): User {
+    const user = new User();
+    user.email = email;
+    user.name = name;
+    user.profileImage = profileImage;
+    user.password = password;
+    user.provider = provider;
+
+    return user;
   }
 }

@@ -1,12 +1,9 @@
 import {
   BadRequestException,
-  CACHE_MANAGER,
-  Inject,
   Injectable,
   NotFoundException,
   UnauthorizedException,
 } from '@nestjs/common';
-import { Cache } from 'cache-manager';
 import { v4 as uuidv4 } from 'uuid';
 
 import { MailService } from '../mail/mail.service';
@@ -27,6 +24,8 @@ import { ValidateUserDto, ValidateUserOutput } from './dtos/validate-user.dto';
 import { ONEYEAR, Payload } from './jwt/jwt.payload';
 import { customJwtService } from './jwt/jwt.service';
 import { UserRepository } from '../users/repository/user.repository';
+import { RedisService } from '../infra/redis/redis.service';
+import { PASSWORD_CODE_KEY, REFRESH_TOKEN_KEY } from './constants';
 
 @Injectable()
 export class AuthService {
@@ -34,28 +33,25 @@ export class AuthService {
     private readonly jwtService: customJwtService,
     private readonly userRepository: UserRepository,
     private readonly mailService: MailService,
-    @Inject(CACHE_MANAGER)
-    private readonly cacheManager: Cache,
+    private readonly redisService: RedisService,
   ) {}
 
-  async jwtLogin({
-    email,
-    password,
-    auto_login,
-  }: LoginBodyDto): Promise<LoginOutput> {
+  async jwtLogin({ email, password }: LoginBodyDto): Promise<LoginOutput> {
     try {
+      const autoLogin = true;
       const { user } = await this.validateUser({ email, password });
       const payload: Payload = this.jwtService.createPayload(
         email,
-        auto_login,
+        autoLogin,
         user.id,
       );
       const refreshToken = await this.jwtService.generateRefreshToken(payload);
-      await this.cacheManager.set(refreshToken, user.id, {
-        ttl: auto_login
-          ? refreshTokenExpirationInCache
-          : refreshTokenExpirationInCacheShortVersion,
-      });
+
+      await this.redisService.set(
+        `${REFRESH_TOKEN_KEY}:${user.id}`,
+        refreshToken,
+        refreshTokenExpirationInCache,
+      );
 
       return {
         access_token: this.jwtService.sign(payload),
@@ -76,18 +72,15 @@ export class AuthService {
         throw new BadRequestException('Refresh token is required');
       }
 
-      const refreshTokenInCache: number | undefined =
-        await this.cacheManager.get(refreshToken);
+      const refreshTokenInCache: string | null = await this.redisService.get(
+        `${REFRESH_TOKEN_KEY}:${user.id}`,
+      );
 
-      if (refreshTokenInCache === undefined) {
+      if (!refreshTokenInCache) {
         throw new NotFoundException('Refresh token not found');
       }
 
-      if (refreshTokenInCache !== userId) {
-        throw new UnauthorizedException('Invalid refresh token');
-      }
-
-      await this.cacheManager.del(refreshToken);
+      await this.redisService.del(`${REFRESH_TOKEN_KEY}:${user.id}`);
 
       return {};
     } else {
@@ -107,18 +100,20 @@ export class AuthService {
     } catch (e) {
       throw new UnauthorizedException('Invalid refresh token');
     }
-    const refreshTokenInCache = await this.cacheManager.get(refreshToken);
+    const user = await this.userRepository.findOneBy({ id: decoded.sub });
+    if (!user) {
+      throw new NotFoundException('User not found');
+    }
+
+    const refreshTokenInCache = await this.redisService.get(
+      `${REFRESH_TOKEN_KEY}:${user.id}`,
+    );
 
     if (!refreshTokenInCache) {
       throw new NotFoundException('There is no refresh token');
     }
 
-    const user = await this.userRepository.findOneBy({ id: decoded.sub });
     const auto_login: boolean = decoded.period === ONEYEAR;
-
-    if (!user) {
-      throw new NotFoundException('User not found');
-    }
 
     const payload: Payload = this.jwtService.createPayload(
       user.email,
@@ -128,12 +123,13 @@ export class AuthService {
     const accessToken = this.jwtService.sign(payload);
     const newRefreshToken = await this.jwtService.generateRefreshToken(payload);
 
-    await this.cacheManager.del(refreshToken);
-    await this.cacheManager.set(newRefreshToken, user.id, {
-      ttl: auto_login
+    await this.redisService.set(
+      `${REFRESH_TOKEN_KEY}:${user.id}`,
+      newRefreshToken,
+      auto_login
         ? refreshTokenExpirationInCache
         : refreshTokenExpirationInCacheShortVersion,
-    });
+    );
 
     return {
       access_token: accessToken,
@@ -151,9 +147,11 @@ export class AuthService {
       }
       // Email Verification
       const code: string = uuidv4();
-      await this.cacheManager.set(code, user.id, {
-        ttl: verifyEmailExpiration,
-      });
+      await this.redisService.set(
+        `${PASSWORD_CODE_KEY}:${code}`,
+        user.id.toString(),
+        verifyEmailExpiration,
+      );
 
       // send password reset email to user using mailgun
       this.mailService.sendResetPasswordEmail(user.email, user.name, code);

@@ -1,56 +1,171 @@
-import { BadRequestException } from '@nestjs/common';
+import {
+  BadRequestException,
+  ForbiddenException,
+  InternalServerErrorException,
+} from '@nestjs/common';
 import * as cheerio from 'cheerio';
-import axios from 'axios';
+import axios, { AxiosError, AxiosResponse } from 'axios';
 
-export const getLinkInfo = async (link: string) => {
-  let title: string | undefined = '';
-  let coverImg: string | undefined = '';
-  let description: string | undefined = '';
-  let siteName: string | undefined;
+interface OGCrawlerOptions {
+  timeout?: number;
+  userAgent?: string;
+  maxRedirects?: number;
+  cookies?: string;
+  proxy?: string;
+}
 
-  if (!link.match(/^(http|https):\/\//)) {
-    link = `http://${link}`;
+class OGCrawler {
+  private readonly timeout: number;
+  private readonly userAgent: string;
+  private readonly maxRedirects: number;
+  private readonly cookies: string;
+  private readonly proxy?: string;
+
+  constructor(options: OGCrawlerOptions = {}) {
+    this.timeout = options.timeout || 5000;
+    this.userAgent =
+      options.userAgent ||
+      'Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/122.0.0.0 Safari/537.36';
+    this.cookies =
+      options.cookies || 'CONSENT=YES+cb; Path=/; Domain=.youtube.com';
+    this.proxy = options.proxy;
   }
 
-  // ! TODO 크롤링에서 대략 초 단위 시간 소요 -> 개선 필요
-  await axios
-    .get(link)
-    .then((res) => {
-      if (res.status !== 200) {
-        throw new BadRequestException('잘못된 링크입니다.');
-      } else {
-        const data = res.data;
-        if (typeof data === 'string') {
-          const $ = cheerio.load(data);
-          title = $('title').text() !== '' ? $('title').text() : 'Untitled';
-          $('meta').each((i, el) => {
-            const meta = $(el);
-            if (meta.attr('property') === 'og:image') {
-              coverImg = meta.attr('content');
+  public async fetch(url: string): Promise<any> {
+    // YouTube 비디오 ID 추출
+    const videoId = this.extractVideoId(url);
+    if (videoId) {
+      return await this.fetchYouTubeData(videoId);
+    }
+
+    try {
+      const response: AxiosResponse = await axios({
+        method: 'get',
+        url: encodeURI(url),
+        timeout: this.timeout,
+        headers: {
+          'User-Agent': this.userAgent,
+          Accept:
+            'text/html,application/xhtml+xml,application/xml;q=0.9,image/avif,image/webp,*/*;q=0.8',
+          Cookie: this.cookies,
+          'Cache-Control': 'no-cache',
+          Pragma: 'no-cache',
+          'Sec-Fetch-Dest': 'document',
+          'Sec-Fetch-Mode': 'navigate',
+          'Sec-Fetch-Site': 'none',
+          'Sec-Fetch-User': '?1',
+          DNT: '1',
+        },
+        maxRedirects: this.maxRedirects,
+        ...(this.proxy
+          ? {
+              proxy: {
+                host: this.proxy.split(':')[0],
+                port: parseInt(this.proxy.split(':')[1]),
+              },
             }
-            if (meta.attr('property') === 'og:description') {
-              description = meta.attr('content');
-            }
-            if (meta.attr('property') === 'og:site_name') {
-              siteName = meta.attr('content');
-            }
-          });
+          : {}),
+      });
+
+      return this.parse(response.data);
+    } catch (error) {
+      if (error instanceof AxiosError) {
+        if (
+          error?.response?.status === 400 ||
+          error.response?.status === 403 ||
+          error.response?.status === 404
+        ) {
+          throw new ForbiddenException(
+            'og 데이터를 가져올 수 없는 링크입니다.',
+          );
         }
       }
-    })
-    .catch((e) => {
-      // Control unreachable link
-      // if(e.message === 'Request failed with status code 403') {
-      // 403 에러가 발생하는 링크는 크롤링이 불가능한 링크이다.
-      // }
-      for (let idx = 1; idx < 3; idx++) {
-        if (link.split('/').at(-idx) !== '') {
-          title = link.split('/').at(-idx);
-          break;
-        }
+
+      throw new InternalServerErrorException(`An unknown error occurred`);
+    }
+  }
+
+  private async fetchYouTubeData(videoId: string): Promise<any> {
+    try {
+      const { data } = await axios.get(
+        'https://www.googleapis.com/youtube/v3/videos',
+        {
+          params: {
+            part: 'snippet',
+            id: videoId,
+            key: process.env.YOUTUBE_DATA_API_KEY!,
+          },
+        },
+      );
+
+      const item = data?.items[0];
+
+      if (item && item.snippet) {
+        return {
+          title: item.snippet.title,
+          description: item.snippet.description,
+          coverImg: item.snippet.thumbnails?.default?.url,
+          siteName: 'YouTube',
+        };
       }
-      title = title ? title : 'Untitled';
+    } catch (error) {
+      console.error('Failed to fetch YouTube data:', error);
+    }
+
+    // 폴백: 기본 썸네일 URL 사용
+    return {
+      title: '',
+      description: '',
+      coverImg: `https://i.ytimg.com/vi/${videoId}/maxresdefault.jpg`,
+      siteName: 'YouTube',
+    };
+  }
+
+  private extractVideoId(url: string): string | null {
+    const regExp =
+      /^.*((youtu.be\/)|(v\/)|(\/u\/\w\/)|(embed\/)|(watch\?))\??v?=?([^#&?]*).*/;
+    const match = url.match(regExp);
+    return match && match[7].length === 11 ? match[7] : null;
+  }
+
+  private parse(html: string): any {
+    const $ = cheerio.load(html);
+    const ogData: any = {};
+
+    $('meta[property^="og:"]').each((_, element) => {
+      const property = $(element).attr('property')?.replace('og:', '');
+      const content = $(element).attr('content');
+
+      if (property && content) {
+        ogData[property] = content;
+      }
     });
+
+    return {
+      title: ogData.title || $('title').text() || '',
+      description:
+        ogData.description ||
+        $('meta[name="description"]').attr('content') ||
+        '',
+      coverImg: ogData.image || '',
+      siteName: ogData.site_name || '',
+    };
+  }
+}
+
+export const getLinkInfo = async (link: string) => {
+  const crawler = new OGCrawler({
+    timeout: 5000,
+    userAgent:
+      'Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/122.0.0.0 Safari/537.36',
+    cookies: 'CONSENT=YES+cb; Path=/; Domain=.youtube.com',
+  });
+  const ogData = await crawler.fetch(link);
+
+  const title = ogData.title;
+  const description = ogData.description;
+  const coverImg = ogData.coverImg;
+  const siteName = ogData.siteName;
 
   return {
     title,

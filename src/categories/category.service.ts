@@ -2,6 +2,8 @@ import {
   Injectable,
   NotFoundException,
   ConflictException,
+  InternalServerErrorException,
+  Inject,
 } from '@nestjs/common';
 import { EntityManager } from 'typeorm';
 import {
@@ -12,8 +14,6 @@ import {
   DeleteCategoryOutput,
   RecentCategoryList,
   RecentCategoryListWithSaveCount,
-  AutoCategorizeOutput,
-  AutoCategorizeBodyDto,
 } from './dtos/category.dto';
 import {
   LoadPersonalCategoriesOutput,
@@ -24,7 +24,6 @@ import { Content } from '../contents/entities/content.entity';
 import { CategoryRepository } from './category.repository';
 import { ContentRepository } from '../contents/repository/content.repository';
 import { getLinkContent, getLinkInfo } from '../contents/util/content.util';
-import { OpenaiService } from '../openai/openai.service';
 import { User } from '../users/entities/user.entity';
 import { UserRepository } from '../users/repository/user.repository';
 import {
@@ -34,6 +33,7 @@ import {
   makeCategoryListWithSaveCount,
 } from './utils/category.util';
 import { Transactional } from '../common/aop/transactional';
+import { AiService } from '../ai/ai.service';
 
 @Injectable()
 export class CategoryService {
@@ -41,7 +41,7 @@ export class CategoryService {
     private readonly contentRepository: ContentRepository,
     private readonly categoryRepository: CategoryRepository,
     private readonly userRepository: UserRepository,
-    private readonly openaiService: OpenaiService,
+    @Inject(AiService) private readonly aiService: AiService,
   ) {}
 
   @Transactional()
@@ -192,6 +192,18 @@ export class CategoryService {
           }
 
           category.parentId = parentId;
+        } else {
+          // 유저 당 대 카테고리 10개 제한
+          const isOverCategoryLimit =
+            await this.categoryRepository.isOverCategoryLimit(user);
+
+          if (isOverCategoryLimit) {
+            throw new ConflictException(
+              "Root categories can't be more than 10 in one user",
+            );
+          }
+
+          category.parentId = null;
         }
 
         await queryRunnerManager.save(category);
@@ -212,18 +224,7 @@ export class CategoryService {
     queryRunnerManager: EntityManager,
   ): Promise<DeleteCategoryOutput> {
     try {
-      const userInDb =
-        await this.userRepository.findOneWithContentsAndCategories(user.id);
-
-      // Check if user exists
-      if (!userInDb) {
-        throw new NotFoundException('User not found.');
-      }
-
-      const category = userInDb.categories?.find(
-        (category) => category.id === categoryId,
-      );
-
+      const category = await this.categoryRepository.findById(categoryId);
       if (!category) {
         throw new NotFoundException('Category not found.');
       }
@@ -239,7 +240,7 @@ export class CategoryService {
         ? await queryRunnerManager.findOneOrFail(Category, {
             where: { id: category.parentId },
           })
-        : undefined;
+        : null;
 
       // find children categories
       const childrenCategories = await queryRunnerManager.find(Category, {
@@ -291,8 +292,9 @@ export class CategoryService {
     user: User,
   ): Promise<LoadPersonalCategoriesOutput> {
     try {
-      const { categories } =
-        await this.userRepository.findOneWithCategoriesOrFail(user.id);
+      const categories = await this.categoryRepository.findWithContents(
+        user.id,
+      );
 
       if (!categories) {
         throw new NotFoundException('Categories not found.');
@@ -411,135 +413,84 @@ export class CategoryService {
     }
   }
 
-  async autoCategorize(
-    user: User,
-    link: string,
-  ): Promise<AutoCategorizeOutput> {
-    try {
-      const userInDb = await this.userRepository.findOneWithCategories(user.id);
-      if (!userInDb) {
-        throw new NotFoundException('User not found');
-      }
+  async autoCategorizeWithId(user: User, link: string) {
+    const _categories = await this.categoryRepository.findByUserId(user.id);
+    if (_categories.length === 0) {
+      throw new NotFoundException('Categories not found');
+    }
 
-      if (!userInDb.categories) {
-        throw new NotFoundException('Categories not found');
-      }
-      const categories: string[] = [];
-      userInDb.categories.forEach((category) => {
-        if (!category.parentId) {
-          categories.push(category.name);
+    const categories = _categories.map((category) => ({
+      ...category,
+      depth: 0,
+    }));
+
+    categories.map((category, index) => {
+      categories.slice(index + 1).map((subCategory) => {
+        if (subCategory.parentId && subCategory.parentId === category.id) {
+          subCategory.depth = category.depth + 1;
         }
       });
-      const { title, siteName, description } = await getLinkInfo(link);
+    });
 
-      const content = await getLinkContent(link);
+    const [{ title, siteName, description }, content] = await Promise.all([
+      getLinkInfo(encodeURI(link)),
+      getLinkContent(link),
+    ]);
 
-      let questionLines = [
-        "You are a machine tasked with auto-categorizing articles based on information obtained through web scraping. You can only answer a single category name. Here is the article's information:",
-      ];
+    const question = `You are a machine tasked with auto-categorizing articles based on information obtained through web scraping.
 
-      if (title) {
-        questionLines.push(
-          `The article in question is titled "${title.trim()}"`,
-        );
-      }
+You can only answer a single category name. Here is the article's information:
+<title>${title && `title: "${title.trim()}"`}</title>
+<content>${
+      content && `content: "${content.replace(/\s/g, '').slice(0, 300).trim()}"`
+    }</content>
+<description>${
+      description && `description: "${description.trim()}"`
+    }</description>
+<siteName>${siteName && `site name: "${siteName.trim()}"`}</siteName>
 
-      if (content) {
-        const contentLength = content.length / 2;
-        questionLines.push(
-          `The 150 characters of the article is, "${content
-            .replace(/\s/g, '')
-            .slice(contentLength - 150, contentLength + 150)
-            .trim()}"`,
-        );
-      }
+Given the categories below, please provide suitable category for the article following the rules.
+[RULES]
+- The deeper the category depth, the more specific the category is.
+- If the 1, 2, and 3 depth categories are equally worthy of saving links, then the deeper categories should be recommended more.
+- If there's no suitable category, must provide reply with "None".
+<categories>${categories
+      .map((category) =>
+        JSON.stringify({
+          id: category.id,
+          name: category.name,
+          depth: category.depth,
+        }),
+      )
+      .join('\n')}</categories>
+  
 
-      if (description) {
-        questionLines.push(`The description is ${description.trim()}"`);
-      }
+Present your reply options in JSON format below.
+- If there's no suitable category, must provide reply with "None".
+\`\`\`json
+{
+  "id": id,
+  "name": "category name"
+}
+\`\`\`
+        `;
 
-      if (siteName) {
-        questionLines.push(`The site's name is "${siteName.trim()}"`);
-      }
-
-      // Add the category options to the end of the list
-      questionLines.push(
-        `Please provide the most suitable category among the following. Here is Category options: [${categories.join(
-          ', ',
-        )}, None]`,
-      );
-
-      // Join all lines together into a single string
-      const question = questionLines.join(' ');
-      console.log(question);
-
-      const response = await this.openaiService.createChatCompletion({
-        question,
-      });
-
-      return { category: response.choices[0].message?.content || 'None' };
-    } catch (e) {
-      throw e;
-    }
-  }
-
-  async autoCategorizeForTest(
-    autoCategorizeBody: AutoCategorizeBodyDto,
-  ): Promise<AutoCategorizeOutput> {
     try {
-      const { link, categories } = autoCategorizeBody;
-      const { title, siteName, description } = await getLinkInfo(link);
-
-      /**
-       * TODO: 본문 크롤링 개선 필요
-       * 현재 p 태그만 크롤링하는데, 불필요한 내용이 포함되는 경우가 많음
-       * 그러나 하나하나 예외 처리하는 방법을 제외하곤 방법을 못 찾은 상황
-       */
-      const content = await getLinkContent(link);
-
-      let questionLines = [
-        "You are a machine tasked with auto-categorizing articles based on information obtained through web scraping. You can only answer a single category name. Here is the article's information:",
-      ];
-
-      if (title) {
-        questionLines.push(
-          `The article in question is titled "${title.trim()}"`,
-        );
-      }
-
-      if (content) {
-        const contentLength = content.length / 2;
-        questionLines.push(
-          `The 150 characters of the article is, "${content
-            .replace(/\s/g, '')
-            .slice(contentLength - 150, contentLength + 150)
-            .trim()}"`,
-        );
-      }
-
-      if (description) {
-        questionLines.push(`The description is ${description.trim()}"`);
-      }
-
-      if (siteName) {
-        questionLines.push(`The site's name is "${siteName.trim()}"`);
-      }
-
-      // Add the category options to the end of the list
-      questionLines.push(
-        `Please provide the most suitable category among the following. Here is Category options: [${categories.join(
-          ', ',
-        )}, None]`,
-      );
-
-      // Join all lines together into a single string
-      const question = questionLines.join(' ');
-
-      const response = await this.openaiService.createChatCompletion({
-        question,
+      const categoryStr = await this.aiService.chat({
+        model: 'llama3-8b-8192',
+        messages: [{ role: 'user', content: question }],
+        temperature: 0,
+        responseType: 'json_object',
       });
 
-      return { category: response.choices[0].message?.content || 'None' };
+      if (categoryStr) {
+        const { id, name } = JSON.parse(
+          categoryStr.replace(/^```json|```$/g, '').trim(),
+        );
+        return { category: { id, name } };
+      }
+
+      throw new InternalServerErrorException('Failed to categorize');
     } catch (e) {
       throw e;
     }

@@ -44,7 +44,7 @@ export class HttpExceptionFilter implements ExceptionFilter {
         : HttpStatus.INTERNAL_SERVER_ERROR;
     const { ip, method, url } = request;
     logger.error(
-      `${method} - ${url} - ${ip.split(':').at(-1)} - ${JSON.stringify(
+      `${method} - ${url} - ${ip?.split(':')?.at(-1)} - ${JSON.stringify(
         exception,
       )}`,
     );

@@ -61,15 +61,15 @@ export class OauthV2Controller {
     return this.oauthService.googleOauth(oauthRequest);
   }
 
-  // @ApiOperation({
-  //   summary: '애플 로그인',
-  //   description:
-  //     '애플 로그인 메서드. (회원가입이 안되어 있으면 회원가입 처리 후 로그인 처리)',
-  // })
-  // @Get('apple-login')
-  // async appleLogin(
-  //   @Body() oauthRequest: OAuthLoginRequest,
-  // ): Promise<LoginOutput> {
-  //   return this.oauthService.appleLogin(oauthRequest);
-  // }
+  @ApiOperation({
+    summary: '애플 로그인',
+    description:
+      '애플 로그인 메서드. (회원가입이 안되어 있으면 회원가입 처리 후 로그인 처리)',
+  })
+  @Post('apple-login')
+  async appleLogin(
+    @Body() oauthRequest: OAuthLoginRequest,
+  ): Promise<LoginOutput> {
+    return this.oauthService.appleLogin(oauthRequest);
+  }
 }

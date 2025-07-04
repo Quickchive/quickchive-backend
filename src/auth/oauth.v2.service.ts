@@ -1,7 +1,6 @@
 import {
   BadRequestException,
   Injectable,
-  InternalServerErrorException,
   UnauthorizedException,
 } from '@nestjs/common';
 import { LoginOutput } from './dtos/login.dto';
@@ -22,6 +21,10 @@ import { ConfigService } from '@nestjs/config';
 
 @Injectable()
 export class OAuthV2Service {
+  private readonly googleClient = new OAuth2Client(
+    this.configService.get('GOOGLE_SECRET'),
+  );
+
   constructor(
     private readonly jwtService: customJwtService,
     private readonly userRepository: UserRepository,
@@ -30,10 +33,6 @@ export class OAuthV2Service {
     private readonly redisService: RedisService,
     private readonly configService: ConfigService,
   ) {}
-
-  private readonly googleClient = new OAuth2Client(
-    this.configService.get('GOOGLE_SECRET'),
-  );
 
   // OAuth Login
   async oauthLogin(email: string, provider: PROVIDER): Promise<LoginOutput> {
@@ -111,6 +110,7 @@ export class OAuthV2Service {
   }
 
   // Login with Google account info
+  // @todo 액세스 토큰 파싱하는 부분 추상화
   async googleOauth({
     authorizationToken,
   }: OAuthLoginRequest): Promise<LoginOutput> {
@@ -150,20 +150,8 @@ export class OAuthV2Service {
     return this.oauthLogin(newUser.email, PROVIDER.GOOGLE);
   }
 
-  private encodePasswordFromEmail(email: string, key?: string): string {
-    return CryptoJS.SHA256(email + key).toString();
-  }
-
-  public async appleLogin(code: string) {
-    const data = await this.oauthUtil.getAppleToken(code);
-
-    if (!data.id_token) {
-      throw new InternalServerErrorException(
-        `No token: ${JSON.stringify(data)}`,
-      );
-    }
-
-    const { sub: id, email } = this.jwtService.decode(data.id_token);
+  public async appleLogin({ authorizationToken }: OAuthLoginRequest) {
+    const { sub: id, email } = this.jwtService.decode(authorizationToken);
 
     const user = await this.userRepository.findOneByEmailAndProvider(
       email,
@@ -188,5 +176,9 @@ export class OAuthV2Service {
     await this.categoryRepository.createDefaultCategories(newUser);
 
     return this.oauthLogin(newUser.email, PROVIDER.APPLE);
+  }
+
+  private encodePasswordFromEmail(email: string, key?: string): string {
+    return CryptoJS.SHA256(email + key).toString();
   }
 }

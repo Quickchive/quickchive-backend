@@ -66,7 +66,7 @@ export class OauthV2Controller {
     description:
       '애플 로그인 메서드. (회원가입이 안되어 있으면 회원가입 처리 후 로그인 처리)',
   })
-  @Post('apple-login')
+  @Post('apple')
   async appleLogin(
     @Body() oauthRequest: OAuthLoginRequest,
   ): Promise<LoginOutput> {

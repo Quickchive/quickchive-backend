@@ -2,14 +2,13 @@ import {
   Body,
   Controller,
   Delete,
-  Post,
+  Get,
   Param,
-  UseGuards,
   ParseIntPipe,
   Patch,
-  Get,
-  UseInterceptors,
+  Post,
   Query,
+  UseGuards,
 } from '@nestjs/common';
 import {
   ApiBadRequestResponse,
@@ -24,10 +23,7 @@ import {
 } from '@nestjs/swagger';
 import { AuthUser } from '../auth/auth-user.decorator';
 import { JwtAuthGuard } from '../auth/jwt/jwt.guard';
-import { TransactionInterceptor } from '../common/interceptors/transaction.interceptor';
-import { TransactionManager } from '../common/transaction.decorator';
 import { User } from '../users/entities/user.entity';
-import { EntityManager } from 'typeorm';
 import { ContentsService } from './contents.service';
 import {
   AddContentBodyDto,
@@ -38,6 +34,7 @@ import {
   toggleFavoriteOutput,
   UpdateContentBodyDto,
   UpdateContentOutput,
+  UpdateContentRequest,
 } from './dtos/content.dto';
 import { ErrorOutput } from '../common/dtos/output.dto';
 import {
@@ -116,6 +113,34 @@ export class ContentsController {
     @Body() content: UpdateContentBodyDto,
   ): Promise<UpdateContentOutput> {
     return this.contentsService.updateContent(user, content);
+  }
+
+  @ApiOperation({
+    summary: '콘텐츠 정보 수정',
+    description: '콘텐츠을 수정하는 메서드',
+  })
+  @ApiCreatedResponse({
+    description: '콘텐츠 수정 성공 여부를 반환한다.',
+    type: UpdateContentOutput,
+  })
+  @ApiConflictResponse({
+    description: '동일한 링크의 콘텐츠가 같은 카테고리 내에 존재할 경우',
+    type: ErrorOutput,
+  })
+  @ApiNotFoundResponse({
+    description: '존재하지 않는 콘텐츠 또는 유저인 경우',
+    type: ErrorOutput,
+  })
+  @Patch(':contentId')
+  async updateContentV2(
+    @AuthUser() user: User,
+    @Body() content: UpdateContentRequest,
+    @Param('contentId') contentId: number,
+  ): Promise<UpdateContentOutput> {
+    return this.contentsService.updateContent(user, {
+      ...content,
+      id: contentId,
+    });
   }
 
   @ApiOperation({

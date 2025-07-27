@@ -101,9 +101,9 @@ export class ContentsService {
       ]);
 
       await this.isDuplicatedContents(
-        content.id,
         [category, ...subCategories],
         content.link,
+        content.id,
       );
 
       content.category = category;
@@ -230,9 +230,9 @@ export class ContentsService {
       ]);
 
       await this.isDuplicatedContents(
-        content.id,
         [category, ...subCategories],
         content.link,
+        content.id,
       );
 
       await this.contentRepository.updateOne(
@@ -483,13 +483,13 @@ export class ContentsService {
   }
 
   private async isDuplicatedContents(
-    id: number,
     categories: Category[],
     link: string,
+    id?: number,
   ) {
     const existingContents = await this.contentRepository.find({
       where: {
-        id: Not(id),
+        ...(id && { id: Not(id) }),
         category: {
           id: In(categories.map((category) => category.id)),
         },

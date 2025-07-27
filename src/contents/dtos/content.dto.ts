@@ -1,7 +1,6 @@
 import {
   ApiProperty,
   ApiPropertyOptional,
-  IntersectionType,
   PartialType,
   PickType,
 } from '@nestjs/swagger';
@@ -121,15 +120,133 @@ export class AddMultipleContentsBodyDto {
 }
 
 class ContentBody extends PartialType(AddContentBodyDto) {}
+
 class ContentIdAndDescription extends PickType(Content, [
   'id',
   'description',
 ]) {}
 
-export class UpdateContentBodyDto extends IntersectionType(
-  ContentIdAndDescription,
-  ContentBody,
-) {}
+export class UpdateContentBodyDto {
+  @ApiProperty({
+    description: '컨텐츠 id',
+  })
+  @IsInt()
+  @IsPositive()
+  id: number;
+
+  @ApiPropertyOptional({
+    description: '컨텐츠 설명',
+  })
+  @IsString()
+  @IsNotEmpty()
+  @IsOptional()
+  readonly description?: string;
+
+  @ApiPropertyOptional({
+    description: '컨텐츠 링크',
+  })
+  @IsUrl()
+  @IsNotEmpty()
+  @IsOptional()
+  readonly link?: string;
+
+  @ApiPropertyOptional({
+    description: '컨텐츠 제목',
+  })
+  @IsString()
+  @IsNotEmpty()
+  @IsOptional()
+  readonly title?: string;
+
+  @ApiPropertyOptional({
+    description: '컨텐츠 메모',
+  })
+  @IsString()
+  @IsNotEmpty()
+  @IsOptional()
+  readonly comment?: string;
+
+  @ApiPropertyOptional({
+    description: '리마인더 시간',
+  })
+  @Type(() => Date)
+  @IsDate()
+  @IsOptional()
+  readonly reminder?: Date;
+
+  @ApiPropertyOptional({
+    description: '즐겨찾기 여부',
+  })
+  @IsBoolean()
+  @IsOptional()
+  readonly favorite?: boolean;
+
+  @ApiPropertyOptional({
+    description: '카테고리 id',
+  })
+  @IsInt()
+  @IsPositive()
+  @IsOptional()
+  readonly categoryId?: number;
+}
+
+export class UpdateContentRequest {
+  @ApiPropertyOptional({
+    description: '컨텐츠 설명',
+  })
+  @IsString()
+  @IsNotEmpty()
+  @IsOptional()
+  readonly description?: string;
+
+  @ApiPropertyOptional({
+    description: '컨텐츠 링크',
+  })
+  @IsUrl()
+  @IsNotEmpty()
+  @IsOptional()
+  readonly link?: string;
+
+  @ApiPropertyOptional({
+    description: '컨텐츠 제목',
+  })
+  @IsString()
+  @IsNotEmpty()
+  @IsOptional()
+  readonly title?: string;
+
+  @ApiPropertyOptional({
+    description: '컨텐츠 메모',
+  })
+  @IsString()
+  @IsNotEmpty()
+  @IsOptional()
+  readonly comment?: string;
+
+  @ApiPropertyOptional({
+    description: '리마인더 시간',
+  })
+  @Type(() => Date)
+  @IsDate()
+  @IsOptional()
+  readonly reminder?: Date;
+
+  @ApiPropertyOptional({
+    description: '즐겨찾기 여부',
+  })
+  @IsBoolean()
+  @IsOptional()
+  readonly favorite?: boolean;
+
+  @ApiPropertyOptional({
+    description: '카테고리 id',
+  })
+  @IsInt()
+  @IsPositive()
+  @IsOptional()
+  readonly categoryId?: number;
+}
+
 export class UpdateContentOutput extends CoreOutput {}
 
 export class DeleteContentOutput extends CoreOutput {}

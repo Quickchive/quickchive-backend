@@ -146,4 +146,23 @@ export class CategoryRepository extends Repository<Category> {
       },
     });
   }
+
+  async findByParentId(
+    parentId: number,
+    entityManager?: EntityManager,
+  ): Promise<Category[]> {
+    if (entityManager) {
+      return entityManager.find(Category, {
+        where: {
+          parentId,
+        },
+      });
+    }
+
+    return await this.find({
+      where: {
+        parentId,
+      },
+    });
+  }
 }

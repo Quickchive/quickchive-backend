@@ -87,17 +87,23 @@ export class ContentsService {
     const content = new Content();
 
     if (categoryId) {
-      const category = await this.categoryRepository.findById(
-        categoryId,
-        entityManager,
-      );
+      const [category, subCategories] = await Promise.all([
+        (async () => {
+          const category = await this.categoryRepository.findById(categoryId);
 
-      if (!category) throw new NotFoundException('Category not found');
+          if (!category) {
+            throw new NotFoundException('카테고리가 존재하지 않습니다.');
+          }
 
-      await checkContentDuplicateAndAddCategorySaveLog(
-        link,
-        category,
-        userInDb,
+          return category;
+        })(),
+        this.categoryRepository.findByParentId(categoryId),
+      ]);
+
+      await this.isDuplicatedContents(
+        content.id,
+        [category, ...subCategories],
+        content.link,
       );
 
       content.category = category;
@@ -223,15 +229,11 @@ export class ContentsService {
         this.categoryRepository.findByParentId(categoryId),
       ]);
 
-      const isDuplicated = await this.isDuplicatedContents(
+      await this.isDuplicatedContents(
         content.id,
         [category, ...subCategories],
         content.link,
       );
-
-      if (isDuplicated) {
-        throw new ConflictException('이미 저장된 컨텐츠입니다.');
-      }
 
       await this.contentRepository.updateOne(
         {
@@ -495,6 +497,8 @@ export class ContentsService {
       },
     });
 
-    return existingContents.length > 0;
+    if (existingContents.length > 0) {
+      throw new ConflictException('이미 저장된 컨텐츠입니다.');
+    }
   }
 }

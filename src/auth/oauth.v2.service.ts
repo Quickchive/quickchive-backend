@@ -150,8 +150,9 @@ export class OAuthV2Service {
     return this.oauthLogin(newUser.email, PROVIDER.GOOGLE);
   }
 
-  public async appleLogin({ authorizationToken }: OAuthLoginRequest) {
-    const { sub: id, email } = this.jwtService.decode(authorizationToken);
+  public async appleLogin({ authorizationToken: code }: OAuthLoginRequest) {
+    const data = await this.oauthUtil.getAppleToken(code);
+    const { sub: id, email } = this.jwtService.decode(data.id_token);
 
     const user = await this.userRepository.findOneByEmailAndProvider(
       email,

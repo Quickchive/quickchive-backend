@@ -133,6 +133,9 @@ export class CategoryRepository extends Repository<Category> {
         user: { id: userId },
       },
       relations: ['contents'],
+      order: {
+        createdAt: 'desc',
+      },
     });
   }
 

@@ -1,24 +1,21 @@
 import {
-  Injectable,
-  NotFoundException,
   ConflictException,
-  InternalServerErrorException,
   Inject,
+  Injectable,
+  InternalServerErrorException,
+  NotFoundException,
 } from '@nestjs/common';
 import { EntityManager } from 'typeorm';
 import {
   AddCategoryBodyDto,
   AddCategoryOutput,
-  UpdateCategoryBodyDto,
-  UpdateCategoryOutput,
   DeleteCategoryOutput,
   RecentCategoryList,
   RecentCategoryListWithSaveCount,
+  UpdateCategoryBodyDto,
+  UpdateCategoryOutput,
 } from './dtos/category.dto';
-import {
-  LoadPersonalCategoriesOutput,
-  LoadFrequentCategoriesOutput,
-} from './dtos/load-personal-categories.dto';
+import { LoadFrequentCategoriesOutput, LoadPersonalCategoriesOutput, } from './dtos/load-personal-categories.dto';
 import { Category } from './category.entity';
 import { Content } from '../contents/entities/content.entity';
 import { CategoryRepository } from './category.repository';
@@ -26,12 +23,7 @@ import { ContentRepository } from '../contents/repository/content.repository';
 import { getLinkContent, getLinkInfo } from '../contents/util/content.util';
 import { User } from '../users/entities/user.entity';
 import { UserRepository } from '../users/repository/user.repository';
-import {
-  generateCategoriesTree,
-  generateSlug,
-  loadLogs,
-  makeCategoryListWithSaveCount,
-} from './utils/category.util';
+import { generateCategoriesTree, generateSlug, loadLogs, makeCategoryListWithSaveCount, } from './utils/category.util';
 import { Transactional } from '../common/aop/transactional';
 import { AiService } from '../ai/ai.service';
 
@@ -477,7 +469,7 @@ Present your reply options in JSON format below.
 
     try {
       const categoryStr = await this.aiService.chat({
-        model: 'llama3-8b-8192',
+        model: 'llama-3.1-8b-instant',
         messages: [{ role: 'user', content: question }],
         temperature: 0,
         responseType: 'json_object',

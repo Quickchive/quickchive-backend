@@ -133,6 +133,9 @@ export class CategoryRepository extends Repository<Category> {
         user: { id: userId },
       },
       relations: ['contents'],
+      order: {
+        createdAt: 'desc',
+      },
     });
   }
 
@@ -140,6 +143,25 @@ export class CategoryRepository extends Repository<Category> {
     return await this.find({
       where: {
         user: { id: userId },
+      },
+    });
+  }
+
+  async findByParentId(
+    parentId: number,
+    entityManager?: EntityManager,
+  ): Promise<Category[]> {
+    if (entityManager) {
+      return entityManager.find(Category, {
+        where: {
+          parentId,
+        },
+      });
+    }
+
+    return await this.find({
+      where: {
+        parentId,
       },
     });
   }

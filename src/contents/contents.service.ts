@@ -1,10 +1,11 @@
 import {
   BadRequestException,
+  ConflictException,
   ForbiddenException,
   Injectable,
   NotFoundException,
 } from '@nestjs/common';
-import { DataSource, EntityManager } from 'typeorm';
+import { DataSource, EntityManager, In, Not } from 'typeorm';
 
 import {
   AddContentBodyDto,
@@ -86,17 +87,23 @@ export class ContentsService {
     const content = new Content();
 
     if (categoryId) {
-      const category = await this.categoryRepository.findById(
-        categoryId,
-        entityManager,
-      );
+      const [category, subCategories] = await Promise.all([
+        (async () => {
+          const category = await this.categoryRepository.findById(categoryId);
 
-      if (!category) throw new NotFoundException('Category not found');
+          if (!category) {
+            throw new NotFoundException('카테고리가 존재하지 않습니다.');
+          }
 
-      await checkContentDuplicateAndAddCategorySaveLog(
-        link,
-        category,
-        userInDb,
+          return category;
+        })(),
+        this.categoryRepository.findByParentId(categoryId),
+      ]);
+
+      await this.isDuplicatedContents(
+        [category, ...subCategories],
+        content.link,
+        content.id,
       );
 
       content.category = category;
@@ -184,8 +191,6 @@ export class ContentsService {
       reminder,
       favorite,
       categoryId,
-      categoryName,
-      parentId,
     }: UpdateContentBodyDto,
     entityManager?: EntityManager,
   ): Promise<AddContentOutput> {
@@ -197,33 +202,38 @@ export class ContentsService {
       reminder,
       favorite,
     };
-    const userInDb = await this.userRepository.findOneWithContentsAndCategories(
-      user.id,
-    );
-    if (!userInDb) {
-      throw new NotFoundException('User not found');
-    }
 
-    const content = userInDb?.contents?.filter(
-      (content) => content.id === contentId,
-    )[0];
+    const content = await this.contentRepository.findOne({
+      where: {
+        id: contentId,
+      },
+      relations: ['category'],
+    });
+
     if (!content) {
-      throw new NotFoundException('Content not found.');
+      throw new NotFoundException('컨텐츠가 존재하지 않습니다.');
     }
 
-    if (categoryId !== undefined) {
-      const category =
-        categoryId !== null
-          ? await this.categoryRepository.findById(categoryId, entityManager)
-          : null;
+    // 카테고리 변경이 발생하는 경우
+    if (categoryId && !content.isSameCategory(categoryId)) {
+      const [category, subCategories] = await Promise.all([
+        (async () => {
+          const category = await this.categoryRepository.findById(categoryId);
 
-      if (category) {
-        await checkContentDuplicateAndAddCategorySaveLog(
-          link,
-          category,
-          userInDb,
-        );
-      }
+          if (!category) {
+            throw new NotFoundException('카테고리가 존재하지 않습니다.');
+          }
+
+          return category;
+        })(),
+        this.categoryRepository.findByParentId(categoryId),
+      ]);
+
+      await this.isDuplicatedContents(
+        [category, ...subCategories],
+        content.link,
+        content.id,
+      );
 
       await this.contentRepository.updateOne(
         {
@@ -469,6 +479,26 @@ export class ContentsService {
       return {};
     } catch (e) {
       throw e;
+    }
+  }
+
+  private async isDuplicatedContents(
+    categories: Category[],
+    link: string,
+    id?: number,
+  ) {
+    const existingContents = await this.contentRepository.find({
+      where: {
+        ...(id && { id: Not(id) }),
+        category: {
+          id: In(categories.map((category) => category.id)),
+        },
+        link,
+      },
+    });
+
+    if (existingContents.length > 0) {
+      throw new ConflictException('이미 저장된 컨텐츠입니다.');
     }
   }
 }

@@ -86,4 +86,8 @@ export class Content extends CoreEntity {
   @ApiProperty({ description: 'Owner ID' })
   @RelationId((content: Content) => content.user)
   userId: number;
+
+  isSameCategory(categoryId: number): boolean {
+    return this.category?.id === categoryId;
+  }
 }

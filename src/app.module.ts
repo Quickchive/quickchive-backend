@@ -16,6 +16,7 @@ import { AiModule } from './ai/openai.module';
 import { AppController } from './app.controller';
 import { AopModule } from './common/aop/aop.module';
 import { InfraModule } from './infra/infra.module';
+import { TestModule } from './test/test.module';
 
 @Module({
   imports: [
@@ -108,6 +109,7 @@ import { InfraModule } from './infra/infra.module';
     }),
     AopModule,
     InfraModule,
+    TestModule,
   ],
   controllers: [AppController],
   providers: [],
